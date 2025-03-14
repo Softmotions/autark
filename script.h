@@ -1,0 +1,15 @@
+#ifndef SCRIPT_H
+#define SCRIPT_H
+
+#define RULE_TYPE_META     0x01U
+#define RULE_TYPE_CONSUMES 0x02U
+#define RULE_TYPE_CHECK    0x04U
+#define RULE_TYPE_SOURCES  0x08U
+#define RULE_TYPE_FLAGS    0x10U
+#define RULE_TYPE_EXEC     0x20U
+#define RULE_TYPE_STATIC   0x40U
+#define RULE_TYPE_SHARED   0x80U
+
+
+
+#endif

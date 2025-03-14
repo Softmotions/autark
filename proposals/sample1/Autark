@@ -1,0 +1,44 @@
+meta {
+  authors { 'Adamansky Anton' }
+  contacts { adamansky@gmail.com }
+  description {
+      A multi-line
+      project description
+  }
+}
+
+consumes {
+  static { libcurl>2.1.0 }
+}
+
+check { system.sh }
+
+flags {
+  c {
+    -fPIC
+  }
+  if { matched { build:type release } -O2 }
+  if { defined { check:CPU } -DCPU=${CPU} }
+}
+
+consumes {
+  ./libcalc
+}
+
+sources {
+  name { main }
+  sample1.c
+  if { matched { check:OS FreeBSD } sample1_freebsd.c }
+  else { sample1_generic.c }
+}
+
+exec {
+  output { sample1 }
+  sources { name { main } }
+  sources { sample1_main.c }
+}
+
+static {
+  output { libsample1 }
+  flags { }
+}

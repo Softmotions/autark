@@ -1,0 +1,32 @@
+
+RULES = RULE* _ EOF                       { _finish(yy); }
+
+RULE = k:KEY _ '{' _ FIELDS _ '}' _       { _rule(yy, k); }
+
+FIELDS = FIELD ( __ FIELD )*
+
+FIELD = ( RULE | v:VALUE { _push(yy, v); } ) _
+
+KEY = < [a-zA-Z][-a-zA-Z_0-9]* >
+
+VALUE = STR | STRQ | TEXT
+
+STR = < ( ![{} ] . )+ >                   { $$ = _node_text(yy, yytext); }
+
+STRQ = ['] < ( !['] . )* > [']            { $$ = _node_text(yy, yytext); }
+
+TEXT = CDATA < ( !CDATA . )* > CDATA      { $$ = _node_text(yy, yytext); }
+
+CDATA = '\"\"\"'
+
+_ = SPACE*
+
+__ = SPACE+
+
+SPACE = ' ' | '\t' | EOL
+
+EOL = ( '\r\n' | '\n' | '\r' )
+
+EOF = !.
+
+%%

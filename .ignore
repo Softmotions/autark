@@ -1,0 +1,5 @@
+.data/
+.cache/
+build/
+*.o
+*.a
