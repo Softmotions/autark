@@ -2,11 +2,11 @@
 
 include config.mk
 
-SRC = xstr.c pool.c log.c utils.c paths.c \
-			script.c
+SRC = xstr.c ulist.c pool.c log.c utils.c paths.c \
+			autark.c script.c
 OBJ = $(SRC:.c=.o)
-HDRS = basedefs.h alloc.h xstr.h pool.h log.h utils.h paths.h \
-			 script.h
+HDRS = config.h basedefs.h alloc.h xstr.h ulist.h pool.h log.h utils.h paths.h \
+			 env.h autark.h script.h
 #			 scriptx.h
 
 all: autark libs

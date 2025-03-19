@@ -41,7 +41,7 @@ void xstr_cat2(struct xstr *xstr, const void *buf, size_t size) {
 
 void xstr_cat(struct xstr *xstr, const char *buf) {
   size_t size = strlen(buf);
-  return xstr_cat2(xstr, buf, size);
+  xstr_cat2(xstr, buf, size);
 }
 
 void xstr_shift(struct xstr *xstr, size_t shift_size) {

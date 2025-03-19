@@ -34,12 +34,29 @@
 
 #define RCC(rc__, label__, expr__) RCHECK(rc__, label__, expr__)
 
-#define RCN(label__, expr__)          \
-        rc = (expr__);                \
-        if (rc) {                     \
-          akerror(rc, 0, 0);          \
-          goto label__;               \
+#define RCN(label__, expr__) \
+        rc = (expr__);       \
+        if (rc) {            \
+          akerror(rc, 0, 0); \
+          goto label__;      \
         }
 
-#endif
 
+#include <stdlib.h>
+#include <stddef.h>
+
+struct value {
+  void  *buf;
+  size_t len;
+  int    error;
+};
+
+static inline int value_destroy(struct value *v) {
+  if (v->buf) {
+    free(v->buf);
+    v->buf = 0;
+  }
+  return v->error;
+}
+
+#endif
