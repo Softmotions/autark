@@ -32,7 +32,6 @@ struct xnode {
 #define YY_CTX_MEMBERS \
         struct xnode *x;
 
-
 #define YYSTYPE struct xnode*
 #define YY_MALLOC(yy_, sz_)        _x_malloc(yy_, sz_)
 #define YY_REALLOC(yy_, ptr_, sz_) _x_realloc(yy_, ptr_, sz_)
@@ -54,26 +53,6 @@ static void* _x_malloc(struct _yycontext *yy, size_t size) {
 
 static void* _x_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   return xrealloc(ptr, size);
-}
-
-struct _yycontext* yyrelease(struct _yycontext *yyctx);
-
-static void _xparse_destroy(struct xparse *xp) {
-  if (xp) {
-    xstr_destroy(xp->xerr);
-    ulist_destroy_keep(&xp->stack);
-    if (xp->yy) {
-      yyrelease(xp->yy);
-      free(xp->yy);
-      xp->yy = 0;
-    }
-    free(xp);
-  }
-}
-
-static void _xnode_destroy(struct xnode *x) {
-  _xparse_destroy(x->xp);
-  x->xp = 0;
 }
 
 static struct xnode* _push(struct _yycontext *yy, struct xnode *n);
@@ -101,6 +80,25 @@ static void _yyerror(yycontext *yy) {
     }
   }
   xstr_cat(xerr, " <--- \n");
+}
+
+
+static void _xparse_destroy(struct xparse *xp) {
+  if (xp) {
+    xstr_destroy(xp->xerr);
+    ulist_destroy_keep(&xp->stack);
+    if (xp->yy) {
+      yyrelease(xp->yy);
+      free(xp->yy);
+      xp->yy = 0;
+    }
+    free(xp);
+  }
+}
+
+static void _xnode_destroy(struct xnode *x) {
+  _xparse_destroy(x->xp);
+  x->xp = 0;
 }
 
 static unsigned _rule_type(const char *key) {
