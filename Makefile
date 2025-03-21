@@ -3,11 +3,10 @@
 include config.mk
 
 SRC = xstr.c ulist.c pool.c log.c utils.c paths.c \
-			autark.c script.c
+			autark.c project.c
 OBJ = $(SRC:.c=.o)
 HDRS = config.h basedefs.h alloc.h xstr.h ulist.h pool.h log.h utils.h paths.h \
-			 env.h autark.h script.h
-#			 scriptx.h
+			 env.h autark.h project.h scriptx.h
 
 all: autark libs
 	#@[ "$(TESTS)" = "1" ] && $(MAKE) -C ./tests;

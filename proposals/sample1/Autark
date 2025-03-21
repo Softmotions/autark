@@ -28,8 +28,10 @@ consumes {
 sources {
   name { main }
   sample1.c
-  if { matched { check:OS FreeBSD } sample1_freebsd.c }
-  else { sample1_generic.c }
+  if {
+    matched { check:OS FreeBSD } sample1_freebsd.c
+    else { sample1_generic.c }
+  }
 }
 
 exec {
