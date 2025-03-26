@@ -38,8 +38,11 @@ struct node {
   struct node    *parent;
   struct project *project;
 
-  int (*settle)(struct node*);
-  int (*build)(struct node*, int *updated);
+  int  (*settle)(struct node*);
+  int  (*build)(struct node*, int *updated);
+  void (*dispose)(struct node*);
+
+  void *impl;
 };
 
 struct project {

@@ -55,9 +55,9 @@ static void* _x_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   return xrealloc(ptr, size);
 }
 
-static struct xnode* _push(struct _yycontext *yy, struct xnode *n);
+static struct xnode* _push(struct _yycontext *yy, struct xnode *x);
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text);
-static struct xnode* _rule(struct _yycontext *yy, struct xnode *n);
+static struct xnode* _rule(struct _yycontext *yy, struct xnode *x);
 static void _finish(struct _yycontext *yy);
 
 #include "scriptx.h"
@@ -81,7 +81,6 @@ static void _yyerror(yycontext *yy) {
   }
   xstr_cat(xerr, " <--- \n");
 }
-
 
 static void _xparse_destroy(struct xparse *xp) {
   if (xp) {
@@ -127,10 +126,14 @@ static unsigned _rule_type(const char *key) {
   }
 }
 
-static struct xnode* _push(struct _yycontext *yy, struct xnode *n) {
-  struct xnode *x = yy->x;
-  ulist_push(&x->xp->stack, &n);
-  return n;
+static void _node_register(struct project *p, struct xnode *x) {
+  ulist_push(&p->nodes, &x);
+}
+
+static struct xnode* _push(struct _yycontext *yy, struct xnode *x) {
+  ulist_push(&yy->x->xp->stack, &x);
+  _node_register(yy->x->base.project, x);
+  return x;
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
@@ -160,26 +163,45 @@ static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
   return key;
 }
 
+
 static void _finish(struct _yycontext *yy) {
   struct xnode *root = yy->x;
+  struct project *p = root->base.project;
   struct xparse *xp = root->xp;
   struct ulist *s = &xp->stack;
   while (s->num) {
     struct xnode *n = XNODE_PEEK(s);
-    if (n->base.type != NODE_TYPE_VALUE) {
-      n->base.next = root->base.child;
-      root->base.child = &n->base;
-    }
+    n->base.next = root->base.child;
+    root->base.child = &n->base;
     ulist_pop(s);
   }
 }
 
-static int _script_from_buf(
-  struct node *parent, const struct value *buf,
+static int _node_setup(struct xnode *x) {
+  struct node *n = &x->base;
+  switch (n->type) {
+
+  }
+  return 0;
+}
+
+static int _nodes_setup(struct project *p) {
+  for (int i = 0; i < p->nodes.num; ++i) {
+    struct xnode *x = XNODE_AT(&p->nodes, i);
+    int rc = _node_setup(x);
+    if (rc) {
+      return rc;
+    }
+  }
+  return 0;
+}
+
+static int _script_from_value(
+  struct node *parent, const struct value *val,
   struct node **out) {
   int rc = 0;
-
   struct xnode *script = 0;
+
   if (!parent) {
     struct pool *pool = pool_create_empty();
     struct project *project = pool_calloc(pool, sizeof(*project));
@@ -195,13 +217,13 @@ static int _script_from_buf(
   }
   script->base.type = NODE_TYPE_SCRIPT;
   script->base.index = script->base.project->nodes.num;
-  ulist_push(&script->base.project->nodes, &script);
+  _node_register(script->base.project, script);
 
   script->xp = malloc(sizeof(*script->xp));
   *script->xp = (struct xparse) {
     .stack = { .usize = sizeof(struct xnode*) },
     .xerr = xstr_create_empty(),
-    .val = *buf,
+    .val = *val,
   };
   script->xp->yy = malloc(sizeof(yycontext));
   *script->xp->yy = (yycontext) {
@@ -218,6 +240,9 @@ static int _script_from_buf(
     }
     goto finish;
   }
+
+  struct project *p = script->base.project;
+  RCC(rc, finish, _nodes_setup(p));
 
 finish:
   _xparse_destroy(script->xp);
@@ -236,19 +261,19 @@ static int _script_from_file(struct node *parent, const char *path, struct node 
   if (buf.error) {
     return value_destroy(&buf);
   }
-  int ret = _script_from_buf(parent, &buf, out);
+  int ret = _script_from_value(parent, &buf, out);
   value_destroy(&buf);
   return ret;
 }
 
-static void _project_destroy(struct project *proj) {
-  if (proj) {
-    for (int i = 0; i < proj->nodes.num; ++i) {
-      struct xnode *x = XNODE_AT(&proj->nodes, i);
+static void _project_destroy(struct project *p) {
+  if (p) {
+    for (int i = 0; i < p->nodes.num; ++i) {
+      struct xnode *x = XNODE_AT(&p->nodes, i);
       _xnode_destroy(x);
     }
-    ulist_destroy_keep(&proj->nodes);
-    pool_destroy(proj->pool);
+    ulist_destroy_keep(&p->nodes);
+    pool_destroy(p->pool);
   }
 }
 
