@@ -19,7 +19,7 @@ HDRS = config.h basedefs.h alloc.h xstr.h ulist.h pool.h log.h utils.h paths.h \
 			 env.h autark.h project.h scriptx.h nodes.h
 
 all: autark libs
-	#@[ "$(TESTS)" = "1" ] && $(MAKE) -C ./tests;
+	@[ "$(TESTS)" = "1" ] && $(MAKE) -C ./tests;
 
 libs: libautark.a
 
@@ -36,11 +36,10 @@ autark: $(OBJ) main.o
 
 libautark.a: $(OBJ)
 	$(AR) rcs $@ $^
-	#@[ "$(TESTS)" = "1" ] && $(MAKE) -C ./tests all;
 
 clean:
 	rm -f autark $(OBJ) main.o libautark.a
-	#$(MAKE) -C ./tests clean
+	$(MAKE) -C ./tests clean
 
 test: all
 	$(MAKE) -C ./tests test

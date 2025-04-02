@@ -1,9 +1,14 @@
 meta {
-  authors { 'Adamansky Anton' }
+  authors { Adamansky Anton }
   contacts { adamansky@gmail.com }
   description {
       A multi-line
-      project description
+      project description.
+      Build OS:
+      if {
+        matched { OS Linux } Linux
+        else { ${OS} }
+      }
   }
 }
 
@@ -18,7 +23,7 @@ flags {
     -fPIC
   }
   if { matched { build:type release } -O2 }
-  if { defined { check:CPU } -DCPU=${CPU} }
+  if { defined { CPU } -DCPU=${CPU} }
 }
 
 consumes {
@@ -29,7 +34,7 @@ sources {
   name { main }
   sample1.c
   if {
-    matched { check:OS FreeBSD } sample1_freebsd.c
+    matched { OS FreeBSD } sample1_freebsd.c
     else { sample1_generic.c }
   }
 }

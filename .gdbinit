@@ -1,5 +1,5 @@
 cd ./tests
-file ./test_akscript
+file ./test_script
 set args -V
 
 set confirm off

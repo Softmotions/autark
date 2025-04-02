@@ -17,7 +17,7 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
     ret.error = errno;
     return ret;
   }
-  while(buflen_max != 0 && ret.error != 0) {
+  while(buflen_max != 0 && ret.error == 0) {
     ssize_t rb = read(fd, buf, sizeof(buf));
     if (rb > 0) {
       if (buflen_max > -1) {
@@ -37,6 +37,7 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
       break;
     }
   }
+  ret.len = xstr_size(xstr);
   ret.buf = xstr_destroy_keep_ptr(xstr);
   return ret;
 }

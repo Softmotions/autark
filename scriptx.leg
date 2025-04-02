@@ -1,23 +1,17 @@
+RULES = RULE* _ EOF                                   { _finish(yy); }
 
-RULES = RULE* _ EOF                       { _finish(yy); }
+RULE = k:STRP _ '{' _ (VALR (__ VALR)*)? _ '}'        { _rule(yy, k); }
 
-RULE = k:KEY _ '{' _ FIELDS _ '}' _       { _rule(yy, k); }
+VALR = RULE | STRQ | STRQQ | STRP
 
-FIELDS = FIELD ( __ FIELD )*
+STRP = <CHP+>                                         { $$ = _node_text_push(yy, yytext); }
 
-FIELD = ( RULE | v:VALUE { _push(yy, v); } ) _
+STRQ = ['] < ( !['] . )* > [']                        { $$ = _node_text_push(yy, yytext); }
 
-KEY = < [a-zA-Z][-a-zA-Z_0-9]* >
+STRQQ = ["] < ( !["] . )* > ["]                       { $$ = _node_text_push(yy, yytext); }
 
-VALUE = STR | STRQ | TEXT
-
-STR = < ( ![{} ] . )+ >                   { $$ = _node_text(yy, yytext); }
-
-STRQ = ['] < ( !['] . )* > [']            { $$ = _node_text(yy, yytext); }
-
-TEXT = CDATA < ( !CDATA . )* > CDATA      { $$ = _node_text(yy, yytext); }
-
-CDATA = '\"\"\"'
+CHP = '\\' [{}\\nrt]
+      | !([{}\\] | SPACE) .
 
 _ = SPACE*
 
@@ -25,8 +19,9 @@ __ = SPACE+
 
 SPACE = ' ' | '\t' | EOL
 
-EOL = ( '\r\n' | '\n' | '\r' )
+EOL = ('\r\n' | '\n' | '\r')
 
 EOF = !.
+
 
 %%

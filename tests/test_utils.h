@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdlib.h>
+#include <stdio.h>
 
 #define _QSTR(x__) #x__
 #define _Q(x__)    _QSTR(x__)

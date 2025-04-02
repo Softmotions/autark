@@ -27,7 +27,7 @@ struct xnode {
   struct xparse *xp; // Used only by root script node
 };
 
-#define YY_DEBUG
+//#define YY_DEBUG
 #define YY_CTX_LOCAL 1
 #define YY_CTX_MEMBERS \
         struct xnode *x;
@@ -35,17 +35,10 @@ struct xnode {
 #define YYSTYPE struct xnode*
 #define YY_MALLOC(yy_, sz_)        _x_malloc(yy_, sz_)
 #define YY_REALLOC(yy_, ptr_, sz_) _x_realloc(yy_, ptr_, sz_)
-#define YY_INPUT(yy_, buf_, result_, max_size_)                 \
-        {                                                       \
-          struct xnode *x = (yy_)->x;                           \
-          if (x->xp->pos >= x->xp->val.len) {                   \
-            result_ = 0;                                        \
-          } else {                                              \
-            char ch = *((char*) x->xp->val.buf + x->xp->pos++); \
-            result_ = 1;                                        \
-            *(buf_) = ch;                                       \
-          }                                                     \
-        }
+
+
+#define YY_INPUT(yy_, buf_, result_, max_size_) \
+        result_ = _input(yy_, buf_, max_size_);
 
 static void* _x_malloc(struct _yycontext *yy, size_t size) {
   return xmalloc(size);
@@ -55,8 +48,10 @@ static void* _x_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   return xrealloc(ptr, size);
 }
 
+static int _input(struct _yycontext *yy, char *buf, int max_size);
 static struct xnode* _push(struct _yycontext *yy, struct xnode *x);
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text);
+static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text);
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *x);
 static void _finish(struct _yycontext *yy);
 
@@ -95,13 +90,27 @@ static void _xparse_destroy(struct xparse *xp) {
   }
 }
 
+static int _input(struct _yycontext *yy, char *buf, int max_size) {
+  struct xparse *xp = yy->x->xp;
+  int cnt = 0;
+  while (cnt < max_size && xp->pos < xp->val.len) {
+    char ch = *((char*) xp->val.buf + xp->pos);
+    *(buf + cnt) = ch;
+    ++xp->pos;
+    ++cnt;
+  }
+  return cnt;
+}
+
 static void _xnode_destroy(struct xnode *x) {
   _xparse_destroy(x->xp);
   x->xp = 0;
 }
 
 static unsigned _rule_type(const char *key) {
-  if (strcmp(key, "meta") == 0) {
+  if (strcmp(key, "$") == 0) {
+    return NODE_TYPE_SUBST;
+  } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
   } else if (strcmp(key, "consumes") == 0) {
     return NODE_TYPE_CONSUMES;
@@ -127,12 +136,13 @@ static unsigned _rule_type(const char *key) {
 }
 
 static void _node_register(struct project *p, struct xnode *x) {
+  x->base.index = p->nodes.num;
   ulist_push(&p->nodes, &x);
 }
 
 static struct xnode* _push(struct _yycontext *yy, struct xnode *x) {
-  ulist_push(&yy->x->xp->stack, &x);
-  _node_register(yy->x->base.project, x);
+  struct ulist *s = &yy->x->xp->stack;
+  ulist_push(s, &x);
   return x;
 }
 
@@ -145,24 +155,29 @@ static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
   return x;
 }
 
+static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text) {
+  return _push(yy, _node_text(yy, text));
+}
+
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
   struct xparse *xp = yy->x->xp;
   struct ulist *s = &xp->stack;
+  struct project *p = yy->x->base.project;
   key->base.type = _rule_type(key->base.value);
   while (s->num) {
-    struct xnode *n = XNODE_PEEK(s);
-    if (n != key) {
-      n->base.next = key->base.child;
-      n->base.parent = &key->base;
-      key->base.child = &n->base;
-      ulist_pop(s);
+    struct xnode *x = XNODE_PEEK(s);
+    if (x != key) {
+      x->base.next = key->base.child;
+      x->base.parent = &key->base;
+      key->base.child = &x->base;
+      ulist_pop(s), _node_register(p, x);
     } else {
-      break; // Keep rule on stack
+      // Keep rule on the stack
+      break;
     }
   }
   return key;
 }
-
 
 static void _finish(struct _yycontext *yy) {
   struct xnode *root = yy->x;
@@ -170,17 +185,17 @@ static void _finish(struct _yycontext *yy) {
   struct xparse *xp = root->xp;
   struct ulist *s = &xp->stack;
   while (s->num) {
-    struct xnode *n = XNODE_PEEK(s);
-    n->base.next = root->base.child;
-    root->base.child = &n->base;
-    ulist_pop(s);
+    struct xnode *x = XNODE_PEEK(s);
+    x->base.next = root->base.child;
+    root->base.child = &x->base;
+    ulist_pop(s), _node_register(p, x);
   }
 }
 
 static int _node_setup(struct xnode *x) {
   struct node *n = &x->base;
   switch (n->type) {
-
+  // TODO:
   }
   return 0;
 }
@@ -215,24 +230,25 @@ static int _script_from_value(
     script = pool_calloc(parent->project->pool, sizeof(*script));
     script->base.parent = parent;
   }
+
   script->base.type = NODE_TYPE_SCRIPT;
-  script->base.index = script->base.project->nodes.num;
   _node_register(script->base.project, script);
 
-  script->xp = malloc(sizeof(*script->xp));
+  script->xp = xmalloc(sizeof(*script->xp));
   *script->xp = (struct xparse) {
     .stack = { .usize = sizeof(struct xnode*) },
     .xerr = xstr_create_empty(),
     .val = *val,
   };
-  script->xp->yy = malloc(sizeof(yycontext));
-  *script->xp->yy = (yycontext) {
+
+  yycontext *yy = script->xp->yy = xmalloc(sizeof(yycontext));
+  *yy = (yycontext) {
     .x = script
   };
 
-  if (!yyparse(script->xp->yy)) {
+  if (!yyparse(yy)) {
     rc = AK_ERROR_SCRIPT_SYNTAX;
-    _yyerror(script->xp->yy);
+    _yyerror(yy);
     if (script->xp->xerr->size) {
       akerror(rc, "%s\n", script->xp->xerr->ptr);
     } else {
