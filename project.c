@@ -49,7 +49,7 @@ static void* _x_realloc(struct _yycontext *yy, void *ptr, size_t size) {
 }
 
 static int _input(struct _yycontext *yy, char *buf, int max_size);
-static struct xnode* _push(struct _yycontext *yy, struct xnode *x);
+static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x);
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text);
 static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text);
 static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char *text);
@@ -141,9 +141,10 @@ static void _node_register(struct project *p, struct xnode *x) {
   ulist_push(&p->nodes, &x);
 }
 
-static struct xnode* _push(struct _yycontext *yy, struct xnode *x) {
+static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) {
   struct ulist *s = &yy->x->xp->stack;
   ulist_push(s, &x);
+  _node_register(yy->x->base.project, x);
   return x;
 }
 
@@ -157,7 +158,7 @@ static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
 }
 
 static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text) {
-  return _push(yy, _node_text(yy, text));
+  return _push_and_register(yy, _node_text(yy, text));
 }
 
 static char* _text_escaped(char *wp, const char *rp) {
@@ -195,16 +196,14 @@ static char* _text_escaped(char *wp, const char *rp) {
   return ret;
 }
 
-
 static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char *text) {
   char buf[strlen(text) + 1];
-  return _push(yy, _node_text(yy, _text_escaped(buf, text)));
+  return _push_and_register(yy, _node_text(yy, _text_escaped(buf, text)));
 }
 
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
   struct xparse *xp = yy->x->xp;
   struct ulist *s = &xp->stack;
-  struct project *p = yy->x->base.project;
   key->base.type = _rule_type(key->base.value);
   while (s->num) {
     struct xnode *x = XNODE_PEEK(s);
@@ -212,7 +211,7 @@ static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
       x->base.next = key->base.child;
       x->base.parent = &key->base;
       key->base.child = &x->base;
-      ulist_pop(s), _node_register(p, x);
+      ulist_pop(s);
     } else {
       // Keep rule on the stack
       break;
@@ -223,14 +222,13 @@ static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
 
 static void _finish(struct _yycontext *yy) {
   struct xnode *root = yy->x;
-  struct project *p = root->base.project;
   struct xparse *xp = root->xp;
   struct ulist *s = &xp->stack;
   while (s->num) {
     struct xnode *x = XNODE_PEEK(s);
     x->base.next = root->base.child;
     root->base.child = &x->base;
-    ulist_pop(s), _node_register(p, x);
+    ulist_pop(s);
   }
 }
 
@@ -336,7 +334,6 @@ int project_open(const char *script_path, struct project **out) {
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
 
-  // TODO: Initiate
 
   *out = n->project;
 finish:
