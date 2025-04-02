@@ -1,0 +1,33 @@
+script:0x2 {
+  meta:0x8 {
+    authors:0x4 {
+      Adamansky:0x1
+      Anton:0x1
+    }
+    contacts:0x4 {
+      adamansky@gmail.com:0x1
+    }
+    description:0x4 {
+      A:0x1
+      multi-line:0x1
+      Single quotes:0x1
+      and double { quotes:0x1
+      Escaped{bra}cke
+ts:0x1
+      
+:0x1
+      if:0x1000 {
+        matched:0x4 {
+          OS:0x1
+          Linux:0x1
+        }
+        Linux:0x1
+        else:0x4 {
+          $:0x2000 {
+            OS:0x1
+          }
+        }
+      }
+    }
+  }
+}

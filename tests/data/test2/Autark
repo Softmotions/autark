@@ -1,0 +1,13 @@
+meta {
+  authors { Adamansky Anton }
+  contacts { adamansky@gmail.com }
+  description {
+    A multi-line 'Single quotes'
+    "and double { quotes"
+    Escaped\{bra\}cke\nts \n
+    if {
+      matched { OS Linux } Linux
+      else { ${OS} }
+    }
+  }
+}

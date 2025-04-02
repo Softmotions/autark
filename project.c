@@ -52,6 +52,7 @@ static int _input(struct _yycontext *yy, char *buf, int max_size);
 static struct xnode* _push(struct _yycontext *yy, struct xnode *x);
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text);
 static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text);
+static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char *text);
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *x);
 static void _finish(struct _yycontext *yy);
 
@@ -159,6 +160,47 @@ static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text) {
   return _push(yy, _node_text(yy, text));
 }
 
+static char* _text_escaped(char *wp, const char *rp) {
+  // Replace: \} \{ \n \r \t
+  int esc = 0;
+  char *ret = wp;
+  while (*rp != '\0') {
+    if (esc) {
+      switch (*rp) {
+        case 'n':
+          *wp = '\n';
+          break;
+        case 'r':
+          *wp = '\r';
+          break;
+        case 't':
+          *wp = '\t';
+          break;
+        default:
+          *wp = *rp;
+          break;
+      }
+      esc = 0;
+    } else if (*rp == '\\') {
+      esc = 1;
+      ++rp;
+      continue;
+    } else {
+      *wp = *rp;
+    }
+    ++wp;
+    ++rp;
+  }
+  *wp = '\0';
+  return ret;
+}
+
+
+static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char *text) {
+  char buf[strlen(text) + 1];
+  return _push(yy, _node_text(yy, _text_escaped(buf, text)));
+}
+
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
   struct xparse *xp = yy->x->xp;
   struct ulist *s = &xp->stack;
@@ -192,23 +234,20 @@ static void _finish(struct _yycontext *yy) {
   }
 }
 
-static int _node_setup(struct xnode *x) {
-  struct node *n = &x->base;
-  switch (n->type) {
-  // TODO:
-  }
-  return 0;
-}
+///////////////////////////////////////////////////////////////////////////
 
-static int _nodes_setup(struct project *p) {
-  for (int i = 0; i < p->nodes.num; ++i) {
-    struct xnode *x = XNODE_AT(&p->nodes, i);
-    int rc = _node_setup(x);
-    if (rc) {
-      return rc;
+static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*)) {
+  int ret = visitor(n, lvl, ctx);
+  if (ret) {
+    return ret;
+  }
+  for (struct node *c = n->child; c; c = c->next) {
+    ret = _node_visit(c, lvl + 1, ctx, visitor);
+    if (ret) {
+      return ret;
     }
   }
-  return 0;
+  return visitor(n, -lvl, ctx);
 }
 
 static int _script_from_value(
@@ -231,6 +270,7 @@ static int _script_from_value(
     script->base.parent = parent;
   }
 
+  script->base.value = "script";
   script->base.type = NODE_TYPE_SCRIPT;
   _node_register(script->base.project, script);
 
@@ -256,9 +296,6 @@ static int _script_from_value(
     }
     goto finish;
   }
-
-  struct project *p = script->base.project;
-  RCC(rc, finish, _nodes_setup(p));
 
 finish:
   _xparse_destroy(script->xp);
@@ -298,6 +335,9 @@ int project_open(const char *script_path, struct project **out) {
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
+
+  // TODO: Initiate
+
   *out = n->project;
 finish:
   return rc;
@@ -313,3 +353,50 @@ void project_close(struct project **pp) {
     *pp = 0;
   }
 }
+
+struct node_print_ctx {
+  struct xstr *xstr;
+};
+
+static int _node_dump_visitor(struct node *n, int lvl, void *d) {
+  struct node_print_ctx *ctx = d;
+  struct xstr *xstr = ctx->xstr;
+  if (lvl > 0) {
+    xstr_cat_repeat(xstr, ' ', (lvl - 1) * NODE_PRINT_INDENT);
+    const char *v = n->value ? n->value : "";
+    if (node_is_value(n)) {
+      xstr_printf(xstr, "%s:0x%x\n", v, n->type);
+    } else {
+      xstr_printf(xstr, "%s:0x%x {\n", v, n->type);
+    }
+  } else if (lvl < 0 && node_is_rule(n)) {
+    xstr_cat_repeat(xstr, ' ', (-lvl - 1) * NODE_PRINT_INDENT);
+    xstr_cat2(xstr, "}\n", 2);
+  }
+  return 0;
+}
+
+void project_print(struct project *p, struct xstr *xstr) {
+  if (!p || !p->root) {
+    xstr_cat(xstr, "null");
+    return;
+  }
+  struct node_print_ctx ctx = {
+    .xstr = xstr,
+  };
+  _node_visit(p->root, 1, &ctx, _node_dump_visitor);
+}
+
+#ifdef TESTS
+
+int test_script_parse(const char *script_path, struct project **out) {
+  *out = 0;
+  struct node *n;
+  int rc = _script_from_file(0, script_path, &n);
+  RCGO(rc, finish);
+  *out = n->project;
+finish:
+  return rc;
+}
+
+#endif

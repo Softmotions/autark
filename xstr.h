@@ -40,4 +40,6 @@ void xstr_destroy(struct xstr*);
 
 char* xstr_destroy_keep_ptr(struct xstr*);
 
+void xstr_cat_repeat(struct xstr*, char ch, int count);
+
 #endif

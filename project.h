@@ -4,9 +4,11 @@
 //#include "basedefs.h"
 #include "pool.h"
 #include "ulist.h"
+#include "xstr.h"
 
-#define NODE_TYPE_SCRIPT   0x01U
-#define NODE_TYPE_VALUE    0x02U
+
+#define NODE_TYPE_VALUE    0x01U
+#define NODE_TYPE_SCRIPT   0x02U
 #define NODE_TYPE_BAG      0x04U
 #define NODE_TYPE_META     0x08U
 #define NODE_TYPE_CONSUMES 0x10U
@@ -25,6 +27,8 @@
 
 #define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)  !node_is_value(n__)
+
+#define NODE_PRINT_INDENT 2
 
 struct node {
   unsigned type;
@@ -57,5 +61,7 @@ int project_open(const char *script_path, struct project **out);
 int project_build(struct project*);
 
 void project_close(struct project**);
+
+void project_print(struct project*, struct xstr *out);
 
 #endif

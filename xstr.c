@@ -176,3 +176,10 @@ char* xstr_destroy_keep_ptr(struct xstr *xstr) {
   free(xstr);
   return ptr;
 }
+
+void xstr_cat_repeat(struct xstr *xstr, char ch, int count) {
+  for (int i = count; i > 0; --i) {
+    char buf[] = { ch };
+    xstr_cat2(xstr, buf, 1);
+  }
+}

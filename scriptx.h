@@ -321,7 +321,7 @@ YY_ACTION(void) yy_1_STRP(yycontext *yy, char *yytext, int yyleng)
   yyprintf((stderr, "do yy_1_STRP\n"));
   {
 #line 7
-   __ = _node_text_push(yy, yytext); ;
+   __ = _node_text_escaped_push(yy, yytext); ;
   }
 #undef yythunkpos
 #undef yypos

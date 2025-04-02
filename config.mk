@@ -17,6 +17,10 @@ else
   CFLAGS += -DNDEBUG
 endif
 
+ifeq ($(TESTS), 1)
+  CFLAGS += -DTESTS
+endif
+
 LIBS=-lm
 ALDFLAGS = $(LIBS) $(LDFLAGS)
 ACFLAGS = $(CFLAGS)
