@@ -534,11 +534,15 @@ const char* node_prop_get(struct node *n, const char *key) {
 }
 
 void node_prop_set(struct node *n, const char *key, const char *val_) {
-  char *val = xstrdup(val_);
+  char *val = val_ ? xstrdup(val_) : 0;
   for ( ; n; n = n->parent) {
     if (n->type == NODE_TYPE_SCRIPT) {
       akassert(n->props);
-      map_put_str(n->props, key, val);
+      if (val) {
+        map_put_str(n->props, key, val);
+      } else {
+        map_remove(n->props, key);
+      }
       return;
     }
   }
