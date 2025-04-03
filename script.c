@@ -9,7 +9,7 @@
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define XNODE_AT(list__, idx__) XNODE(*(struct node**) ulist_get(list__, idx__))
 #define XNODE_PEEK(list__)      XNODE(*(struct node**) ulist_peek(list__))
-#define XPROJECT(n__)           (n__)->base.project
+#define XSCRIPT(n__)            (n__)->base.script
 #define NODE(x__)               (struct node*) (x__)
 
 struct _yycontext;
@@ -144,14 +144,14 @@ static void _node_register(struct script *p, struct xnode *x) {
 static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) {
   struct ulist *s = &yy->x->xp->stack;
   ulist_push(s, &x);
-  _node_register(yy->x->base.project, x);
+  _node_register(yy->x->base.script, x);
   return x;
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
-  struct script *p = XPROJECT(yy->x);
+  struct script *p = XSCRIPT(yy->x);
   struct xnode *x = pool_calloc(p->pool, sizeof(*x));
-  x->base.project = p;
+  x->base.script = p;
   x->base.value = pool_strdup(p->pool, text);
   x->base.type = NODE_TYPE_VALUE;
   return x;
@@ -252,43 +252,43 @@ static int _script_from_value(
   struct node *parent, const struct value *val,
   struct node **out) {
   int rc = 0;
-  struct xnode *script = 0;
+  struct xnode *x = 0;
 
   if (!parent) {
     struct pool *pool = pool_create_empty();
-    struct script *project = pool_calloc(pool, sizeof(*project));
-    project->pool = pool;
-    ulist_init(&project->nodes, 64, sizeof(struct node*));
+    struct script *script = pool_calloc(pool, sizeof(*script));
+    script->pool = pool;
+    ulist_init(&script->nodes, 64, sizeof(struct node*));
 
-    script = pool_calloc(pool, sizeof(*script));
-    script->base.project = project;
-    project->root = (struct node*) script;
+    x = pool_calloc(pool, sizeof(*x));
+    x->base.script = script;
+    script->root = (struct node*) x;
   } else {
-    script = pool_calloc(parent->project->pool, sizeof(*script));
-    script->base.parent = parent;
+    x = pool_calloc(parent->script->pool, sizeof(*x));
+    x->base.parent = parent;
   }
 
-  script->base.value = "script";
-  script->base.type = NODE_TYPE_SCRIPT;
-  _node_register(script->base.project, script);
+  x->base.value = "script";
+  x->base.type = NODE_TYPE_SCRIPT;
+  _node_register(x->base.script, x);
 
-  script->xp = xmalloc(sizeof(*script->xp));
-  *script->xp = (struct xparse) {
+  x->xp = xmalloc(sizeof(*x->xp));
+  *x->xp = (struct xparse) {
     .stack = { .usize = sizeof(struct xnode*) },
     .xerr = xstr_create_empty(),
     .val = *val,
   };
 
-  yycontext *yy = script->xp->yy = xmalloc(sizeof(yycontext));
+  yycontext *yy = x->xp->yy = xmalloc(sizeof(yycontext));
   *yy = (yycontext) {
-    .x = script
+    .x = x
   };
 
   if (!yyparse(yy)) {
     rc = AK_ERROR_SCRIPT_SYNTAX;
     _yyerror(yy);
-    if (script->xp->xerr->size) {
-      akerror(rc, "%s\n", script->xp->xerr->ptr);
+    if (x->xp->xerr->size) {
+      akerror(rc, "%s\n", x->xp->xerr->ptr);
     } else {
       akerror(rc, 0, 0);
     }
@@ -296,12 +296,12 @@ static int _script_from_value(
   }
 
 finish:
-  _xparse_destroy(script->xp);
-  script->xp = 0;
+  _xparse_destroy(x->xp);
+  x->xp = 0;
   if (rc) {
-    _xnode_destroy(script);
+    _xnode_destroy(x);
   } else {
-    *out = &script->base;
+    *out = &x->base;
   }
   return rc;
 }
@@ -317,7 +317,7 @@ static int _script_from_file(struct node *parent, const char *path, struct node 
   return ret;
 }
 
-static void _project_destroy(struct script *p) {
+static void _script_destroy(struct script *p) {
   if (p) {
     for (int i = 0; i < p->nodes.num; ++i) {
       struct xnode *x = XNODE_AT(&p->nodes, i);
@@ -335,7 +335,7 @@ int script_open(const char *script_path, struct script **out) {
   RCGO(rc, finish);
 
 
-  *out = n->project;
+  *out = n->script;
 finish:
   return rc;
 }
@@ -346,7 +346,7 @@ int script_build(struct script *p) {
 
 void script_close(struct script **pp) {
   if (pp && *pp) {
-    _project_destroy(*pp);
+    _script_destroy(*pp);
     *pp = 0;
   }
 }
@@ -391,7 +391,7 @@ int test_script_parse(const char *script_path, struct script **out) {
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
-  *out = n->project;
+  *out = n->script;
 finish:
   return rc;
 }

@@ -33,7 +33,7 @@
 struct node {
   unsigned type;
   unsigned flags;
-  unsigned index;  ///< Own index in project::nodes
+  unsigned index;  ///< Own index in script::nodes
 
   const char *value;  ///< Key or value
   const char *path;
@@ -41,7 +41,7 @@ struct node {
   struct node   *child;
   struct node   *next;
   struct node   *parent;
-  struct script *project;
+  struct script *script;
 
   int  (*settle)(struct node*);
   int  (*build)(struct node*, int *updated);
