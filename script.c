@@ -1,4 +1,4 @@
-#include "project.h"
+#include "script.h"
 #include "utils.h"
 #include "log.h"
 #include "pool.h"
@@ -136,7 +136,7 @@ static unsigned _rule_type(const char *key) {
   }
 }
 
-static void _node_register(struct project *p, struct xnode *x) {
+static void _node_register(struct script *p, struct xnode *x) {
   x->base.index = p->nodes.num;
   ulist_push(&p->nodes, &x);
 }
@@ -149,7 +149,7 @@ static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) 
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
-  struct project *p = XPROJECT(yy->x);
+  struct script *p = XPROJECT(yy->x);
   struct xnode *x = pool_calloc(p->pool, sizeof(*x));
   x->base.project = p;
   x->base.value = pool_strdup(p->pool, text);
@@ -256,7 +256,7 @@ static int _script_from_value(
 
   if (!parent) {
     struct pool *pool = pool_create_empty();
-    struct project *project = pool_calloc(pool, sizeof(*project));
+    struct script *project = pool_calloc(pool, sizeof(*project));
     project->pool = pool;
     ulist_init(&project->nodes, 64, sizeof(struct node*));
 
@@ -317,7 +317,7 @@ static int _script_from_file(struct node *parent, const char *path, struct node 
   return ret;
 }
 
-static void _project_destroy(struct project *p) {
+static void _project_destroy(struct script *p) {
   if (p) {
     for (int i = 0; i < p->nodes.num; ++i) {
       struct xnode *x = XNODE_AT(&p->nodes, i);
@@ -328,7 +328,7 @@ static void _project_destroy(struct project *p) {
   }
 }
 
-int project_open(const char *script_path, struct project **out) {
+int script_open(const char *script_path, struct script **out) {
   *out = 0;
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);
@@ -340,11 +340,11 @@ finish:
   return rc;
 }
 
-int project_build(struct project *p) {
+int script_build(struct script *p) {
   return 0;
 }
 
-void project_close(struct project **pp) {
+void script_close(struct script **pp) {
   if (pp && *pp) {
     _project_destroy(*pp);
     *pp = 0;
@@ -373,7 +373,7 @@ static int _node_dump_visitor(struct node *n, int lvl, void *d) {
   return 0;
 }
 
-void project_print(struct project *p, struct xstr *xstr) {
+void script_print(struct script *p, struct xstr *xstr) {
   if (!p || !p->root) {
     xstr_cat(xstr, "null");
     return;
@@ -386,7 +386,7 @@ void project_print(struct project *p, struct xstr *xstr) {
 
 #ifdef TESTS
 
-int test_script_parse(const char *script_path, struct project **out) {
+int test_script_parse(const char *script_path, struct script **out) {
   *out = 0;
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);

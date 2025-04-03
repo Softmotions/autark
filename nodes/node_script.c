@@ -1,1 +1,1 @@
-#include "../project.h"
+#include "../script.h"

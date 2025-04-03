@@ -5,7 +5,7 @@
 #include <string.h>
 #include "utils.h"
 #include "xstr.h"
-#include "project.h"
+#include "script.h"
 
 #define _QSTR(x__) #x__
 #define _Q(x__)    _QSTR(x__)
@@ -16,7 +16,7 @@
           goto label__;                                                 \
         }
 
-int test_script_parse(const char *script_path, struct project **out);
+int test_script_parse(const char *script_path, struct script **out);
 
 static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
   size_t sz = xstr_size(xstr);

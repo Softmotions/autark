@@ -1,5 +1,5 @@
-#ifndef PROJECT_H
-#define PROJECT_H
+#ifndef SCRIPT_H
+#define SCRIPT_H
 
 //#include "basedefs.h"
 #include "pool.h"
@@ -38,9 +38,9 @@ struct node {
   const char *value;  ///< Key or value
   const char *path;
 
-  struct node    *child;
-  struct node    *next;
-  struct node    *parent;
+  struct node   *child;
+  struct node   *next;
+  struct node   *parent;
   struct script *project;
 
   int  (*settle)(struct node*);

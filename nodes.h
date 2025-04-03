@@ -1,7 +1,7 @@
 #ifndef NODES_H
 #define NODES_H
 
-#include "project.h"
+#include "script.h"
 
 int node_script_setup(struct node*);
 int node_meta_setup(struct node*);

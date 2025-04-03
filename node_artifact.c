@@ -1,5 +1,4 @@
-
-#include "project.h"
+#include "script.h"
 
 static int _settle(struct node *n) {
   return 0;

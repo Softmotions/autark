@@ -1,20 +1,19 @@
 #include "test_utils.h"
 #include "log.h"
-#include "project.h"
 #include "xstr.h"
 
 int main(void) {
   int rc = 0;
-  struct project *p;
+  struct script *p;
   struct xstr *xstr = xstr_create_empty();
 
   rc = test_script_parse("./data/test2/Autark", &p);
   ASSERT(assert, rc == 0);
 
-  project_print(p, xstr);
+  script_print(p, xstr);
   ASSERT(assert, cmp_file_with_xstr("./data/test2/Autark.dump", xstr) == 0);
 
-  project_close(&p);
+  script_close(&p);
   xstr_destroy(xstr);
 
   if (rc) {
