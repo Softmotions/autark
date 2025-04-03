@@ -107,6 +107,10 @@ static int _input(struct _yycontext *yy, char *buf, int max_size) {
 }
 
 static void _xnode_destroy(struct xnode *x) {
+  if (x->base.type == NODE_TYPE_SCRIPT) {
+    map_destroy(x->base.props);
+    x->base.props = 0;
+  }
   if (x->base.dispose) {
     x->base.dispose(&x->base);
   }
@@ -296,6 +300,7 @@ static int _script_from_value(
     pool = parent->env->pool;
   }
 
+  x->base.props = map_create_str(map_kv_free);
   x->base.value = pool_strdup(pool, file ? file : "script");
   x->base.type = NODE_TYPE_SCRIPT;
   _node_register(x->base.env, x);
@@ -514,13 +519,29 @@ void script_dump(struct env *p, struct xstr *xstr) {
   _node_visit(p->root, 1, &ctx, _node_dump_visitor);
 }
 
-
-const char* node_env_get(const char *key) {
+const char* node_prop_get(struct node *n, const char *key) {
+  const char *ret = 0;
+  for ( ; n; n = n->parent) {
+    if (n->type == NODE_TYPE_SCRIPT) {
+      akassert(n->props);
+      ret = map_get(n->props, key);
+      if (ret) {
+        return ret;
+      }
+    }
+  }
   return 0;
 }
 
-void node_env_set(const char *key, const char *val) {
-
+void node_prop_set(struct node *n, const char *key, const char *val_) {
+  char *val = xstrdup(val_);
+  for ( ; n; n = n->parent) {
+    if (n->type == NODE_TYPE_SCRIPT) {
+      akassert(n->props);
+      map_put_str(n->props, key, val);
+      return;
+    }
+  }
 }
 
 #ifdef TESTS

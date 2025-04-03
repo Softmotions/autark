@@ -72,9 +72,9 @@ static int _uint64_cmp(const void *v1, const void *v2) {
 
 static inline uint32_t _hash_uint32(uint32_t x) {
   x ^= x >> 16;
-  x *= 0x85ebca6b;
+  x *= 0x85ebca6bU;
   x ^= x >> 13;
-  x *= 0xc2b2ae35;
+  x *= 0xc2b2ae35U;
   x ^= x >> 16;
   return x;
 }

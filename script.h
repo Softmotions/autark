@@ -5,7 +5,7 @@
 #include "pool.h"
 #include "ulist.h"
 #include "xstr.h"
-
+#include "map.h"
 
 #define NODE_TYPE_VALUE    0x01U
 #define NODE_TYPE_SCRIPT   0x02U
@@ -38,12 +38,12 @@ struct node {
   unsigned pos;       // Node position
 
   const char *value;  ///< Key or value
-  const char *path;
 
   struct node *child;
   struct node *next;
   struct node *parent;
   struct env  *env;
+  struct map  *props;
 
   int  (*resolve)(struct node*);
   int  (*build)(struct node*);
@@ -70,8 +70,8 @@ void script_dump(struct env*, struct xstr *out);
 
 int node_build(struct node *n);
 
-const char* node_env_get(const char *key);
+const char* node_prop_get(struct node*, const char *key);
 
-void node_env_set(const char *key, const char *val);
+void node_prop_set(struct node*, const char *key, const char *val);
 
 #endif
