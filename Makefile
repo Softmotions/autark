@@ -2,7 +2,15 @@
 
 include config.mk
 
-SRC = xstr.c ulist.c pool.c log.c utils.c paths.c autark.c script.c \
+SRC = xstr.c \
+			ulist.c \
+			pool.c \
+			log.c \
+			utils.c \
+			map.c \
+			paths.c \
+			autark.c \
+			script.c \
 			node_script.c \
 			node_meta.c \
 			node_consumes.c \
@@ -11,12 +19,26 @@ SRC = xstr.c ulist.c pool.c log.c utils.c paths.c autark.c script.c \
 			node_flags.c \
 			node_artifact.c \
 			node_include.c \
-			node_if.c
+			node_if.c \
+			node_subst.c
 
 
 OBJ = $(SRC:.c=.o)
-HDRS = config.h basedefs.h alloc.h xstr.h ulist.h pool.h log.h utils.h paths.h \
-			 env.h autark.h script.h scriptx.h nodes.h
+HDRS = config.h \
+			 basedefs.h \
+			 alloc.h \
+			 xstr.h \
+			 ulist.h \
+			 map.h \
+			 pool.h \
+			 log.h \
+			 utils.h \
+			 paths.h \
+			 env.h \
+			 autark.h \
+			 script.h \
+			 scriptx.h \
+			 nodes.h
 
 all: autark libs
 	@[ "$(TESTS)" = "1" ] && $(MAKE) -C ./tests;

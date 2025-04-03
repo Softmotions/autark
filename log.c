@@ -1,6 +1,7 @@
 #include "basedefs.h"
 #include "log.h"
 #include "xstr.h"
+#include "alloc.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -29,6 +30,8 @@ static const char* _error_get(int code) {
       return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
+    case AK_ERROR_CYCLIC_BUILD_DEPS:
+      return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
     case AK_ERROR_OK:
       return "OK";
     default:
@@ -75,7 +78,7 @@ static void _event_va(
         break;
     }
     if (file) {
-      char *cfile = strdup(file);
+      char *cfile = xstrdup(file);
       if (cfile) {
         cfile = _basename(cfile);
         xstr_printf(xstr, "%s:%d ", cfile, line);

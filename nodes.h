@@ -14,5 +14,6 @@ int node_static_setup(struct node*);
 int node_shared_setup(struct node*);
 int node_include_setup(struct node*);
 int node_if_setup(struct node*);
+int node_subst_setup(struct node*);
 
 #endif

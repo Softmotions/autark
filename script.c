@@ -4,12 +4,14 @@
 #include "pool.h"
 #include "xstr.h"
 #include "alloc.h"
+#include "nodes.h"
 #include "config.h"
 
 #define XNODE(n__)              ((struct xnode*) (n__))
-#define XNODE_AT(list__, idx__) XNODE(*(struct node**) ulist_get(list__, idx__))
+#define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
+#define XNODE_AT(list__, idx__) XNODE(NODE_AT(list__, idx__))
 #define XNODE_PEEK(list__)      XNODE(*(struct node**) ulist_peek(list__))
-#define XSCRIPT(n__)            (n__)->base.script
+#define XENV(n__)               (n__)->base.env
 #define NODE(x__)               (struct node*) (x__)
 
 struct _yycontext;
@@ -24,7 +26,8 @@ struct xparse {
 
 struct xnode {
   struct node    base;
-  struct xparse *xp; // Used only by root script node
+  struct xparse *xp;        // Used only by root script node
+  unsigned       bld_calls; // Build calls counter in order to detect cyclic build deps
 };
 
 //#define YY_DEBUG
@@ -104,6 +107,9 @@ static int _input(struct _yycontext *yy, char *buf, int max_size) {
 }
 
 static void _xnode_destroy(struct xnode *x) {
+  if (x->base.dispose) {
+    x->base.dispose(&x->base);
+  }
   _xparse_destroy(x->xp);
   x->xp = 0;
 }
@@ -136,7 +142,25 @@ static unsigned _rule_type(const char *key) {
   }
 }
 
-static void _node_register(struct script *p, struct xnode *x) {
+static const char* _node_file(struct node *n) {
+  for ( ; n; n = n->parent) {
+    if (n->type == NODE_TYPE_SCRIPT) {
+      return n->value;
+    }
+  }
+  return "script";
+}
+
+static int _node_error(int rc, struct node *n, const char *msg) {
+  if (msg) {
+    akerror(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, msg);
+  } else {
+    akerror(rc, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
+  }
+  return rc;
+}
+
+static void _node_register(struct env *p, struct xnode *x) {
   x->base.index = p->nodes.num;
   ulist_push(&p->nodes, &x);
 }
@@ -144,16 +168,17 @@ static void _node_register(struct script *p, struct xnode *x) {
 static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) {
   struct ulist *s = &yy->x->xp->stack;
   ulist_push(s, &x);
-  _node_register(yy->x->base.script, x);
+  _node_register(yy->x->base.env, x);
   return x;
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
-  struct script *p = XSCRIPT(yy->x);
-  struct xnode *x = pool_calloc(p->pool, sizeof(*x));
-  x->base.script = p;
-  x->base.value = pool_strdup(p->pool, text);
+  struct env *env = XENV(yy->x);
+  struct xnode *x = pool_calloc(env->pool, sizeof(*x));
+  x->base.value = pool_strdup(env->pool, text);
+  x->base.env = env;
   x->base.type = NODE_TYPE_VALUE;
+  x->base.pos = yy->__pos;
   return x;
 }
 
@@ -232,8 +257,6 @@ static void _finish(struct _yycontext *yy) {
   }
 }
 
-///////////////////////////////////////////////////////////////////////////
-
 static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*)) {
   int ret = visitor(n, lvl, ctx);
   if (ret) {
@@ -249,28 +272,33 @@ static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct
 }
 
 static int _script_from_value(
-  struct node *parent, const struct value *val,
-  struct node **out) {
+  struct node        *parent,
+  const char         *file,
+  const struct value *val,
+  struct node       **out) {
   int rc = 0;
   struct xnode *x = 0;
+  struct pool *pool;
 
   if (!parent) {
-    struct pool *pool = pool_create_empty();
-    struct script *script = pool_calloc(pool, sizeof(*script));
-    script->pool = pool;
-    ulist_init(&script->nodes, 64, sizeof(struct node*));
+    pool = pool_create_empty();
+    struct env *env = pool_calloc(pool, sizeof(*env));
+    env->pool = pool;
+    ulist_init(&env->nodes, 64, sizeof(struct node*));
 
     x = pool_calloc(pool, sizeof(*x));
-    x->base.script = script;
-    script->root = (struct node*) x;
+    x->base.env = env;
+    env->root = (struct node*) x;
   } else {
-    x = pool_calloc(parent->script->pool, sizeof(*x));
+    x = pool_calloc(parent->env->pool, sizeof(*x));
     x->base.parent = parent;
+    x->base.env = parent->env;
+    pool = parent->env->pool;
   }
 
-  x->base.value = "script";
+  x->base.value = pool_strdup(pool, file ? file : "script");
   x->base.type = NODE_TYPE_SCRIPT;
-  _node_register(x->base.script, x);
+  _node_register(x->base.env, x);
 
   x->xp = xmalloc(sizeof(*x->xp));
   *x->xp = (struct xparse) {
@@ -306,18 +334,18 @@ finish:
   return rc;
 }
 
-static int _script_from_file(struct node *parent, const char *path, struct node **out) {
+static int _script_from_file(struct node *parent, const char *file, struct node **out) {
   *out = 0;
-  struct value buf = utils_file_as_buf(path, CFG_SCRIPT_MAX_SIZE_BYTES);
+  struct value buf = utils_file_as_buf(file, CFG_SCRIPT_MAX_SIZE_BYTES);
   if (buf.error) {
     return value_destroy(&buf);
   }
-  int ret = _script_from_value(parent, &buf, out);
+  int ret = _script_from_value(parent, file, &buf, out);
   value_destroy(&buf);
   return ret;
 }
 
-static void _script_destroy(struct script *p) {
+static void _script_destroy(struct env *p) {
   if (p) {
     for (int i = 0; i < p->nodes.num; ++i) {
       struct xnode *x = XNODE_AT(&p->nodes, i);
@@ -328,26 +356,128 @@ static void _script_destroy(struct script *p) {
   }
 }
 
-int script_open(const char *script_path, struct script **out) {
-  *out = 0;
-  struct node *n;
-  int rc = _script_from_file(0, script_path, &n);
-  RCGO(rc, finish);
+static int _node_bind(struct node *n) {
+  n->flags |= NODE_FLG_BOUND;
+  switch (n->type) {
+    case NODE_TYPE_SCRIPT:
+      return node_script_setup(n);
+    case NODE_TYPE_META:
+      return node_meta_setup(n);
+    case NODE_TYPE_CONSUMES:
+      return node_consumes_setup(n);
+    case NODE_TYPE_CHECK:
+      return node_check_setup(n);
+    case NODE_TYPE_SOURCES:
+      return node_sources_setup(n);
+    case NODE_TYPE_FLAGS:
+      return node_flags_setup(n);
+    case NODE_TYPE_EXEC:
+      return node_exec_setup(n);
+    case NODE_TYPE_STATIC:
+      return node_static_setup(n);
+    case NODE_TYPE_SHARED:
+      return node_shared_setup(n);
+    case NODE_TYPE_INCLUDE:
+      return node_include_setup(n);
+    case NODE_TYPE_IF:
+      return node_if_setup(n);
+    case NODE_TYPE_SUBST:
+      return node_subst_setup(n);
+  }
+  return 0;
+}
 
+static void _node_reset(struct node *n) {
+  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT);
+}
 
-  *out = n->script;
+static int _node_resolve(struct node *n) {
+  if (n->resolve) {
+    return n->resolve(n);
+  } else {
+    return 0;
+  }
+}
+
+int node_build(struct node *n) {
+  int rc = 0;
+  if (!(n->flags & NODE_FLG_BUILT)) {
+    if (n->build) {
+      struct xnode *x = (void*) n;
+      x->bld_calls++;
+      if (x->bld_calls > 1) {
+        return _node_error(AK_ERROR_CYCLIC_BUILD_DEPS, n, 0);
+      }
+      rc = n->build(n);
+      x->bld_calls--;
+    }
+    n->flags |= NODE_FLG_BUILT;
+  }
+  return rc;
+}
+
+static int _script_bind(struct env *s) {
+  int rc = 0;
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    if (!(n->flags & NODE_FLG_BOUND)) {
+      RCC(rc, finish, _node_bind(n));
+    }
+  }
 finish:
   return rc;
 }
 
-int script_build(struct script *p) {
-  return 0;
+int script_open(const char *file, struct env **out) {
+  *out = 0;
+  int rc = 0;
+  struct node *n;
+  RCC(rc, finish, _script_from_file(0, file, &n));
+  RCC(rc, finish, _script_bind(n->env));
+  *out = n->env;
+finish:
+  return rc;
 }
 
-void script_close(struct script **pp) {
-  if (pp && *pp) {
-    _script_destroy(*pp);
-    *pp = 0;
+int script_resolve(struct env *s) {
+  int rc = 0;
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    _node_reset(n);
+  }
+
+  // Checks first
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    if (n->type == NODE_TYPE_CHECK) {
+      RCC(rc, finish, _node_resolve(n));
+    }
+  }
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    if (n->type != NODE_TYPE_CHECK) {
+      RCC(rc, finish, _node_resolve(n));
+    }
+  }
+finish:
+  return rc;
+}
+
+int script_build(struct env *s) {
+  int rc = 0;
+  RCC(rc, finish, script_resolve(s));
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    RCC(rc, finish, node_build(n));
+  }
+finish:
+  return rc;
+}
+
+void script_close(struct env **sp) {
+  if (sp && *sp) {
+    _script_destroy(*sp);
+    *sp = 0;
   }
 }
 
@@ -373,7 +503,7 @@ static int _node_dump_visitor(struct node *n, int lvl, void *d) {
   return 0;
 }
 
-void script_print(struct script *p, struct xstr *xstr) {
+void script_dump(struct env *p, struct xstr *xstr) {
   if (!p || !p->root) {
     xstr_cat(xstr, "null");
     return;
@@ -384,14 +514,23 @@ void script_print(struct script *p, struct xstr *xstr) {
   _node_visit(p->root, 1, &ctx, _node_dump_visitor);
 }
 
+
+const char* node_env_get(const char *key) {
+  return 0;
+}
+
+void node_env_set(const char *key, const char *val) {
+
+}
+
 #ifdef TESTS
 
-int test_script_parse(const char *script_path, struct script **out) {
+int test_script_parse(const char *script_path, struct env **out) {
   *out = 0;
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
-  *out = n->script;
+  *out = n->env;
 finish:
   return rc;
 }

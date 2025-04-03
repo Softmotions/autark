@@ -11,12 +11,10 @@ static int _build(struct node *n) {
 static void _dispose(struct node *n) {
 }
 
-int node_include_setup(struct node *n) {
+int node_subst_setup(struct node *n) {
   n->resolve = _resolve;
   n->build = _build;
   n->dispose = _dispose;
   return 0;
 }
-
-
 

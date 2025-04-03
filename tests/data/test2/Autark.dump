@@ -1,4 +1,4 @@
-script:0x2 {
+./data/test2/Autark:0x2 {
   meta:0x8 {
     authors:0x4 {
       Adamansky:0x1

@@ -4,13 +4,13 @@
 
 int main(void) {
   int rc = 0;
-  struct script *p;
+  struct env *p;
   struct xstr *xstr = xstr_create_empty();
 
   rc = test_script_parse("./data/test2/Autark", &p);
   ASSERT(assert, rc == 0);
 
-  script_print(p, xstr);
+  script_dump(p, xstr);
   ASSERT(assert, cmp_file_with_xstr("./data/test2/Autark.dump", xstr) == 0);
 
   script_close(&p);

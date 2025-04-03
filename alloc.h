@@ -6,6 +6,15 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
+
+AK_ALLOC static inline char* xstrdup(const char *str) {
+  char *ret = strdup(str);
+  if (!ret) {
+    akfatal2("Allocation failed");
+  }
+  return ret;
+}
 
 AK_ALLOC static inline void* xmalloc(size_t size) {
   void *ptr = malloc(size);

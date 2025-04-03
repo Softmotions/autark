@@ -22,8 +22,9 @@
 #define NODE_TYPE_IF       0x1000U
 #define NODE_TYPE_SUBST    0x2000U
 
-#define NODE_FLG_SETTLED  0x01U
-#define NODE_FLG_RESOLVED 0x02U
+#define NODE_FLG_BOUND   0x01U
+#define NODE_FLG_UPDATED 0x02U // Node product updated as result of build
+#define NODE_FLG_BUILT   0x04U // Node built
 
 #define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)  !node_is_value(n__)
@@ -33,35 +34,44 @@
 struct node {
   unsigned type;
   unsigned flags;
-  unsigned index;  ///< Own index in script::nodes
+  unsigned index;     // Own index in env::nodes
+  unsigned pos;       // Node position
 
   const char *value;  ///< Key or value
   const char *path;
 
-  struct node   *child;
-  struct node   *next;
-  struct node   *parent;
-  struct script *script;
+  struct node *child;
+  struct node *next;
+  struct node *parent;
+  struct env  *env;
 
-  int  (*settle)(struct node*);
-  int  (*build)(struct node*, int *updated);
+  int  (*resolve)(struct node*);
+  int  (*build)(struct node*);
   void (*dispose)(struct node*);
 
   void *impl;
 };
 
-struct script {
+struct env {
   struct pool *pool;
   struct node *root;
   struct ulist nodes; // ulist<struct node*>
 };
 
-int script_open(const char *script_path, struct script **out);
+int script_open(const char *file, struct env **out);
 
-int script_build(struct script*);
+int script_resolve(struct env*);
 
-void script_close(struct script**);
+int script_build(struct env*);
 
-void script_print(struct script*, struct xstr *out);
+void script_close(struct env**);
+
+void script_dump(struct env*, struct xstr *out);
+
+int node_build(struct node *n);
+
+const char* node_env_get(const char *key);
+
+void node_env_set(const char *key, const char *val);
 
 #endif

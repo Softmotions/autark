@@ -1,10 +1,10 @@
 #include "script.h"
 
-static int _settle(struct node *n) {
+static int _resolve(struct node *n) {
   return 0;
 }
 
-static int _build(struct node *n, int *updated) {
+static int _build(struct node *n) {
   return 0;
 }
 
@@ -12,7 +12,7 @@ static void _dispose(struct node *n) {
 }
 
 int node_script_setup(struct node *n) {
-  n->settle = _settle;
+  n->resolve = _resolve;
   n->build = _build;
   n->dispose = _dispose;
   return 0;
