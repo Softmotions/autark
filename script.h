@@ -42,7 +42,8 @@ struct node {
   struct node *child;
   struct node *next;
   struct node *parent;
-  struct env  *env;
+
+  struct xenv *env;
   struct map  *props;
 
   int  (*resolve)(struct node*);
@@ -52,21 +53,22 @@ struct node {
   void *impl;
 };
 
-struct env {
+struct xenv {
   struct pool *pool;
   struct node *root;
-  struct ulist nodes; // ulist<struct node*>
+  struct ulist nodes;        // ulist<struct node*>
+  struct ulist contexts; // ulist<struct node*> nodes with type == NODE_TYPE_SCRIPT
 };
 
-int script_open(const char *file, struct env **out);
+int script_open(const char *file, struct xenv **out);
 
-int script_resolve(struct env*);
+int script_resolve(struct xenv*);
 
-int script_build(struct env*);
+int script_build(struct xenv*);
 
-void script_close(struct env**);
+void script_close(struct xenv**);
 
-void script_dump(struct env*, struct xstr *out);
+void script_dump(struct xenv*, struct xstr *out);
 
 int node_build(struct node *n);
 

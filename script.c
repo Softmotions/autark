@@ -4,11 +4,16 @@
 #include "pool.h"
 #include "xstr.h"
 #include "alloc.h"
+#include "log.h"
 #include "nodes.h"
+#include "node_script.h"
 #include "config.h"
+
+#include <unistd.h>
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
+#define NODE_PEEK(list__)       *(struct node**) ulist_peek(list__)
 #define XNODE_AT(list__, idx__) XNODE(NODE_AT(list__, idx__))
 #define XNODE_PEEK(list__)      XNODE(*(struct node**) ulist_peek(list__))
 #define XENV(n__)               (n__)->base.env
@@ -59,7 +64,10 @@ static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char 
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *x);
 static void _finish(struct _yycontext *yy);
 
+
 #include "scriptx.h"
+
+static int _node_bind(struct node *n);
 
 static void _yyerror(yycontext *yy) {
   struct xnode *x = yy->x;
@@ -164,7 +172,7 @@ static int _node_error(int rc, struct node *n, const char *msg) {
   return rc;
 }
 
-static void _node_register(struct env *p, struct xnode *x) {
+static void _node_register(struct xenv *p, struct xnode *x) {
   x->base.index = p->nodes.num;
   ulist_push(&p->nodes, &x);
 }
@@ -177,7 +185,7 @@ static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) 
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
-  struct env *env = XENV(yy->x);
+  struct xenv *env = XENV(yy->x);
   struct xnode *x = pool_calloc(env->pool, sizeof(*x));
   x->base.value = pool_strdup(env->pool, text);
   x->base.env = env;
@@ -286,9 +294,10 @@ static int _script_from_value(
 
   if (!parent) {
     pool = pool_create_empty();
-    struct env *env = pool_calloc(pool, sizeof(*env));
+    struct xenv *env = pool_calloc(pool, sizeof(*env));
     env->pool = pool;
     ulist_init(&env->nodes, 64, sizeof(struct node*));
+    ulist_init(&env->contexts, 64, sizeof(struct node*));
 
     x = pool_calloc(pool, sizeof(*x));
     x->base.env = env;
@@ -301,9 +310,10 @@ static int _script_from_value(
   }
 
   x->base.props = map_create_str(map_kv_free);
-  x->base.value = pool_strdup(pool, file ? file : "script");
+  x->base.value = pool_strdup(pool, file ? file : "<script>");
   x->base.type = NODE_TYPE_SCRIPT;
   _node_register(x->base.env, x);
+  _node_bind(&x->base);
 
   x->xp = xmalloc(sizeof(*x->xp));
   *x->xp = (struct xparse) {
@@ -350,46 +360,79 @@ static int _script_from_file(struct node *parent, const char *file, struct node 
   return ret;
 }
 
-static void _script_destroy(struct env *p) {
-  if (p) {
-    for (int i = 0; i < p->nodes.num; ++i) {
-      struct xnode *x = XNODE_AT(&p->nodes, i);
+static void _script_destroy(struct xenv *e) {
+  if (e) {
+    for (int i = 0; i < e->nodes.num; ++i) {
+      struct xnode *x = XNODE_AT(&e->nodes, i);
       _xnode_destroy(x);
     }
-    ulist_destroy_keep(&p->nodes);
-    pool_destroy(p->pool);
+    ulist_destroy_keep(&e->nodes);
+    ulist_destroy_keep(&e->contexts);
+    pool_destroy(e->pool);
   }
 }
 
 static int _node_bind(struct node *n) {
-  n->flags |= NODE_FLG_BOUND;
-  switch (n->type) {
-    case NODE_TYPE_SCRIPT:
-      return node_script_setup(n);
-    case NODE_TYPE_META:
-      return node_meta_setup(n);
-    case NODE_TYPE_CONSUMES:
-      return node_consumes_setup(n);
-    case NODE_TYPE_CHECK:
-      return node_check_setup(n);
-    case NODE_TYPE_SOURCES:
-      return node_sources_setup(n);
-    case NODE_TYPE_FLAGS:
-      return node_flags_setup(n);
-    case NODE_TYPE_EXEC:
-      return node_exec_setup(n);
-    case NODE_TYPE_STATIC:
-      return node_static_setup(n);
-    case NODE_TYPE_SHARED:
-      return node_shared_setup(n);
-    case NODE_TYPE_INCLUDE:
-      return node_include_setup(n);
-    case NODE_TYPE_IF:
-      return node_if_setup(n);
-    case NODE_TYPE_SUBST:
-      return node_subst_setup(n);
+  if (!(n->flags & NODE_FLG_BOUND)) {
+    n->flags |= NODE_FLG_BOUND;
+    switch (n->type) {
+      case NODE_TYPE_SCRIPT:
+        return node_script_setup(n);
+      case NODE_TYPE_META:
+        return node_meta_setup(n);
+      case NODE_TYPE_CONSUMES:
+        return node_consumes_setup(n);
+      case NODE_TYPE_CHECK:
+        return node_check_setup(n);
+      case NODE_TYPE_SOURCES:
+        return node_sources_setup(n);
+      case NODE_TYPE_FLAGS:
+        return node_flags_setup(n);
+      case NODE_TYPE_EXEC:
+        return node_exec_setup(n);
+      case NODE_TYPE_STATIC:
+        return node_static_setup(n);
+      case NODE_TYPE_SHARED:
+        return node_shared_setup(n);
+      case NODE_TYPE_INCLUDE:
+        return node_include_setup(n);
+      case NODE_TYPE_IF:
+        return node_if_setup(n);
+      case NODE_TYPE_SUBST:
+        return node_subst_setup(n);
+    }
   }
   return 0;
+}
+
+static struct node* _node_owner_script(struct node *n) {
+  for ( ; n; n = n->parent) {
+    if (n->type == NODE_TYPE_SCRIPT) {
+      return n;
+    }
+  }
+  akassert(0);
+}
+
+static void _node_context_push(struct node *n) {
+  struct node *s = _node_owner_script(n);
+  struct node *o = NODE_PEEK(&n->env->contexts);
+  ulist_push(&n->env->contexts, &s);
+  if (o != s) {
+    const char *dir = node_script_dir(s);
+    chdir(dir);
+  }
+}
+
+static void _node_context_pop(struct node *n) {
+  struct node *s = NODE_PEEK(&n->env->contexts);
+  akassert(s);
+  ulist_pop(&n->env->contexts);
+  struct node *o = NODE_PEEK(&n->env->contexts);
+  if (o && o != s) {
+    const char *dir = node_script_dir(o);
+    chdir(dir);
+  }
 }
 
 static void _node_reset(struct node *n) {
@@ -398,7 +441,10 @@ static void _node_reset(struct node *n) {
 
 static int _node_resolve(struct node *n) {
   if (n->resolve) {
-    return n->resolve(n);
+    _node_context_push(n);
+    int ret = n->resolve(n);
+    _node_context_pop(n);
+    return ret;
   } else {
     return 0;
   }
@@ -413,7 +459,9 @@ int node_build(struct node *n) {
       if (x->bld_calls > 1) {
         return _node_error(AK_ERROR_CYCLIC_BUILD_DEPS, n, 0);
       }
+      _node_context_push(n);
       rc = n->build(n);
+      _node_context_pop(n);
       x->bld_calls--;
     }
     n->flags |= NODE_FLG_BUILT;
@@ -421,7 +469,7 @@ int node_build(struct node *n) {
   return rc;
 }
 
-static int _script_bind(struct env *s) {
+static int _script_bind(struct xenv *s) {
   int rc = 0;
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
@@ -433,7 +481,7 @@ finish:
   return rc;
 }
 
-int script_open(const char *file, struct env **out) {
+int script_open(const char *file, struct xenv **out) {
   *out = 0;
   int rc = 0;
   struct node *n;
@@ -444,7 +492,7 @@ finish:
   return rc;
 }
 
-int script_resolve(struct env *s) {
+int script_resolve(struct xenv *s) {
   int rc = 0;
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
@@ -468,7 +516,7 @@ finish:
   return rc;
 }
 
-int script_build(struct env *s) {
+int script_build(struct xenv *s) {
   int rc = 0;
   RCC(rc, finish, script_resolve(s));
   for (int i = 0; i < s->nodes.num; ++i) {
@@ -479,7 +527,7 @@ finish:
   return rc;
 }
 
-void script_close(struct env **sp) {
+void script_close(struct xenv **sp) {
   if (sp && *sp) {
     _script_destroy(*sp);
     *sp = 0;
@@ -508,7 +556,7 @@ static int _node_dump_visitor(struct node *n, int lvl, void *d) {
   return 0;
 }
 
-void script_dump(struct env *p, struct xstr *xstr) {
+void script_dump(struct xenv *p, struct xstr *xstr) {
   if (!p || !p->root) {
     xstr_cat(xstr, "null");
     return;
@@ -550,7 +598,7 @@ void node_prop_set(struct node *n, const char *key, const char *val_) {
 
 #ifdef TESTS
 
-int test_script_parse(const char *script_path, struct env **out) {
+int test_script_parse(const char *script_path, struct xenv **out) {
   *out = 0;
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);

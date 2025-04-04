@@ -38,6 +38,7 @@ HDRS = config.h \
 			 autark.h \
 			 script.h \
 			 scriptx.h \
+			 node_script.h \
 			 nodes.h
 
 all: autark libs

@@ -35,6 +35,6 @@ void akinfo(const char *fmt, ...);
         _akverbose(__FILE__, __LINE__, (fmt__), __VA_ARGS__)
 
 #define akassert(exp__) \
-    if (!exp__) akfatal(AK_ERROR_ASSERTION, 0, 0)
+    if (!(exp__)) akfatal(AK_ERROR_ASSERTION, 0, 0)
 
 #endif

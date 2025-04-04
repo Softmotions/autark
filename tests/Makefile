@@ -24,7 +24,7 @@ clean:
 test: all
 	@for exec in $(EXECS); do \
 		echo "Running $$exec..."; \
-		./$$exec; \
+		$(MEM_CHECKER) ./$$exec; \
 	done
 
 .PHONY: all clean test

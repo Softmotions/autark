@@ -60,7 +60,7 @@ void* ulist_get(const struct ulist *list, unsigned idx) {
 }
 
 void* ulist_peek(const struct ulist *list) {
-  return ulist_get(list, list->num - 1);
+  return list->num ? ulist_get(list, list->num - 1) : 0;
 }
 
 void ulist_insert(struct ulist *list, unsigned idx, const void *data) {
