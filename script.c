@@ -13,9 +13,9 @@
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
-#define NODE_PEEK(list__)       *(struct node**) ulist_peek(list__)
+#define NODE_PEEK(list__)       ((list__)->num ? *(struct node**) ulist_peek(list__) : 0)
 #define XNODE_AT(list__, idx__) XNODE(NODE_AT(list__, idx__))
-#define XNODE_PEEK(list__)      XNODE(*(struct node**) ulist_peek(list__))
+#define XNODE_PEEK(list__)      ((list__)->num ? XNODE(*(struct node**) ulist_peek(list__)) : 0)
 #define XENV(n__)               (n__)->base.env
 #define NODE(x__)               (struct node*) (x__)
 
@@ -264,6 +264,7 @@ static void _finish(struct _yycontext *yy) {
   while (s->num) {
     struct xnode *x = XNODE_PEEK(s);
     x->base.next = root->base.child;
+    x->base.parent = &root->base;
     root->base.child = &x->base;
     ulist_pop(s);
   }
@@ -498,8 +499,6 @@ int script_resolve(struct xenv *s) {
     struct node *n = NODE_AT(&s->nodes, i);
     _node_reset(n);
   }
-
-  // Checks first
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
     if (n->type == NODE_TYPE_CHECK) {
