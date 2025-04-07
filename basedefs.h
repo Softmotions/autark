@@ -3,6 +3,7 @@
 
 #define QSTR(x__) #x__
 #define Q(x__)    QSTR(x__)
+#define AK_LLEN(l__) (sizeof(l__) - 1)
 
 #if __GNUC__ >= 4
 #define AUR      __attribute__((warn_unused_result))

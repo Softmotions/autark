@@ -5,9 +5,10 @@
 
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
+#define AUTARK_UNIT "AUTARK_UNIT"
 
 struct env {
-  const char  *cmd;
+  const char  *cwd;
   const char  *program;
   struct pool *pool;
   int verbose;
@@ -15,6 +16,7 @@ struct env {
   struct {
     const char *root_dir;  // Project root source dir
     const char *cache_dir; // Project artifacts cache dirs
+    const char *unit;      // Active project unit (script)
   } project;
 };
 

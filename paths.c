@@ -1,4 +1,6 @@
 #include "paths.h"
+#include "xstr.h"
+#include "basedefs.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -158,4 +160,44 @@ int path_is_exist(const char *path) {
     return 0;
   }
   return st.ftype != AKPATH_NOT_EXISTS;
+}
+
+static inline int _path_num_segments(const char *path) {
+  int c = 0;
+  for (const char *rp = path; *rp != '\0'; ++rp) {
+    if (*rp == '/' || *rp == '\0') {
+      ++c;
+    }
+  }
+  return c;
+}
+
+char* path_relativize(const char *from_, const char *to_, const char *cwd) {
+  char from[PATH_MAX], to[PATH_MAX];
+  if (!realpath(from_, from) || !realpath(to_, to) || *from != '/' || *to != '/') {
+    return 0;
+  }
+
+  int sf, sc;
+  struct xstr *xstr = xstr_create_empty();
+  const char *frp = from, *trp = to, *srp = to;
+
+  for (++frp, ++trp, sc = 0, sf = _path_num_segments(from);
+       *frp == *trp;
+       ++frp, ++trp) {
+    if (*frp == '/' || *frp == '\0') {
+      ++sc;
+      srp = trp;
+      if (*frp == '\0') {
+        break;
+      }
+    }
+  }
+  for (int i = 0, l = sf - sc; i < l; ++i) {
+    xstr_cat2(xstr, "../", AK_LLEN("../"));
+  }
+  if (*srp != '\0') {
+    xstr_cat(xstr, srp + 1);
+  }
+  return xstr_destroy_keep_ptr(xstr);
 }

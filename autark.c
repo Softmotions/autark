@@ -62,11 +62,9 @@ static void _project_env_define(void) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
 
-  if (!path_is_absolute(g_env.project.cache_dir)) {
-    g_env.project.cache_dir = path_to_real(g_env.project.cache_dir, g_env.pool);
-    if (!g_env.project.cache_dir) {
-      akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
-    }
+  g_env.project.cache_dir = path_to_real(g_env.project.cache_dir, g_env.pool);
+  if (!g_env.project.cache_dir) {
+    akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
 
   const char *root_dir = g_env.project.root_dir;
@@ -74,32 +72,49 @@ static void _project_env_define(void) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
 
-  if (!path_is_absolute(root_dir)) {
-    root_dir = path_to_real(g_env.project.root_dir, g_env.pool);
-    if (!root_dir) {
-      akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
-    }
-    g_env.project.root_dir = root_dir;
+  root_dir = path_to_real(g_env.project.root_dir, g_env.pool);
+  if (!root_dir) {
+    akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
+  }
+  g_env.project.root_dir = root_dir;
+
+  if (!g_env.project.unit) {
+    g_env.project.unit = "Autark";
   }
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
+  setenv(AUTARK_UNIT, g_env.project.unit, 1);
 }
 
-static int _project_env_detect(void) {
-  int rc = 0;
-  // TODO:
+static void _project_env_read(void) {
+  const char *val = getenv(AUTARK_CACHE_DIR);
+  if (!val) {
+    akfatal(AK_ERROR_FAIL, "Missing required AUTARK_CACHE_DIR env variable", 0);
+  }
+  g_env.project.cache_dir = pool_strdup(g_env.pool, val);
 
-  return rc;
+  val = getenv(AUTARK_ROOT_DIR);
+  if (!val) {
+    akfatal(AK_ERROR_FAIL, "Missing required AUTARK_ROOT_DIR env variable", 0);
+  }
+
+  val = getenv(AUTARK_UNIT);
+  if (!val) {
+    akfatal(AK_ERROR_FAIL, "Missing required AUTARK_UNIT env variable", 0);
+  }
 }
 
 static int _on_command_set(int argc, char* const *argv) {
+  _project_env_read();
   int rc = 0;
+
 
   return rc;
 }
 
 static int _on_command_dep(int argc, char* const *argv) {
+  _project_env_read();
   int rc = 0;
   const char *file = 0;
   if (optind >= argc) {
@@ -119,6 +134,11 @@ int autark_run(int argc, char* const *argv) {
 
   {
     char buf[PATH_MAX], rpath[PATH_MAX];
+    if (!getcwd(buf, PATH_MAX)) {
+      rc = errno;
+      goto finish;
+    }
+    g_env.cwd = pool_strdup(pool, buf);
     if (utils_exec_path(buf)) {
       strncpy(buf, argv[0], sizeof(buf));
       realpath(buf, rpath);
@@ -167,12 +187,7 @@ int autark_run(int argc, char* const *argv) {
       g_env.project.root_dir = pool_strdup(pool, arg);
     }
   } else {
-    char buf[PATH_MAX];
-    if (!getcwd(buf, PATH_MAX)) {
-      rc = errno;
-      goto finish;
-    }
-    g_env.project.root_dir = pool_strdup(pool, buf);
+    g_env.project.root_dir = g_env.cwd;
   }
 
   // Main build routine

@@ -2,6 +2,8 @@
 #define PATHS_H
 
 #include "pool.h"
+#include "basedefs.h"
+
 #include <stdint.h>
 
 enum akpath_access {
@@ -51,5 +53,7 @@ int path_is_dir(const char *path);
 int path_is_file(const char *path);
 
 int path_is_exist(const char *path);
+
+AK_ALLOC char* path_relativize(const char *from, const char *to, const char *cwd);
 
 #endif
