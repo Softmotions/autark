@@ -1,6 +1,9 @@
 #ifndef BASEDEFS_H
 #define BASEDEFS_H
 
+#define QSTR(x__) #x__
+#define Q(x__)    QSTR(x__)
+
 #if __GNUC__ >= 4
 #define AUR      __attribute__((warn_unused_result))
 #define AK_ALLOC __attribute__((malloc)) __attribute__((warn_unused_result))

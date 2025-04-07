@@ -1,6 +1,9 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "basedefs.h"
+#include <stdarg.h>
+
 enum akecode {
   AK_ERROR_OK                = 0,
   AK_ERROR_FAIL              = -1,
@@ -11,6 +14,7 @@ enum akecode {
   AK_ERROR_IO                = -6,
   AK_ERROR_SCRIPT_SYNTAX     = -10,
   AK_ERROR_CYCLIC_BUILD_DEPS = -11,
+  AK_ERROR_SCRIPT_ERROR      = -12,
 };
 
 __attribute__((noreturn))
@@ -19,7 +23,12 @@ void akfatal2(const char *msg);
 __attribute__((noreturn))
 void _akfatal(const char *file, int line, int code, const char *fmt, ...);
 
+__attribute__((noreturn))
+void _akfatal_va(const char *file, int line, int code, const char *fmt, va_list);
+
 void _akerror(const char *file, int line, int code, const char *fmt, ...);
+
+void _akerror_va(const char *file, int line, int code, const char *fmt, va_list);
 
 void _akverbose(const char *file, int line, const char *fmt, ...);
 
@@ -28,13 +37,30 @@ void akinfo(const char *fmt, ...);
 #define akfatal(code__, fmt__, ...) \
         _akfatal(__FILE__, __LINE__, (code__), (fmt__), __VA_ARGS__)
 
+#define akfatal_va(code__, fmt__, va__) \
+        _akfatal_va(__FILE__, __LINE__, (code__), (fmt__), (va__))
+
 #define akerror(code__, fmt__, ...) \
         _akerror(__FILE__, __LINE__, (code__), (fmt__), __VA_ARGS__)
+
+#define akerror_va(code__, fmt__, va__) \
+        _akerror_va(__FILE__, __LINE__, (code__), (fmt__), (va__))
 
 #define akverbose(fmt__, ...) \
         _akverbose(__FILE__, __LINE__, (fmt__), __VA_ARGS__)
 
-#define akassert(exp__) \
-    if (!(exp__)) akfatal(AK_ERROR_ASSERTION, 0, 0)
+#define akassert(exp__)                                \
+        do {                                           \
+          if (!(exp__)) {                              \
+            akfatal(AK_ERROR_ASSERTION, Q(expr__), 0); \
+          }                                            \
+        } while (0)
+
+#define akcheck(exp__)                     \
+        do {                               \
+          int e = (exp__);                 \
+          if (e) akfatal(e, Q(expr__), 0); \
+        } while (0)
+
 
 #endif

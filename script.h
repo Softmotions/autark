@@ -56,7 +56,7 @@ struct node {
 struct xenv {
   struct pool *pool;
   struct node *root;
-  struct ulist nodes;        // ulist<struct node*>
+  struct ulist nodes;    // ulist<struct node*>
   struct ulist contexts; // ulist<struct node*> nodes with type == NODE_TYPE_SCRIPT
 };
 
@@ -75,5 +75,9 @@ int node_build(struct node *n);
 const char* node_prop_get(struct node*, const char *key);
 
 void node_prop_set(struct node*, const char *key, const char *val);
+
+void node_fatal(int rc, struct node *n, const char *fmt, ...);
+
+int node_error(int rc, struct node *n, const char *fmt, ...);
 
 #endif

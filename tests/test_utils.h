@@ -3,16 +3,15 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+
+#include "basedefs.h"
 #include "utils.h"
 #include "xstr.h"
 #include "script.h"
 
-#define _QSTR(x__) #x__
-#define _Q(x__)    _QSTR(x__)
-
 #define ASSERT(label__, expr__)                                         \
         if (!(expr__)) {                                                \
-          fputs(__FILE__ ":" _Q(__LINE__) " " _Q(expr__) "\n", stderr); \
+          fputs(__FILE__ ":" Q(__LINE__) " " Q(expr__) "\n", stderr); \
           goto label__;                                                 \
         }
 

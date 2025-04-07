@@ -4,12 +4,12 @@
 #include "pool.h"
 #include "xstr.h"
 #include "alloc.h"
-#include "log.h"
 #include "nodes.h"
 #include "node_script.h"
 #include "config.h"
 
 #include <unistd.h>
+#include <stdarg.h>
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
@@ -163,12 +163,32 @@ static const char* _node_file(struct node *n) {
   return "script";
 }
 
-static int _node_error(int rc, struct node *n, const char *msg) {
-  if (msg) {
-    akerror(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, msg);
+void node_fatal(int rc, struct node *n, const char *fmt, ...) {
+  struct xstr *xstr = xstr_create_empty();
+  if (fmt) {
+    va_list ap;
+    va_start(ap, fmt);
+    xstr_printf_va(xstr, fmt, ap);
+    va_end(ap);
+    akfatal(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, xstr_ptr(xstr));
+  } else {
+    akfatal(rc, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
+  }
+  xstr_destroy(xstr);
+}
+
+int node_error(int rc, struct node *n, const char *fmt, ...) {
+  struct xstr *xstr = xstr_create_empty();
+  if (fmt) {
+    va_list ap;
+    va_start(ap, fmt);
+    xstr_printf_va(xstr, fmt, ap);
+    va_end(ap);
+    akerror(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, xstr_ptr(xstr));
   } else {
     akerror(rc, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
   }
+  xstr_destroy(xstr);
   return rc;
 }
 
@@ -458,7 +478,7 @@ int node_build(struct node *n) {
       struct xnode *x = (void*) n;
       x->bld_calls++;
       if (x->bld_calls > 1) {
-        return _node_error(AK_ERROR_CYCLIC_BUILD_DEPS, n, 0);
+        node_fatal(AK_ERROR_CYCLIC_BUILD_DEPS, n, 0);
       }
       _node_context_push(n);
       rc = n->build(n);

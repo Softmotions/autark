@@ -1,1 +1,161 @@
 #include "paths.h"
+
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <math.h>
+#include <unistd.h>
+
+#ifdef __APPLE__
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+#define st_mtim st_mtimespec
+#endif
+
+#define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + lround((ts__).tv_nsec / 1.0e6))
+
+int path_is_absolute(const char *path) {
+  if (!path) {
+    return 0;
+  }
+  return *path == '/';
+}
+
+int path_is_accesible(const char *path, enum akpath_access a) {
+  if (!path || *path == '\0') {
+    return 0;
+  }
+  int mode = 0;
+  switch (a) {
+    case AKPATH_READ:
+      mode |= R_OK;
+    case AKPATH_WRITE:
+      mode |= W_OK;
+    case AKPATH_EXEC:
+      mode |= X_OK;
+  }
+  return access(path, mode);
+}
+
+int path_is_accesible_read(const char *path) {
+  return path_is_accesible(path, AKPATH_READ);
+}
+
+int path_is_accesible_write(const char *path) {
+  return path_is_accesible(path, AKPATH_WRITE);
+}
+
+int path_is_accesible_exec(const char *path) {
+  return path_is_accesible(path, AKPATH_EXEC);
+}
+
+const char* path_to_real(const char *path, struct pool *pool) {
+  char buf[PATH_MAX];
+  char *ret = realpath(path, buf);
+  if (!ret) {
+    return 0;
+  }
+  return pool_strdup(pool, ret);
+}
+
+int path_mkdirs(const char *path) {
+  int rc = 0;
+  const size_t len = strlen(path);
+  char buf[len + 1];
+  char *rp = buf;
+
+  memcpy(rp, path, len + 1);
+  for (char *p = rp + 1; *p; p++) {
+    if (*p == '/') {
+      *p = '\0';
+      if (mkdir(rp, S_IRWXU) != 0) {
+        if (errno != EEXIST) {
+          rc = errno;
+          goto finish;
+        }
+      }
+      *p = '/';
+    }
+  }
+  if (mkdir(rp, S_IRWXU) != 0) {
+    if (errno != EEXIST) {
+      rc = errno;
+      goto finish;
+    }
+  }
+finish:
+  return rc;
+}
+
+static int _stat(const char *path, int fd, struct akpath_stat *fs) {
+  struct stat st = { 0 };
+  memset(fs, 0, sizeof(*fs));
+  if (path) {
+    if (stat(path, &st)) {
+      if (errno == ENOENT) {
+        fs->ftype = AKPATH_NOT_EXISTS;
+        return 0;
+      } else {
+        return errno;
+      }
+    }
+  } else {
+    if (fstat(fd, &st)) {
+      if (errno == ENOENT) {
+        fs->ftype = AKPATH_NOT_EXISTS;
+        return 0;
+      } else {
+        return errno;
+      }
+    }
+  }
+  fs->atime = _TIMESPEC2MS(st.st_atim);
+  fs->mtime = _TIMESPEC2MS(st.st_mtim);
+  fs->ctime = _TIMESPEC2MS(st.st_ctim);
+  fs->size = (uint64_t) st.st_size;
+
+  if (S_ISREG(st.st_mode)) {
+    fs->ftype = AKPATH_TYPE_FILE;
+  } else if (S_ISDIR(st.st_mode)) {
+    fs->ftype = AKPATH_TYPE_DIR;
+  } else if (S_ISLNK(st.st_mode)) {
+    fs->ftype = AKPATH_LINK;
+  } else {
+    fs->ftype = AKPATH_OTHER;
+  }
+  return 0;
+}
+
+int path_stat(const char *path, struct akpath_stat *stat) {
+  return _stat(path, -1, stat);
+}
+
+int path_statfd(int fd, struct akpath_stat *stat) {
+  return _stat(0, fd, stat);
+}
+
+int path_is_dir(const char *path) {
+  struct akpath_stat st;
+  if (path_stat(path, &st)) {
+    return 0;
+  }
+  return st.ftype == AKPATH_TYPE_DIR;
+}
+
+int path_is_file(const char *path) {
+  struct akpath_stat st;
+  if (path_stat(path, &st)) {
+    return 0;
+  }
+  return st.ftype == AKPATH_TYPE_FILE;
+}
+
+int path_is_exist(const char *path) {
+  struct akpath_stat st;
+  if (path_stat(path, &st)) {
+    return 0;
+  }
+  return st.ftype != AKPATH_NOT_EXISTS;
+}

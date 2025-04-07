@@ -32,6 +32,8 @@ static const char* _error_get(int code) {
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
     case AK_ERROR_CYCLIC_BUILD_DEPS:
       return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
+    case AK_ERROR_SCRIPT_ERROR:
+      return "Build script error (AKK_ERROR_SCRIPT_ERROR)";
     case AK_ERROR_OK:
       return "OK";
     default:
@@ -140,4 +142,13 @@ void akinfo(const char *fmt, ...) {
   va_start(ap, fmt);
   _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
   va_end(ap);
+}
+
+void _akerror_va(const char *file, int line, int code, const char *fmt, va_list ap) {
+  _event_va(LEVEL_ERROR, file, line, code, fmt, ap);
+}
+
+void _akfatal_va(const char *file, int line, int code, const char *fmt, va_list ap) {
+  _event_va(LEVEL_FATAL, file, line, code, fmt, ap);
+  akfatal2(0);
 }
