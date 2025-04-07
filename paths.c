@@ -182,7 +182,7 @@ char* path_relativize(const char *from_, const char *to_, const char *cwd) {
   struct xstr *xstr = xstr_create_empty();
   const char *frp = from, *trp = to, *srp = to;
 
-  for (++frp, ++trp, sc = 0, sf = _path_num_segments(from);
+  for (++frp, ++trp, sc = 0, sf = _path_num_segments(frp);
        *frp == *trp;
        ++frp, ++trp) {
     if (*frp == '/' || *frp == '\0') {
