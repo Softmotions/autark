@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <math.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #ifdef __APPLE__
 #define st_atim st_atimespec
@@ -172,7 +173,7 @@ static inline int _path_num_segments(const char *path) {
   return c;
 }
 
-char* path_relativize(const char *from_, const char *to_, const char *cwd) {
+char* path_relativize(const char *from_, const char *to_) {
   char from[PATH_MAX], to[PATH_MAX];
   if (!realpath(from_, from) || !realpath(to_, to) || *from != '/' || *to != '/') {
     return 0;
@@ -200,4 +201,19 @@ char* path_relativize(const char *from_, const char *to_, const char *cwd) {
     xstr_cat(xstr, srp + 1);
   }
   return xstr_destroy_keep_ptr(xstr);
+}
+
+char* path_dirname(char *path) {
+  return dirname(path);
+}
+
+char* path_basename(char *path) {
+  size_t i;
+  if (!path || *path == '\0') {
+    return ".";
+  }
+  i = strlen(path) - 1;
+  for ( ; i && path[i] == '/'; i--) path[i] = 0;
+  for ( ; i && path[i - 1] != '/'; i--);
+  return path + i;
 }

@@ -5,7 +5,9 @@
 
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
-#define AUTARK_UNIT "AUTARK_UNIT"
+#define AUTARK_UNIT      "AUTARK_UNIT"      // Path relative to AUTARK_ROOT_DIR of build process unit executed
+                                            // currently.
+#define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
 
 struct env {
   const char  *cwd;
@@ -14,9 +16,10 @@ struct env {
   int verbose;
   int quiet;
   struct {
-    const char *root_dir;  // Project root source dir
-    const char *cache_dir; // Project artifacts cache dirs
-    const char *unit;      // Active project unit (script)
+    const char *root_dir;        // Project root source dir
+    const char *cache_dir;       // Project artifacts cache dirs
+    const char *unit;            // Active project unit (script)
+    const char *unit_cache_path; // Path to unit relative to build cache dir
   } project;
 };
 

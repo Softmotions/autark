@@ -54,6 +54,14 @@ int path_is_file(const char *path);
 
 int path_is_exist(const char *path);
 
-AK_ALLOC char* path_relativize(const char *from, const char *to, const char *cwd);
+AK_ALLOC char* path_relativize(const char *from, const char *to);
+
+// Modifies its argument
+char *path_dirname(char *path);
+
+// Modifies its argument
+char *path_basename(char *path);
+
+
 
 #endif
