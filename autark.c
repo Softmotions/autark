@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "log.h"
 #include "paths.h"
+#include "script.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -193,6 +194,21 @@ static int _on_command_dep(int argc, char* const *argv) {
   return 0;
 }
 
+int _build(void) {
+  int rc = 0;
+  struct xenv *x;
+  RCC(rc, finish, script_open(g_env.unit.path, &x));
+  rc = script_build(x);
+  script_close(&x);
+  if (rc) {
+    akerror(rc, "Build failed", 0);
+  } else {
+    akinfo("Build success");
+  }
+finish:
+  return rc;
+}
+
 int autark_run(int argc, char* const *argv) {
   int rc = 0;
   struct pool *pool = pool_create_empty();
@@ -258,9 +274,7 @@ int autark_run(int argc, char* const *argv) {
 
   // Main build routine
   _project_env_define();
-
-  // TODO: Run build command
-
+  rc = _build();
 
 finish:
   pool_destroy(pool);
