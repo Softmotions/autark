@@ -52,11 +52,11 @@ static int _usage(const char *err, ...) {
 }
 
 static void _project_env_unit_init(void) {
-  if (g_env.project.unit) {
+  if (g_env.unit.path) {
     char path[PATH_MAX];
-    snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, g_env.project.unit);
-    g_env.project.unit_cache_path = path_to_real(path, g_env.pool);
-    strncpy(path, g_env.project.unit_cache_path, sizeof(path));
+    snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, g_env.unit.path);
+    g_env.unit.cache_path = path_to_real(path, g_env.pool);
+    strncpy(path, g_env.unit.cache_path, sizeof(path));
     path_dirname(path);
     int rc = path_mkdirs(path);
     if (rc) {
@@ -95,14 +95,14 @@ static void _project_env_define(void) {
   }
   g_env.project.root_dir = root_dir;
 
-  if (!g_env.project.unit) {
-    g_env.project.unit = "Autark";
+  if (!g_env.unit.path) {
+    g_env.unit.path = "Autark";
   }
   _project_env_unit_init();
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-  setenv(AUTARK_UNIT, g_env.project.unit, 1);
+  setenv(AUTARK_UNIT, g_env.unit.path, 1);
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
@@ -111,7 +111,7 @@ static void _project_env_define(void) {
       "AUTARK_UNIT_DIR:  %s\n",
       g_env.project.root_dir,
       g_env.project.cache_dir,
-      g_env.project.unit);
+      g_env.unit.path);
   }
 }
 
@@ -136,22 +136,52 @@ static void _project_env_read(void) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
 
-  g_env.project.unit = pool_strdup(g_env.pool, val);
+  g_env.unit.path = pool_strdup(g_env.pool, val);
   _project_env_unit_init();
 }
 
 static int _on_command_set(int argc, char* const *argv) {
   _project_env_read();
-  int rc = 0;
-
-
-  return rc;
+  const char *key;
+  const char *val = "";
+  if (optind >= argc) {
+    return _usage("Missing <key> argument");
+  }
+  key = argv[optind++];
+  if (optind < argc) {
+    val = argv[optind];
+  }
+  if (g_env.verbose) {
+    akinfo("set %s=%s\n", key, val);
+  }
+  const char *env_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".env");
+  FILE *f = fopen(env_path, "a+");
+  if (!f) {
+    akfatal(errno, "Failed to open file: %s", env_path);
+  }
+  fprintf(f, "%s=%s\n", key, val);
+  fclose(f);
+  return 0;
 }
 
-static int _on_command_dep_impl(const char *file) {
+static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
     akinfo("dep %s", file);
   }
+  unsigned ts = 0;
+  if (strcmp(file, "-") != 0) {
+    struct akpath_stat stat = { 0 };
+    if (!path_stat(file, &stat)) {
+      ts = stat.mtime / 1000U;
+    }
+  }
+  const char *deps_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".deps");
+  FILE *f = fopen(deps_path, "a+");
+  if (!f) {
+    akfatal(errno, "Failed to open file: %s", deps_path);
+  }
+  fprintf(f, "%s:%u\n", file, ts);
+  fclose(f);
 }
 
 static int _on_command_dep(int argc, char* const *argv) {
@@ -159,7 +189,8 @@ static int _on_command_dep(int argc, char* const *argv) {
   if (optind >= argc) {
     return _usage("Missing required dependency option");
   }
-  return _on_command_dep_impl(argv[optind]);
+  _on_command_dep_impl(argv[optind]);
+  return 0;
 }
 
 int autark_run(int argc, char* const *argv) {

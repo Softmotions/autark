@@ -16,11 +16,13 @@ struct env {
   int verbose;
   int quiet;
   struct {
-    const char *root_dir;        // Project root source dir
-    const char *cache_dir;       // Project artifacts cache dirs
-    const char *unit;            // Active project unit (script)
-    const char *unit_cache_path; // Path to unit relative to build cache dir
+    const char *root_dir;   // Project root source dir
+    const char *cache_dir;  // Project artifacts cache dirs
   } project;
+  struct {
+    const char *path;       // Active project unit (script)
+    const char *cache_path; // Path to unit relative to build cache dir
+  } unit;
 };
 
 extern struct env g_env;
