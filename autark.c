@@ -210,7 +210,7 @@ finish:
   return rc;
 }
 
-int autark_run(int argc, char* const *argv) {
+int autark_run(int argc, char **argv) {
   int rc = 0;
   struct pool *pool = pool_create_empty();
   g_env.pool = pool;

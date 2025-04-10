@@ -1,10 +1,10 @@
 #!/bin/sh
 set -e
 
-FILE=./check_file
-[ ! -e $FILE ] && touch $FILE
+CF=./check_file
+[ ! -e $CF ] && touch $CF
 
-SIZE=$(ls -s $FILE | awk '{print $1}')
-echo "$FILE size ${SIZE}"
+SIZE=$(ls -s $CF | awk '{print $1}')
+echo "$CF size $SIZE"
 
-#autark set SIZE=${SIZE}
+#autark set CF_SIZE=${SIZE}

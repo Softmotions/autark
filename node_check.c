@@ -17,7 +17,7 @@ static int _node_check_script(struct node *n) {
 static int _node_check_special(struct node *n) {
   int rc = 0;
   // TODO:
-  return rc;
+  return AK_ERROR_NOT_IMPLEMENTED;
 }
 
 static int _node_check(struct node *n) {

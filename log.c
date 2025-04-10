@@ -33,7 +33,9 @@ static const char* _error_get(int code) {
     case AK_ERROR_CYCLIC_BUILD_DEPS:
       return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
     case AK_ERROR_SCRIPT_ERROR:
-      return "Build script error (AKK_ERROR_SCRIPT_ERROR)";
+      return "Build script error (AK_ERROR_SCRIPT_ERROR)";
+    case AK_ERROR_NOT_IMPLEMENTED:
+      return "Not implemented (AK_ERROR_NOT_IMPLEMENTED)";
     case AK_ERROR_OK:
       return "OK";
     default:
