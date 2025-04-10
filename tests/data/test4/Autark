@@ -1,0 +1,4 @@
+check {
+  check1.sh
+  check2.sh
+}

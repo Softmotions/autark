@@ -30,7 +30,7 @@ static int _usage_va(const char *err, va_list ap) {
           "\nautark [sources_dir] [options]\n"
           "  Build project in given sources dir.\n");
   fprintf(stderr,
-          "    -C, --cache=<>              Project cache/build dir. Default: ./build-cache\n");
+          "    -C, --cache=<>              Project cache/build dir. Default: ./autark-cache\n");
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
   fprintf(stderr,
@@ -56,8 +56,9 @@ static void _project_env_unit_init(void) {
   if (g_env.unit.path) {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, g_env.unit.path);
-    g_env.unit.cache_path = path_to_real(path, g_env.pool);
+    g_env.unit.cache_path = path_normalize(path, g_env.pool);
     strncpy(path, g_env.unit.cache_path, sizeof(path));
+    path[sizeof(path) - 1] = '\0';
     path_dirname(path);
     int rc = path_mkdirs(path);
     if (rc) {
@@ -69,7 +70,7 @@ static void _project_env_unit_init(void) {
 static void _project_env_define(void) {
   akassert(g_env.project.root_dir);
   if (!g_env.project.cache_dir) {
-    g_env.project.cache_dir = "./build-cache";
+    g_env.project.cache_dir = "./autark-cache";
   }
 
   int rc = path_mkdirs(g_env.project.cache_dir);
@@ -80,7 +81,7 @@ static void _project_env_define(void) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
 
-  g_env.project.cache_dir = path_to_real(g_env.project.cache_dir, g_env.pool);
+  g_env.project.cache_dir = path_normalize(g_env.project.cache_dir, g_env.pool);
   if (!g_env.project.cache_dir) {
     akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
@@ -90,7 +91,7 @@ static void _project_env_define(void) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
 
-  root_dir = path_to_real(g_env.project.root_dir, g_env.pool);
+  root_dir = path_normalize(g_env.project.root_dir, g_env.pool);
   if (!root_dir) {
     akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
   }
@@ -212,6 +213,7 @@ finish:
 int autark_run(int argc, char* const *argv) {
   int rc = 0;
   struct pool *pool = pool_create_empty();
+  g_env.pool = pool;
   akassert(argc > 0 && argv[0]);
 
   {
@@ -223,6 +225,7 @@ int autark_run(int argc, char* const *argv) {
     g_env.cwd = pool_strdup(pool, buf);
     if (utils_exec_path(buf)) {
       strncpy(buf, argv[0], sizeof(buf));
+      buf[sizeof(buf) - 1] = '\0';
       realpath(buf, rpath);
       g_env.program = pool_strdup(pool, rpath);
     } else {
@@ -262,7 +265,7 @@ int autark_run(int argc, char* const *argv) {
     if (strcmp(arg, "set") == 0) {
       rc = _on_command_set(argc, argv);
       goto finish;
-    } else if (strcmp(arg, "dep") == _on_command_dep(argc, argv)) {
+    } else if (strcmp(arg, "dep") == 0) {
       rc = _on_command_dep(argc, argv);
       goto finish;
     } else { // Root dir expected
@@ -274,6 +277,12 @@ int autark_run(int argc, char* const *argv) {
 
   // Main build routine
   _project_env_define();
+
+  if (strcmp(g_env.cwd, g_env.project.root_dir) != 0) {
+    akcheck(chdir(g_env.project.root_dir));
+    g_env.cwd = g_env.project.root_dir;
+  }
+
   rc = _build();
 
 finish:

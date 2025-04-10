@@ -20,8 +20,8 @@ struct env {
     const char *cache_dir;  // Project artifacts cache dirs
   } project;
   struct {
-    const char *path;       // Active project unit (script)
-    const char *cache_path; // Path to unit relative to build cache dir
+    const char *path;       // Relative path of current unit.
+    const char *cache_path; // Absolute path to unit in cache dir.
   } unit;
 };
 

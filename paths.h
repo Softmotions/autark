@@ -5,6 +5,7 @@
 #include "basedefs.h"
 
 #include <stdint.h>
+#include <limits.h>
 
 enum akpath_access {
   AKPATH_READ  = 0x01,
@@ -32,7 +33,14 @@ struct akpath_stat {
 
 int path_is_absolute(const char *path);
 
-const char* path_to_real(const char *path, struct pool *pool);
+/// Uses stdlib `realpath` implementation.
+/// NOTE: Path argument must exists on file system.
+/// Foo other cases see: path_normalize()
+const char* path_real(const char *path, struct pool *pool);
+
+/// Normalize a path buffer to an absolute path without resolving symlinks.
+/// It operates purely on the path string, and works for non-existing paths.
+const char* path_normalize(const char *path, struct pool *pool);
 
 int path_mkdirs(const char *path);
 

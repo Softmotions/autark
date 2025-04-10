@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "xstr.h"
 #include "script.h"
+#include "autark.h"
 
 #define ASSERT(label__, expr__)                                         \
         if (!(expr__)) {                                                \

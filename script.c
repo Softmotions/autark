@@ -18,6 +18,9 @@
 #define XNODE_PEEK(list__)      ((list__)->num ? XNODE(*(struct node**) ulist_peek(list__)) : 0)
 #define XENV(n__)               (n__)->base.env
 #define NODE(x__)               (struct node*) (x__)
+#define NODE_IS_EXCLUDED(n__)   (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
+#define NODE_IS_INCLUDED(n__)   (!NODE_IS_EXCLUDED(n__))
+#define NODE_IS_RESOLVED(n__)   (((n__)->flags & NODE_FLG_RESOLVED) != 0)
 
 struct _yycontext;
 
@@ -457,18 +460,20 @@ static void _node_context_pop(struct node *n) {
 }
 
 static void _node_reset(struct node *n) {
-  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT);
+  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_RESOLVED | NODE_FLG_EXCLUDED);
 }
 
 static int _node_resolve(struct node *n) {
-  if (n->resolve) {
-    _node_context_push(n);
-    int ret = n->resolve(n);
-    _node_context_pop(n);
-    return ret;
-  } else {
-    return 0;
+  if (!(n->flags & NODE_FLG_RESOLVED)) {
+    n->flags |= NODE_FLG_RESOLVED;
+    if (n->resolve) {
+      _node_context_push(n);
+      int ret = n->resolve(n);
+      _node_context_pop(n);
+      return ret;
+    }
   }
+  return 0;
 }
 
 int node_build(struct node *n) {
@@ -521,16 +526,21 @@ int script_resolve(struct xenv *s) {
   }
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
-    if (n->type == NODE_TYPE_CHECK) {
+    if (n->type == NODE_TYPE_CHECK && NODE_IS_INCLUDED(n)) {
       RCC(rc, finish, _node_resolve(n));
     }
   }
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    if (n->type != NODE_TYPE_CHECK) {
-      RCC(rc, finish, _node_resolve(n));
+  int resolved;
+  do {
+    resolved = 0;
+    for (int i = 0; i < s->nodes.num; ++i) {
+      struct node *n = NODE_AT(&s->nodes, i);
+      if (n->type != NODE_TYPE_CHECK && NODE_IS_INCLUDED(n) && !NODE_IS_RESOLVED(n)) {
+        ++resolved;
+        RCC(rc, finish, _node_resolve(n));
+      }
     }
-  }
+  } while (resolved > 0);
 finish:
   return rc;
 }

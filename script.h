@@ -22,9 +22,11 @@
 #define NODE_TYPE_IF       0x1000U
 #define NODE_TYPE_SUBST    0x2000U
 
-#define NODE_FLG_BOUND   0x01U
-#define NODE_FLG_UPDATED 0x02U // Node product updated as result of build
-#define NODE_FLG_BUILT   0x04U // Node built
+#define NODE_FLG_BOUND    0x01U
+#define NODE_FLG_RESOLVED 0x02U // Node built
+#define NODE_FLG_UPDATED  0x04U // Node product updated as result of build
+#define NODE_FLG_BUILT    0x08U // Node built
+#define NODE_FLG_EXCLUDED 0x10U // Node is excluded from build
 
 #define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)  !node_is_value(n__)

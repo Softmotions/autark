@@ -60,49 +60,46 @@ static void _event_va(
   const char *format,
   va_list     va) {
   struct xstr *xstr = 0;
-  if (code != AK_ERROR_FAIL) {
-    xstr = xstr_create_empty();
-    switch (level) {
-      case LEVEL_FATAL:
-        xstr_cat2(xstr, "FATAL   ", LLEN("FATAL   "));
-        break;
-      case LEVEL_INFO:
-        xstr_cat2(xstr, "INFO    ", LLEN("INFO    "));
-        break;
-      case LEVEL_ERROR:
-        xstr_cat2(xstr, "ERROR    ", LLEN("ERROR    "));
-        break;
-      case LEVEL_VERBOSE:
-        xstr_cat2(xstr, "VERBOSE ", LLEN("VERBOSE "));
-        break;
-      default:
-        xstr_cat2(xstr, "XXX     ", LLEN("XXX     "));
-        break;
-    }
-    if (file) {
-      char *cfile = xstrdup(file);
-      if (cfile) {
-        cfile = _basename(cfile);
-        xstr_printf(xstr, "%s:%d ", cfile, line);
-        free(cfile);
-      }
-    }
-    if (code) {
-      const char *err = _error_get(code);
-      xstr_printf(xstr, "%d|", code);
-      if (err) {
-        xstr_cat(xstr, err);
-      }
-    }
-    if (format) {
-      if (code) {
-        xstr_cat2(xstr, "|", 1);
-      }
-      xstr_printf_va(xstr, format, va);
-    }
-    xstr_cat2(xstr, "\n", 1);
+  xstr = xstr_create_empty();
+  switch (level) {
+    case LEVEL_FATAL:
+      xstr_cat2(xstr, "FATAL   ", LLEN("FATAL   "));
+      break;
+    case LEVEL_INFO:
+      xstr_cat2(xstr, "INFO    ", LLEN("INFO    "));
+      break;
+    case LEVEL_ERROR:
+      xstr_cat2(xstr, "ERROR    ", LLEN("ERROR    "));
+      break;
+    case LEVEL_VERBOSE:
+      xstr_cat2(xstr, "VERBOSE ", LLEN("VERBOSE "));
+      break;
+    default:
+      xstr_cat2(xstr, "XXX     ", LLEN("XXX     "));
+      break;
   }
-
+  if (file) {
+    char *cfile = xstrdup(file);
+    if (cfile) {
+      cfile = _basename(cfile);
+      xstr_printf(xstr, "%s:%d ", cfile, line);
+      free(cfile);
+    }
+  }
+  if (code) {
+    const char *err = _error_get(code);
+    xstr_printf(xstr, "%d|", code);
+    if (err) {
+      xstr_cat(xstr, err);
+    }
+  }
+  if (format) {
+    if (code) {
+      xstr_cat2(xstr, "|", 1);
+    }
+    xstr_printf_va(xstr, format, va);
+  }
+  xstr_cat2(xstr, "\n", 1);
   fputs(xstr_ptr(xstr), stderr);
   xstr_destroy(xstr);
 }

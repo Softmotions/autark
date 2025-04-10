@@ -1,5 +1,6 @@
 #include "paths.h"
 #include "xstr.h"
+#include "alloc.h"
 #include "basedefs.h"
 
 #include <limits.h>
@@ -31,15 +32,16 @@ int path_is_accesible(const char *path, enum akpath_access a) {
     return 0;
   }
   int mode = 0;
-  switch (a) {
-    case AKPATH_READ:
-      mode |= R_OK;
-    case AKPATH_WRITE:
-      mode |= W_OK;
-    case AKPATH_EXEC:
-      mode |= X_OK;
+  if (a & AKPATH_READ) {
+    mode |= R_OK;
   }
-  return access(path, mode);
+  if (a & AKPATH_WRITE) {
+    mode |= W_OK;
+  }
+  if (a & AKPATH_EXEC) {
+    mode |= X_OK;
+  }
+  return access(path, mode) == 0;
 }
 
 int path_is_accesible_read(const char *path) {
@@ -54,13 +56,82 @@ int path_is_accesible_exec(const char *path) {
   return path_is_accesible(path, AKPATH_EXEC);
 }
 
-const char* path_to_real(const char *path, struct pool *pool) {
+const char* path_real(const char *path, struct pool *pool) {
   char buf[PATH_MAX];
   char *ret = realpath(path, buf);
   if (!ret) {
     return 0;
   }
   return pool_strdup(pool, ret);
+}
+
+const char* path_normalize(const char *path, struct pool *pool) {
+  char buf[PATH_MAX];
+  if (path[0] == '/') {
+    strncpy(buf, path, PATH_MAX - 1);
+    buf[PATH_MAX - 1] = '\0';
+  } else {
+    if (!getcwd(buf, sizeof(buf))) {
+      return 0;
+    }
+    size_t len = strlen(buf);
+    if (len < PATH_MAX - 1) {
+      buf[len] = '/';
+      buf[len + 1] = '\0';
+      strncat(buf, path, PATH_MAX - len - 2);
+    } else {
+      errno = ENAMETOOLONG;
+      return 0;
+    }
+  }
+
+  // Normalize: split and process each segment
+  const char *rp = buf;
+  char *segments[PATH_MAX];
+  int top = 0;
+
+  while (*rp) {
+    while (*rp == '/') ++rp;
+    if (!*rp) {
+      break;
+    }
+
+    const char *sp = rp;
+    while (*rp && *rp != '/') ++rp;
+
+    size_t len = rp - sp;
+    if (len == 0) {
+      continue;
+    }
+
+    char segment[PATH_MAX];
+    memcpy(segment, sp, len);
+    segment[len] = '\0';
+
+    if (strcmp(segment, ".") == 0) {
+      continue;
+    } else if (strcmp(segment, "..") == 0) {
+      if (top > 0) {
+        free(segments[--top]);
+      }
+    } else {
+      segments[top++] = xstrdup(segment);
+    }
+  }
+
+  if (top == 0) {
+    buf[0] = '/';
+    buf[1] = '\0';
+  } else {
+    buf[0] = '\0';
+    for (int i = 0; i < top; ++i) {
+      strcat(buf, "/");
+      strcat(buf, segments[i]);
+      free(segments[i]);
+    }
+  }
+
+  return pool_strdup(pool, buf);
 }
 
 int path_mkdirs(const char *path) {

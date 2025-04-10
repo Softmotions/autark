@@ -2,7 +2,7 @@
 
 include ../config.mk
 
-EXEC_SRCS := test1.c test2.c test3.c
+EXEC_SRCS := test1.c test2.c test3.c test4.c
 AKLIB := ../libautark.a
 CDEPS := Makefile ../config.mk $(AKLIB) ./test_utils.h
 EXECS := $(EXEC_SRCS:.c=)
