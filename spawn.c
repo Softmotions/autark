@@ -1,8 +1,6 @@
 #include "spawn.h"
-#include "env.h"
 #include "log.h"
 #include "ulist.h"
-#include "alloc.h"
 #include "pool.h"
 
 #include <stdlib.h>
@@ -22,9 +20,10 @@ struct spawn {
   struct pool *pool;
   struct ulist args;
   struct ulist env;
-  size_t       (*stdin_provider)(char *buf, size_t buflen, struct spawn*);
-  void (*stdout_handler)(char *buf, size_t buflen, struct spawn*);
-  void (*stderr_handler)(char *buf, size_t buflen, struct spawn*);
+
+  size_t (*stdin_provider)(char *buf, size_t buflen, struct spawn*);
+  void   (*stdout_handler)(char *buf, size_t buflen, struct spawn*);
+  void   (*stderr_handler)(char *buf, size_t buflen, struct spawn*);
 };
 
 struct spawn* spawn_create(const char *exec, void *user_data) {
@@ -246,18 +245,18 @@ int spawn_do(struct spawn *s) {
     }
 
     // Now read both stdout & stderr
-    struct pollfd fds[2] = {
+    struct pollfd fds[] = {
       { .fd = pipe_stdout[0], .events = POLLIN },
       { .fd = pipe_stderr[0], .events = POLLIN }
     };
 
     while (1) {
-      int ret = poll(fds, 2, -1);
+      int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
       if (ret == -1) {
         rc = ret;
         goto finish;
       }
-      for (int i = 0; i < 2; ++i) {
+      for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
         if (fds[i].events & POLLIN) {
           ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
           if (n > 0) {
