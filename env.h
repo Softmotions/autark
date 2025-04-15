@@ -16,12 +16,13 @@ struct env {
   int verbose;
   int quiet;
   struct {
-    const char *root_dir;   // Project root source dir
-    const char *cache_dir;  // Project artifacts cache dirs
+    const char *root_dir;   // Project root source dir.
+    const char *cache_dir;  // Project artifacts cache dir.
   } project;
   struct {
     const char *path;       // Relative path of current unit.
-    const char *cache_path; // Absolute path to unit in cache dir.
+    const char *cache_path; // absolute path to unit in cache dir.
+    const char *cache_dir;   // Cache directory where unit file is located.
   } unit;
 };
 

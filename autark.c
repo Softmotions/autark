@@ -60,6 +60,7 @@ static void _project_env_unit_init(void) {
     strncpy(path, g_env.unit.cache_path, sizeof(path));
     path[sizeof(path) - 1] = '\0';
     path_dirname(path);
+    g_env.unit.cache_dir = pool_strdup(g_env.pool, path);
     int rc = path_mkdirs(path);
     if (rc) {
       akfatal(rc, "Failed to create directory: %s", path);

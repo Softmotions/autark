@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-
 static bool _check_is_outdated(struct node *n) {
   // TODO:
   return true;
@@ -20,27 +19,28 @@ static bool _check_is_outdated(struct node *n) {
 
 static int _check_script_run(struct node *n) {
   int rc = 0, code;
-  char env_path[PATH_MAX], env_path_tmp[PATH_MAX];
+  char unit_path[PATH_MAX], env_path[PATH_MAX], env_path_tmp[PATH_MAX];
 
   const char *unit = n->value;
   if (!g_env.quiet) {
     fprintf(stderr, "Checking %s\n", unit);
   }
 
-  snprintf(env_path_tmp, sizeof(env_path_tmp), ".autark/%s.env.tmp", unit);
+  snprintf(unit_path, sizeof(unit_path), ".autark/%s", unit);
+  snprintf(env_path_tmp, sizeof(env_path_tmp), "%s/.autark/%s.env.tmp", g_env.unit.cache_dir, unit);
   unlink(env_path_tmp);
 
-  struct spawn *spawn = spawn_create(unit, n);
-  spawn_env_set(spawn, AUTARK_UNIT, unit);
+  struct spawn *spawn = spawn_create(unit_path, n);
+  spawn_env_set(spawn, AUTARK_UNIT, unit_path);
   RCC(rc, finish, spawn_do(spawn));
 
   code = spawn_exit_code(spawn);
   if (code != 0) {
-    rc = akerror(AK_ERROR_FAIL, "Check program exited with non-zero code: %d", code);
+    rc = akerror(AK_ERROR_FAIL, "Check program: %s exited with non-zero code: %d", code);
     goto finish;
   }
 
-  snprintf(env_path, sizeof(env_path), ".autark/%s.env", unit);
+  snprintf(env_path, sizeof(env_path), "%s/.autark/%s.env", g_env.unit.cache_dir, unit);
   if (path_is_accesible_read(env_path_tmp)) {
     RCC(rc, finish, utils_rename_file(env_path_tmp, env_path));
     RCC(rc, finish, node_env_load(n, env_path));
