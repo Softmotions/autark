@@ -27,7 +27,7 @@ void _akfatal(const char *file, int line, int code, const char *fmt, ...);
 __attribute__((noreturn))
 void _akfatal_va(const char *file, int line, int code, const char *fmt, va_list);
 
-void _akerror(const char *file, int line, int code, const char *fmt, ...);
+int _akerror(const char *file, int line, int code, const char *fmt, ...);
 
 void _akerror_va(const char *file, int line, int code, const char *fmt, va_list);
 

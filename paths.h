@@ -4,7 +4,6 @@
 #include "pool.h"
 #include "basedefs.h"
 
-#include <stdint.h>
 #include <limits.h>
 
 enum akpath_access {
@@ -31,7 +30,7 @@ struct akpath_stat {
   enum akpath_ftype ftype;
 };
 
-int path_is_absolute(const char *path);
+bool path_is_absolute(const char *path);
 
 /// Uses stdlib `realpath` implementation.
 /// NOTE: Path argument must exists on file system.
@@ -48,28 +47,27 @@ int path_stat(const char *path, struct akpath_stat *stat);
 
 int path_statfd(int fd, struct akpath_stat *stat);
 
-int path_is_accesible(const char *path, enum akpath_access a);
+bool path_is_accesible(const char *path, enum akpath_access a);
 
-int path_is_accesible_read(const char *path);
+bool path_is_accesible_read(const char *path);
 
-int path_is_accesible_write(const char *path);
+bool path_is_accesible_write(const char *path);
 
-int path_is_accesible_exec(const char *path);
+bool path_is_accesible_exec(const char *path);
 
-int path_is_dir(const char *path);
+bool path_is_dir(const char *path);
 
-int path_is_file(const char *path);
+bool path_is_file(const char *path);
 
-int path_is_exist(const char *path);
+bool path_is_exist(const char *path);
 
 AK_ALLOC char* path_relativize(const char *from, const char *to);
 
 // Modifies its argument
-char *path_dirname(char *path);
+char* path_dirname(char *path);
 
 // Modifies its argument
-char *path_basename(char *path);
-
+char* path_basename(char *path);
 
 
 #endif

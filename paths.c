@@ -20,14 +20,14 @@
 
 #define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + lround((ts__).tv_nsec / 1.0e6))
 
-int path_is_absolute(const char *path) {
+bool path_is_absolute(const char *path) {
   if (!path) {
     return 0;
   }
   return *path == '/';
 }
 
-int path_is_accesible(const char *path, enum akpath_access a) {
+bool path_is_accesible(const char *path, enum akpath_access a) {
   if (!path || *path == '\0') {
     return 0;
   }
@@ -44,15 +44,15 @@ int path_is_accesible(const char *path, enum akpath_access a) {
   return access(path, mode) == 0;
 }
 
-int path_is_accesible_read(const char *path) {
+bool path_is_accesible_read(const char *path) {
   return path_is_accesible(path, AKPATH_READ);
 }
 
-int path_is_accesible_write(const char *path) {
+bool path_is_accesible_write(const char *path) {
   return path_is_accesible(path, AKPATH_WRITE);
 }
 
-int path_is_accesible_exec(const char *path) {
+bool path_is_accesible_exec(const char *path) {
   return path_is_accesible(path, AKPATH_EXEC);
 }
 
@@ -210,7 +210,7 @@ int path_statfd(int fd, struct akpath_stat *stat) {
   return _stat(0, fd, stat);
 }
 
-int path_is_dir(const char *path) {
+bool path_is_dir(const char *path) {
   struct akpath_stat st;
   if (path_stat(path, &st)) {
     return 0;
@@ -218,7 +218,7 @@ int path_is_dir(const char *path) {
   return st.ftype == AKPATH_TYPE_DIR;
 }
 
-int path_is_file(const char *path) {
+bool path_is_file(const char *path) {
   struct akpath_stat st;
   if (path_stat(path, &st)) {
     return 0;
@@ -226,7 +226,7 @@ int path_is_file(const char *path) {
   return st.ftype == AKPATH_TYPE_FILE;
 }
 
-int path_is_exist(const char *path) {
+bool path_is_exist(const char *path) {
   struct akpath_stat st;
   if (path_stat(path, &st)) {
     return 0;

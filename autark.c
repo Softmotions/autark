@@ -110,7 +110,7 @@ static void _project_env_define(void) {
     akinfo(
       "AUTARK_ROOT_DIR:  %s\n"
       "AUTARK_CACHE_DIR: %s\n"
-      "AUTARK_UNIT_DIR:  %s\n",
+      "AUTARK_UNIT:  %s\n",
       g_env.project.root_dir,
       g_env.project.cache_dir,
       g_env.unit.path);
@@ -156,7 +156,7 @@ static int _on_command_set(int argc, char* const *argv) {
   if (g_env.verbose) {
     akinfo("set %s=%s\n", key, val);
   }
-  const char *env_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".env");
+  const char *env_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".env.tmp");
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
@@ -197,7 +197,7 @@ static int _on_command_dep(int argc, char* const *argv) {
 
 int _build(void) {
   int rc = 0;
-  struct xenv *x;
+  struct sctx *x;
   RCC(rc, finish, script_open(g_env.unit.path, &x));
   rc = script_build(x);
   script_close(&x);

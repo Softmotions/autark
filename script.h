@@ -45,8 +45,8 @@ struct node {
   struct node *next;
   struct node *parent;
 
-  struct xenv *env;
-  struct map  *props;
+  struct sctx *ctx;
+  struct map  *env;
 
   int  (*resolve)(struct node*);
   int  (*build)(struct node*);
@@ -55,28 +55,30 @@ struct node {
   void *impl;
 };
 
-struct xenv {
+struct sctx {
   struct pool *pool;
   struct node *root;
   struct ulist nodes;    // ulist<struct node*>
   struct ulist contexts; // ulist<struct node*> nodes with type == NODE_TYPE_SCRIPT
 };
 
-int script_open(const char *file, struct xenv **out);
+int script_open(const char *file, struct sctx **out);
 
-int script_resolve(struct xenv*);
+int script_resolve(struct sctx*);
 
-int script_build(struct xenv*);
+int script_build(struct sctx*);
 
-void script_close(struct xenv**);
+void script_close(struct sctx**);
 
-void script_dump(struct xenv*, struct xstr *out);
+void script_dump(struct sctx*, struct xstr *out);
 
 int node_build(struct node *n);
 
-const char* node_prop_get(struct node*, const char *key);
+const char* node_env_get(struct node*, const char *key);
 
-void node_prop_set(struct node*, const char *key, const char *val);
+void node_env_set(struct node*, const char *key, const char *val);
+
+int node_env_load(struct node*, const char *path);
 
 void node_fatal(int rc, struct node *n, const char *fmt, ...);
 

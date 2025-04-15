@@ -280,6 +280,9 @@ int spawn_do(struct spawn *s) {
   }
 
 finish:
+  if (rc) {
+    akerror(rc, "Failed to spawn: %s", file);
+  }
   return rc;
 }
 

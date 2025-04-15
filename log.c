@@ -122,11 +122,12 @@ void _akfatal(const char *file, int line, int code, const char *fmt, ...) {
   akfatal2(0);
 }
 
-void _akerror(const char *file, int line, int code, const char *fmt, ...) {
+int _akerror(const char *file, int line, int code, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   _event_va(LEVEL_ERROR, file, line, code, fmt, ap);
   va_end(ap);
+  return code;
 }
 
 void _akverbose(const char *file, int line, const char *fmt, ...) {

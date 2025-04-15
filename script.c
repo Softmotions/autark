@@ -10,13 +10,15 @@
 
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <errno.h>
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
 #define NODE_PEEK(list__)       ((list__)->num ? *(struct node**) ulist_peek(list__) : 0)
 #define XNODE_AT(list__, idx__) XNODE(NODE_AT(list__, idx__))
 #define XNODE_PEEK(list__)      ((list__)->num ? XNODE(*(struct node**) ulist_peek(list__)) : 0)
-#define XENV(n__)               (n__)->base.env
+#define XCTX(n__)               (n__)->base.ctx
 #define NODE(x__)               (struct node*) (x__)
 #define NODE_IS_EXCLUDED(n__)   (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
 #define NODE_IS_INCLUDED(n__)   (!NODE_IS_EXCLUDED(n__))
@@ -119,8 +121,8 @@ static int _input(struct _yycontext *yy, char *buf, int max_size) {
 
 static void _xnode_destroy(struct xnode *x) {
   if (x->base.type == NODE_TYPE_SCRIPT) {
-    map_destroy(x->base.props);
-    x->base.props = 0;
+    map_destroy(x->base.env);
+    x->base.env = 0;
   }
   if (x->base.dispose) {
     x->base.dispose(&x->base);
@@ -195,7 +197,7 @@ int node_error(int rc, struct node *n, const char *fmt, ...) {
   return rc;
 }
 
-static void _node_register(struct xenv *p, struct xnode *x) {
+static void _node_register(struct sctx *p, struct xnode *x) {
   x->base.index = p->nodes.num;
   ulist_push(&p->nodes, &x);
 }
@@ -203,15 +205,15 @@ static void _node_register(struct xenv *p, struct xnode *x) {
 static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) {
   struct ulist *s = &yy->x->xp->stack;
   ulist_push(s, &x);
-  _node_register(yy->x->base.env, x);
+  _node_register(yy->x->base.ctx, x);
   return x;
 }
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
-  struct xenv *env = XENV(yy->x);
-  struct xnode *x = pool_calloc(env->pool, sizeof(*x));
-  x->base.value = pool_strdup(env->pool, text);
-  x->base.env = env;
+  struct sctx *ctx = XCTX(yy->x);
+  struct xnode *x = pool_calloc(ctx->pool, sizeof(*x));
+  x->base.value = pool_strdup(ctx->pool, text);
+  x->base.ctx = ctx;
   x->base.type = NODE_TYPE_VALUE;
   x->base.pos = yy->__pos;
   return x;
@@ -318,25 +320,25 @@ static int _script_from_value(
 
   if (!parent) {
     pool = pool_create_empty();
-    struct xenv *env = pool_calloc(pool, sizeof(*env));
-    env->pool = pool;
-    ulist_init(&env->nodes, 64, sizeof(struct node*));
-    ulist_init(&env->contexts, 64, sizeof(struct node*));
+    struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
+    ctx->pool = pool;
+    ulist_init(&ctx->nodes, 64, sizeof(struct node*));
+    ulist_init(&ctx->contexts, 64, sizeof(struct node*));
 
     x = pool_calloc(pool, sizeof(*x));
-    x->base.env = env;
-    env->root = (struct node*) x;
+    x->base.ctx = ctx;
+    ctx->root = (struct node*) x;
   } else {
-    x = pool_calloc(parent->env->pool, sizeof(*x));
+    x = pool_calloc(parent->ctx->pool, sizeof(*x));
     x->base.parent = parent;
-    x->base.env = parent->env;
-    pool = parent->env->pool;
+    x->base.ctx = parent->ctx;
+    pool = parent->ctx->pool;
   }
 
-  x->base.props = map_create_str(map_kv_free);
+  x->base.env = map_create_str(map_kv_free);
   x->base.value = pool_strdup(pool, file ? file : "<script>");
   x->base.type = NODE_TYPE_SCRIPT;
-  _node_register(x->base.env, x);
+  _node_register(x->base.ctx, x);
   _node_bind(&x->base);
 
   x->xp = xmalloc(sizeof(*x->xp));
@@ -384,7 +386,7 @@ static int _script_from_file(struct node *parent, const char *file, struct node 
   return ret;
 }
 
-static void _script_destroy(struct xenv *e) {
+static void _script_destroy(struct sctx *e) {
   if (e) {
     for (int i = 0; i < e->nodes.num; ++i) {
       struct xnode *x = XNODE_AT(&e->nodes, i);
@@ -440,8 +442,8 @@ static struct node* _node_owner_script(struct node *n) {
 
 static void _node_context_push(struct node *n) {
   struct node *s = _node_owner_script(n);
-  struct node *o = NODE_PEEK(&n->env->contexts);
-  ulist_push(&n->env->contexts, &s);
+  struct node *o = NODE_PEEK(&n->ctx->contexts);
+  ulist_push(&n->ctx->contexts, &s);
   if (o != s) {
     const char *dir = node_script_dir(s);
     chdir(dir);
@@ -449,10 +451,10 @@ static void _node_context_push(struct node *n) {
 }
 
 static void _node_context_pop(struct node *n) {
-  struct node *s = NODE_PEEK(&n->env->contexts);
+  struct node *s = NODE_PEEK(&n->ctx->contexts);
   akassert(s);
-  ulist_pop(&n->env->contexts);
-  struct node *o = NODE_PEEK(&n->env->contexts);
+  ulist_pop(&n->ctx->contexts);
+  struct node *o = NODE_PEEK(&n->ctx->contexts);
   if (o && o != s) {
     const char *dir = node_script_dir(o);
     chdir(dir);
@@ -495,7 +497,7 @@ int node_build(struct node *n) {
   return rc;
 }
 
-static int _script_bind(struct xenv *s) {
+static int _script_bind(struct sctx *s) {
   int rc = 0;
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
@@ -507,18 +509,18 @@ finish:
   return rc;
 }
 
-int script_open(const char *file, struct xenv **out) {
+int script_open(const char *file, struct sctx **out) {
   *out = 0;
   int rc = 0;
   struct node *n;
   RCC(rc, finish, _script_from_file(0, file, &n));
-  RCC(rc, finish, _script_bind(n->env));
-  *out = n->env;
+  RCC(rc, finish, _script_bind(n->ctx));
+  *out = n->ctx;
 finish:
   return rc;
 }
 
-int script_resolve(struct xenv *s) {
+int script_resolve(struct sctx *s) {
   int rc = 0;
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
@@ -545,7 +547,7 @@ finish:
   return rc;
 }
 
-int script_build(struct xenv *s) {
+int script_build(struct sctx *s) {
   int rc = 0;
   RCC(rc, finish, script_resolve(s));
   for (int i = 0; i < s->nodes.num; ++i) {
@@ -556,7 +558,7 @@ finish:
   return rc;
 }
 
-void script_close(struct xenv **sp) {
+void script_close(struct sctx **sp) {
   if (sp && *sp) {
     _script_destroy(*sp);
     *sp = 0;
@@ -585,7 +587,7 @@ static int _node_dump_visitor(struct node *n, int lvl, void *d) {
   return 0;
 }
 
-void script_dump(struct xenv *p, struct xstr *xstr) {
+void script_dump(struct sctx *p, struct xstr *xstr) {
   if (!p || !p->root) {
     xstr_cat(xstr, "null");
     return;
@@ -596,12 +598,12 @@ void script_dump(struct xenv *p, struct xstr *xstr) {
   _node_visit(p->root, 1, &ctx, _node_dump_visitor);
 }
 
-const char* node_prop_get(struct node *n, const char *key) {
+const char* node_env_get(struct node *n, const char *key) {
   const char *ret = 0;
   for ( ; n; n = n->parent) {
     if (n->type == NODE_TYPE_SCRIPT) {
-      akassert(n->props);
-      ret = map_get(n->props, key);
+      akassert(n->env);
+      ret = map_get(n->env, key);
       if (ret) {
         return ret;
       }
@@ -610,29 +612,42 @@ const char* node_prop_get(struct node *n, const char *key) {
   return 0;
 }
 
-void node_prop_set(struct node *n, const char *key, const char *val_) {
+void node_env_set(struct node *n, const char *key, const char *val_) {
   char *val = val_ ? xstrdup(val_) : 0;
   for ( ; n; n = n->parent) {
     if (n->type == NODE_TYPE_SCRIPT) {
-      akassert(n->props);
+      akassert(n->env);
       if (val) {
-        map_put_str(n->props, key, val);
+        map_put_str(n->env, key, val);
       } else {
-        map_remove(n->props, key);
+        map_remove(n->env, key);
       }
       return;
     }
   }
 }
 
+int node_env_load(struct node *n, const char *path) {
+  int rc = 0;
+  FILE *f = fopen(path, "r+");
+  if (!f) {
+    return errno;
+  }
+
+  // TODO:
+
+  fclose(f);
+  return rc;
+}
+
 #ifdef TESTS
 
-int test_script_parse(const char *script_path, struct xenv **out) {
+int test_script_parse(const char *script_path, struct sctx **out) {
   *out = 0;
   struct node *n;
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
-  *out = n->env;
+  *out = n->ctx;
 finish:
   return rc;
 }

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 int utils_exec_path(char buf[PATH_MAX]) {
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
@@ -71,4 +72,51 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
   return ret;
 }
 
+int utils_copy_file(const char *src, const char *dst) {
+  int rc = 0;
+  char buf[8192];
+  FILE *sf = fopen(src, "rb");
+  if (!sf) {
+    return errno;
+  }
+  FILE *df = fopen(dst, "wb");
+  if (!df) {
+    rc = errno;
+    fclose(sf);
+    return rc;
+  }
+  size_t nr = 0;
+  while (1) {
+    nr = fread(buf, 1, sizeof(buf), sf);
+    if (nr) {
+      nr = fwrite(buf, 1, nr, df);
+      if (!nr) {
+        rc = AK_ERROR_IO;
+        break;
+      }
+    } else if (feof(sf)) {
+      break;
+    } else if (ferror(sf)) {
+      rc = AK_ERROR_IO;
+      break;
+    }
+  }
+  fclose(sf);
+  fclose(df);
+  return rc;
+}
 
+int utils_rename_file(const char *src, const char *dst) {
+  if (rename(src, dst) == -1) {
+    if (errno == EXDEV) {
+      int rc = utils_copy_file(src, dst);
+      if (!rc) {
+        unlink(src);
+      }
+      return rc;
+    } else {
+      return errno;
+    }
+  }
+  return 0;
+}

@@ -34,7 +34,7 @@ int node_script_setup(struct node *n) {
   n->build = _build;
   n->dispose = _dispose;
 
-  struct _script *s = pool_calloc(n->env->pool, sizeof(*s));
+  struct _script *s = pool_calloc(n->ctx->pool, sizeof(*s));
   n->impl = s;
 
   char cwd[PATH_MAX], rpath[PATH_MAX];
@@ -48,7 +48,7 @@ int node_script_setup(struct node *n) {
   if (!realpath(value, rpath)) {
     return errno;
   }
-  s->dir = pool_strdup(n->env->pool, dirname(rpath));
+  s->dir = pool_strdup(n->ctx->pool, dirname(rpath));
   return 0;
 }
 

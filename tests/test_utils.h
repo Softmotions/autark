@@ -16,7 +16,7 @@
           goto label__;                                                 \
         }
 
-int test_script_parse(const char *script_path, struct xenv **out);
+int test_script_parse(const char *script_path, struct sctx **out);
 
 static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
   size_t sz = xstr_size(xstr);

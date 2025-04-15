@@ -4,7 +4,7 @@
 
 int main(void) {
   int rc = 0;
-  struct xenv *p;
+  struct sctx *p;
   struct xstr *xstr = xstr_create_empty();
 
   rc = test_script_parse("./data/test1/Autark", &p);
