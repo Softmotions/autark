@@ -13,7 +13,73 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct env g_env = { 0 };
+struct env g_env = {
+  .units_stack = { .usize = sizeof(struct unit*) },
+  .units = { .usize = sizeof(struct unit*) }
+};
+
+static void _unit_destroy(struct unit *unit) {
+  map_destroy(unit->env);
+}
+
+struct unit* unit_create(const char *unit_path) {
+  akassert(unit_path && !path_is_absolute(unit_path));
+  char path[PATH_MAX];
+  struct pool *pool = g_env.pool;
+  struct unit *unit = pool_calloc(g_env.pool, sizeof(*unit));
+  unit->env = map_create_str(map_kv_free);
+  unit->path_rel = pool_strdup(pool, unit_path);
+  unit->basename = path_basename((char*) unit->path_rel);
+
+  snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_path);
+  unit->dir = path_normalize(path, pool);
+  path_dirname((char*) unit->dir);
+
+  snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_path);
+  unit->cache_path = path_normalize(path, pool);
+
+  strncpy(path, unit->cache_path, sizeof(path));
+  path[sizeof(path) - 1] = '\0';
+  path_dirname(path);
+  unit->cache_dir = pool_strdup(pool, path);
+
+  int rc = path_mkdirs(unit->cache_dir);
+  if (rc) {
+    akfatal(rc, "Failed to create directory: %s", path);
+  }
+  ulist_push(&g_env.units, &unit);
+  return unit;
+}
+
+void unit_push(struct unit *unit) {
+  akassert(unit);
+  ulist_push(&g_env.units_stack, &unit);
+}
+
+struct unit* unit_pop(void) {
+  akassert(g_env.units_stack.num > 0);
+  struct unit *unit = *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
+  ulist_pop(&g_env.units_stack);
+  return unit;
+}
+
+struct unit* unit_peek(void) {
+  if (g_env.units_stack.num == 0) {
+    return 0;
+  }
+  struct unit *unit = *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
+  return unit;
+}
+
+void unit_ch_cache_dir(struct unit *unit) {
+  akassert(unit);
+  akcheck(chdir(unit->cache_dir));
+}
+
+void unit_ch_dir(struct unit *unit) {
+  akassert(unit);
+  akcheck(chdir(unit->dir));
+}
 
 static int _usage_va(const char *err, va_list ap) {
   if (err) {
@@ -52,22 +118,6 @@ static int _usage(const char *err, ...) {
   return rc;
 }
 
-static void _project_env_unit_init(void) {
-  if (g_env.unit.path) {
-    char path[PATH_MAX];
-    snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, g_env.unit.path);
-    g_env.unit.cache_path = path_normalize(path, g_env.pool);
-    strncpy(path, g_env.unit.cache_path, sizeof(path));
-    path[sizeof(path) - 1] = '\0';
-    path_dirname(path);
-    g_env.unit.cache_dir = pool_strdup(g_env.pool, path);
-    int rc = path_mkdirs(path);
-    if (rc) {
-      akfatal(rc, "Failed to create directory: %s", path);
-    }
-  }
-}
-
 static void _project_env_define(void) {
   akassert(g_env.project.root_dir);
   if (!g_env.project.cache_dir) {
@@ -97,24 +147,19 @@ static void _project_env_define(void) {
     akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
   }
   g_env.project.root_dir = root_dir;
-
-  if (!g_env.unit.path) {
-    g_env.unit.path = "Autark";
-  }
-  _project_env_unit_init();
+  akcheck(chdir(root_dir));
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-  setenv(AUTARK_UNIT, g_env.unit.path, 1);
+  setenv(AUTARK_UNIT, "Autark", 1);
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
       "AUTARK_ROOT_DIR:  %s\n"
       "AUTARK_CACHE_DIR: %s\n"
-      "AUTARK_UNIT:  %s\n",
+      "AUTARK_UNIT:      Autark\n",
       g_env.project.root_dir,
-      g_env.project.cache_dir,
-      g_env.unit.path);
+      g_env.project.cache_dir);
   }
 }
 
@@ -139,8 +184,9 @@ static void _project_env_read(void) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
 
-  g_env.unit.path = pool_strdup(g_env.pool, val);
-  _project_env_unit_init();
+  struct unit *unit = unit_create(val);
+  unit_push(unit);
+  unit_ch_dir(unit);
 }
 
 static int _on_command_set(int argc, char* const *argv) {
@@ -157,7 +203,11 @@ static int _on_command_set(int argc, char* const *argv) {
   if (g_env.verbose) {
     akinfo("set %s=%s\n", key, val);
   }
-  const char *env_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".env.tmp");
+
+  struct unit *unit = unit_peek();
+  unit_ch_cache_dir(unit);
+
+  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->basename, ".env.tmp");
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
@@ -178,7 +228,11 @@ static void _on_command_dep_impl(const char *file) {
       ts = stat.mtime / 1000U;
     }
   }
-  const char *deps_path = pool_printf(g_env.pool, "%s.%s", g_env.unit.cache_path, ".deps");
+
+  struct unit *unit = unit_peek();
+  unit_ch_cache_dir(unit);
+
+  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->basename, ".deps");
   FILE *f = fopen(deps_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", deps_path);
@@ -199,8 +253,11 @@ static int _on_command_dep(int argc, char* const *argv) {
 int _build(void) {
   int rc = 0;
   struct sctx *x;
-  RCC(rc, finish, script_open(g_env.unit.path, &x));
-  rc = script_build(x);
+  struct unit *unit = unit_peek();
+  unit_ch_dir(unit);
+
+  RCC(rc, finish, script_open(unit->basename, &x));
+  script_build(x);
   script_close(&x);
   if (rc) {
     akerror(rc, "Build failed", 0);
@@ -287,6 +344,12 @@ int autark_run(int argc, char **argv) {
   rc = _build();
 
 finish:
+  for (int i = 0; i < g_env.units.num; ++i) {
+    struct unit *unit = *(struct unit**) ulist_get(&g_env.units, i);
+    _unit_destroy(unit);
+  }
+  ulist_destroy_keep(&g_env.units);
+  ulist_destroy_keep(&g_env.units_stack);
   pool_destroy(pool);
   return rc;
 }

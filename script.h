@@ -5,7 +5,6 @@
 #include "pool.h"
 #include "ulist.h"
 #include "xstr.h"
-#include "map.h"
 
 #define NODE_TYPE_VALUE    0x01U
 #define NODE_TYPE_SCRIPT   0x02U
@@ -46,10 +45,10 @@ struct node {
   struct node *parent;
 
   struct sctx *ctx;
-  struct map  *env;
+  struct unit *unit;
 
-  int  (*resolve)(struct node*);
-  int  (*build)(struct node*);
+  void (*resolve)(struct node*);
+  void (*build)(struct node*);
   void (*dispose)(struct node*);
 
   void *impl;
@@ -59,20 +58,19 @@ struct sctx {
   struct pool *pool;
   struct node *root;
   struct ulist nodes;    // ulist<struct node*>
-  struct ulist contexts; // ulist<struct node*> nodes with type == NODE_TYPE_SCRIPT
 };
 
 int script_open(const char *file, struct sctx **out);
 
-int script_resolve(struct sctx*);
+void script_resolve(struct sctx*);
 
-int script_build(struct sctx*);
+void script_build(struct sctx*);
 
 void script_close(struct sctx**);
 
 void script_dump(struct sctx*, struct xstr *out);
 
-int node_build(struct node *n);
+void node_build(struct node *n);
 
 const char* node_env_get(struct node*, const char *key);
 

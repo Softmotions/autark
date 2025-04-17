@@ -1,11 +1,9 @@
 #include "script.h"
 
-static int _resolve(struct node *n) {
-  return 0;
+static void _resolve(struct node *n) {
 }
 
-static int _build(struct node *n) {
-  return 0;
+static void _build(struct node *n) {
 }
 
 static void _dispose(struct node *n) {
