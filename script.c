@@ -6,6 +6,7 @@
 #include "xstr.h"
 #include "alloc.h"
 #include "nodes.h"
+#include "autark.h"
 #include "config.h"
 
 #include <unistd.h>
@@ -207,8 +208,8 @@ static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) 
 
 static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
   struct sctx *ctx = XCTX(yy->x);
-  struct xnode *x = pool_calloc(ctx->pool, sizeof(*x));
-  x->base.value = pool_strdup(ctx->pool, text);
+  struct xnode *x = pool_calloc(g_env.pool, sizeof(*x));
+  x->base.value = pool_strdup(g_env.pool, text);
   x->base.ctx = ctx;
   x->base.type = NODE_TYPE_VALUE;
   x->base.pos = yy->__pos;
@@ -311,23 +312,22 @@ static int _script_from_value(
   const struct value *val,
   struct node       **out) {
   int rc = 0;
+  autark_init();
+
   struct xnode *x = 0;
-  struct pool *pool;
+  struct pool *pool = g_env.pool;
 
   if (!parent) {
-    pool = pool_create_empty();
     struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
-    ctx->pool = pool;
     ulist_init(&ctx->nodes, 64, sizeof(struct node*));
 
     x = pool_calloc(pool, sizeof(*x));
     x->base.ctx = ctx;
     ctx->root = (struct node*) x;
   } else {
-    x = pool_calloc(parent->ctx->pool, sizeof(*x));
+    x = pool_calloc(pool, sizeof(*x));
     x->base.parent = parent;
     x->base.ctx = parent->ctx;
-    pool = parent->ctx->pool;
   }
 
   if (file) {
@@ -393,7 +393,6 @@ static void _script_destroy(struct sctx *e) {
       _xnode_destroy(x);
     }
     ulist_destroy_keep(&e->nodes);
-    pool_destroy(e->pool);
   }
 }
 
@@ -625,6 +624,7 @@ int node_env_load(struct node *n, const char *path) {
 int test_script_parse(const char *script_path, struct sctx **out) {
   *out = 0;
   struct node *n;
+  autark_build_prepare(true);
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
   *out = n->ctx;

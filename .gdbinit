@@ -1,5 +1,5 @@
 cd ./tests
-file ./test4
+file ./test1
 set args -V
 
 set confirm off

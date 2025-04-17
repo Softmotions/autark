@@ -97,6 +97,8 @@ static int _usage_va(const char *err, va_list ap) {
           "  Build project in given sources dir.\n");
   fprintf(stderr,
           "    -C, --cache=<>              Project cache/build dir. Default: ./autark-cache\n");
+  fprintf(stderr,
+          "    -c, --clean                 Clean build cache dir.\n");
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
   fprintf(stderr,
@@ -110,18 +112,36 @@ static int _usage_va(const char *err, va_list ap) {
   return AK_ERROR_INVALID_ARGS;
 }
 
-static int _usage(const char *err, ...) {
+__attribute__((noreturn))
+
+static void _usage(const char *err, ...) {
   va_list ap;
   va_start(ap, err);
-  int rc = _usage_va(err, ap);
+  _usage_va(err, ap);
   va_end(ap);
-  return rc;
+  _exit(1);
 }
 
-static void _project_env_define(void) {
-  akassert(g_env.project.root_dir);
+void autark_build_prepare(bool clean) {
+  static bool _prepared = false;
+  if (_prepared) {
+    return;
+  }
+  _prepared = true;
+
+  if (!g_env.project.root_dir) {
+    g_env.project.root_dir = g_env.cwd;
+    akassert(g_env.project.root_dir);
+  }
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = "./autark-cache";
+  }
+
+  if (clean) {
+    if (path_is_dir(g_env.project.cache_dir)) {
+      int rc = path_rmdir(g_env.project.cache_dir);
+      akfatal(rc, "Failed to remove cache directory: %s", g_env.project.cache_dir);
+    }
   }
 
   int rc = path_mkdirs(g_env.project.cache_dir);
@@ -147,6 +167,7 @@ static void _project_env_define(void) {
     akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
   }
   g_env.project.root_dir = root_dir;
+  g_env.cwd = root_dir;
   akcheck(chdir(root_dir));
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
@@ -189,12 +210,12 @@ static void _project_env_read(void) {
   unit_ch_dir(unit);
 }
 
-static int _on_command_set(int argc, char* const *argv) {
+static void _on_command_set(int argc, char* const *argv) {
   _project_env_read();
   const char *key;
   const char *val = "";
   if (optind >= argc) {
-    return _usage("Missing <key> argument");
+    _usage("Missing <key> argument");
   }
   key = argv[optind++];
   if (optind < argc) {
@@ -214,7 +235,6 @@ static int _on_command_set(int argc, char* const *argv) {
   }
   fprintf(f, "%s=%s\n", key, val);
   fclose(f);
-  return 0;
 }
 
 static void _on_command_dep_impl(const char *file) {
@@ -241,65 +261,71 @@ static void _on_command_dep_impl(const char *file) {
   fclose(f);
 }
 
-static int _on_command_dep(int argc, char* const *argv) {
+static void _on_command_dep(int argc, char* const *argv) {
   _project_env_read();
   if (optind >= argc) {
-    return _usage("Missing required dependency option");
+    _usage("Missing required dependency option");
   }
   _on_command_dep_impl(argv[optind]);
-  return 0;
 }
 
-int _build(void) {
-  int rc = 0;
+void _build(void) {
   struct sctx *x;
   struct unit *unit = unit_peek();
   unit_ch_dir(unit);
 
-  RCC(rc, finish, script_open(unit->basename, &x));
+  int rc = script_open(unit->basename, &x);
+  if (rc) {
+    akfatal(rc, "Failed to open script: %s", unit->basename);
+  }
   script_build(x);
   script_close(&x);
-  if (rc) {
-    akerror(rc, "Build failed", 0);
-  } else {
-    akinfo("Build success");
-  }
-finish:
-  return rc;
+  akinfo("Build success");
 }
 
-int autark_run(int argc, char **argv) {
-  int rc = 0;
-  struct pool *pool = pool_create_empty();
-  g_env.pool = pool;
-  akassert(argc > 0 && argv[0]);
-
-  {
-    char buf[PATH_MAX], rpath[PATH_MAX];
+void autark_init(void) {
+  if (!g_env.pool) {
+    g_env.pool = pool_create_empty();
+    char buf[PATH_MAX];
     if (!getcwd(buf, PATH_MAX)) {
-      rc = errno;
-      goto finish;
+      akfatal(errno, 0, 0);
     }
-    g_env.cwd = pool_strdup(pool, buf);
-    if (utils_exec_path(buf)) {
-      strncpy(buf, argv[0], sizeof(buf));
-      buf[sizeof(buf) - 1] = '\0';
-      realpath(buf, rpath);
-      g_env.program = pool_strdup(pool, rpath);
-    } else {
-      g_env.program = pool_strdup(pool, buf);
-    }
+    g_env.cwd = pool_strdup(g_env.pool, buf);
+    akcheck(utils_exec_path(buf));
+    g_env.program = pool_strdup(g_env.pool, buf);
   }
+}
+
+AK_DESTRUCTOR void autark_dispose(void) {
+  if (g_env.pool) {
+    struct pool *pool = g_env.pool;
+    g_env.pool = 0;
+    for (int i = 0; i < g_env.units.num; ++i) {
+      struct unit *unit = *(struct unit**) ulist_get(&g_env.units, i);
+      _unit_destroy(unit);
+    }
+    ulist_destroy_keep(&g_env.units);
+    ulist_destroy_keep(&g_env.units_stack);
+    pool_destroy(pool);
+  }
+}
+
+void autark_run(int argc, char **argv) {
+  akassert(argc > 0 && argv[0]);
+  autark_init();
+
+  bool clean = false;
 
   static const struct option long_options[] = {
     { "cache", 1, 0, 'C' },
+    { "clean", 0, 0, 'c' },
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "quiet", 0, 0, 'q' },
     { 0 }
   };
 
-  for (int ch; (ch = getopt_long(argc, argv, "+C:hVq", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, argv, "+C:chVq", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'C':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -310,10 +336,12 @@ int autark_run(int argc, char **argv) {
       case 'q':
         g_env.quiet = 1;
         break;
+      case 'c':
+        clean = true;
+        break;
       case 'h':
       default:
         _usage(0);
-        goto finish;
     }
   }
 
@@ -321,35 +349,16 @@ int autark_run(int argc, char **argv) {
     const char *arg = argv[optind];
     ++optind;
     if (strcmp(arg, "set") == 0) {
-      rc = _on_command_set(argc, argv);
-      goto finish;
+      _on_command_set(argc, argv);
+      return;
     } else if (strcmp(arg, "dep") == 0) {
-      rc = _on_command_dep(argc, argv);
-      goto finish;
+      _on_command_dep(argc, argv);
+      return;
     } else { // Root dir expected
-      g_env.project.root_dir = pool_strdup(pool, arg);
+      g_env.project.root_dir = pool_strdup(g_env.pool, arg);
     }
-  } else {
-    g_env.project.root_dir = g_env.cwd;
   }
 
-  // Main build routine
-  _project_env_define();
-
-  if (strcmp(g_env.cwd, g_env.project.root_dir) != 0) {
-    akcheck(chdir(g_env.project.root_dir));
-    g_env.cwd = g_env.project.root_dir;
-  }
-
-  rc = _build();
-
-finish:
-  for (int i = 0; i < g_env.units.num; ++i) {
-    struct unit *unit = *(struct unit**) ulist_get(&g_env.units, i);
-    _unit_destroy(unit);
-  }
-  ulist_destroy_keep(&g_env.units);
-  ulist_destroy_keep(&g_env.units_stack);
-  pool_destroy(pool);
-  return rc;
+  autark_build_prepare(clean);
+  _build();
 }

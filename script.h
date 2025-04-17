@@ -55,7 +55,6 @@ struct node {
 };
 
 struct sctx {
-  struct pool *pool;
   struct node *root;
   struct ulist nodes;    // ulist<struct node*>
 };

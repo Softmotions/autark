@@ -43,6 +43,8 @@ const char* path_normalize(const char *path, struct pool *pool);
 
 int path_mkdirs(const char *path);
 
+int path_rmdir(const char *path);
+
 int path_stat(const char *path, struct akpath_stat *stat);
 
 int path_statfd(int fd, struct akpath_stat *stat);

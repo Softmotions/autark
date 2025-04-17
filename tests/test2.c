@@ -1,11 +1,13 @@
 #include "test_utils.h"
 #include "log.h"
 #include "xstr.h"
+#include "autark.h"
 
 int main(void) {
   int rc = 0;
   struct sctx *p;
   struct xstr *xstr = xstr_create_empty();
+  autark_init();
 
   rc = test_script_parse("./data/test2/Autark", &p);
   ASSERT(assert, rc == 0);

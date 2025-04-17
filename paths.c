@@ -11,6 +11,8 @@
 #include <math.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <ftw.h>
+#include <stdio.h>
 
 #ifdef __APPLE__
 #define st_atim st_atimespec
@@ -161,6 +163,20 @@ int path_mkdirs(const char *path) {
   }
 finish:
   return rc;
+}
+
+static int _rmfile(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
+  if (remove(pathname) < 0) {
+    perror(pathname);
+  }
+  return 0;
+}
+
+int path_rmdir(const char *path) {
+  if (nftw(path, _rmfile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
+    return errno;
+  }
+  return 0;
 }
 
 static int _stat(const char *path, int fd, struct akpath_stat *fs) {
