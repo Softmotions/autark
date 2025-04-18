@@ -132,11 +132,9 @@ void autark_build_prepare(bool clean, const char *script_path) {
 
   autark_init();
 
-  char path_buf[PATH_MAX];
-  const char *unit = "Autark";
-
   if (!g_env.project.root_dir) {
     if (script_path) {
+      char path_buf[PATH_MAX];
       strncpy(path_buf, script_path, PATH_MAX - 1);
       path_buf[PATH_MAX - 1] = '\0';
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
@@ -182,26 +180,16 @@ void autark_build_prepare(bool clean, const char *script_path) {
     akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
 
-  if (script_path) {
-    strncpy(path_buf, script_path, PATH_MAX - 1);
-    path_buf[PATH_MAX - 1] = '\0';
-    path_basename(path_buf);
-    unit = path_buf;
-  }
-
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-  setenv(AUTARK_UNIT, unit, 1);
 
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
       "AUTARK_ROOT_DIR:  %s\n"
-      "AUTARK_CACHE_DIR: %s\n"
-      "AUTARK_UNIT:      %s\n",
+      "AUTARK_CACHE_DIR: %s\n",
       g_env.project.root_dir,
-      g_env.project.cache_dir,
-      unit);
+      g_env.project.cache_dir);
   }
 }
 
