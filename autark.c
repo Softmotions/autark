@@ -3,6 +3,7 @@
 #include "log.h"
 #include "paths.h"
 #include "script.h"
+#include "autark.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -122,17 +123,38 @@ static void _usage(const char *err, ...) {
   _exit(1);
 }
 
-void autark_build_prepare(bool clean) {
+void autark_build_prepare(bool clean, const char *script_path) {
   static bool _prepared = false;
   if (_prepared) {
     return;
   }
   _prepared = true;
 
+  autark_init();
+
+  char path_buf[PATH_MAX];
+  const char *unit = "Autark";
+
   if (!g_env.project.root_dir) {
-    g_env.project.root_dir = g_env.cwd;
+    if (script_path) {
+      strncpy(path_buf, script_path, PATH_MAX - 1);
+      path_buf[PATH_MAX - 1] = '\0';
+      g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
+    } else {
+      g_env.project.root_dir = g_env.cwd;
+    }
     akassert(g_env.project.root_dir);
   }
+
+  const char *root_dir = path_real(g_env.project.root_dir, g_env.pool);
+  if (!root_dir) {
+    akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
+  }
+
+  akcheck(chdir(root_dir));
+  g_env.project.root_dir = root_dir;
+  g_env.cwd = root_dir;
+
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = "./autark-cache";
   }
@@ -140,7 +162,9 @@ void autark_build_prepare(bool clean) {
   if (clean) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rmdir(g_env.project.cache_dir);
-      akfatal(rc, "Failed to remove cache directory: %s", g_env.project.cache_dir);
+      if (rc) {
+        akfatal(rc, "Failed to remove cache directory: %s", g_env.project.cache_dir);
+      }
     }
   }
 
@@ -148,6 +172,7 @@ void autark_build_prepare(bool clean) {
   if (rc) {
     akfatal(rc, "Failed to create directory: %s", g_env.project.cache_dir);
   }
+
   if (!path_is_dir(g_env.project.cache_dir) || !path_is_accesible_read(g_env.project.cache_dir)) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
@@ -157,30 +182,26 @@ void autark_build_prepare(bool clean) {
     akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
 
-  const char *root_dir = g_env.project.root_dir;
-  if (!path_is_dir(root_dir)) {
-    akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
+  if (script_path) {
+    strncpy(path_buf, script_path, PATH_MAX - 1);
+    path_buf[PATH_MAX - 1] = '\0';
+    path_basename(path_buf);
+    unit = path_buf;
   }
-
-  root_dir = path_normalize(g_env.project.root_dir, g_env.pool);
-  if (!root_dir) {
-    akfatal(errno, "Failed to resolve project ROOT dir: %s", g_env.project.root_dir);
-  }
-  g_env.project.root_dir = root_dir;
-  g_env.cwd = root_dir;
-  akcheck(chdir(root_dir));
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-  setenv(AUTARK_UNIT, "Autark", 1);
+  setenv(AUTARK_UNIT, unit, 1);
+
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
       "AUTARK_ROOT_DIR:  %s\n"
       "AUTARK_CACHE_DIR: %s\n"
-      "AUTARK_UNIT:      Autark\n",
+      "AUTARK_UNIT:      %s\n",
       g_env.project.root_dir,
-      g_env.project.cache_dir);
+      g_env.project.cache_dir,
+      unit);
   }
 }
 
@@ -359,6 +380,6 @@ void autark_run(int argc, char **argv) {
     }
   }
 
-  autark_build_prepare(clean);
+  autark_build_prepare(clean, "Autark");
   _build();
 }

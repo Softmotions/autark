@@ -312,7 +312,6 @@ static int _script_from_value(
   const struct value *val,
   struct node       **out) {
   int rc = 0;
-  autark_init();
 
   struct xnode *x = 0;
   struct pool *pool = g_env.pool;
@@ -500,6 +499,7 @@ int script_open(const char *file, struct sctx **out) {
   *out = 0;
   int rc = 0;
   struct node *n;
+  autark_build_prepare(false, file);
   RCC(rc, finish, _script_from_file(0, file, &n));
   RCC(rc, finish, _script_bind(n->ctx));
   *out = n->ctx;
@@ -624,11 +624,16 @@ int node_env_load(struct node *n, const char *path) {
 int test_script_parse(const char *script_path, struct sctx **out) {
   *out = 0;
   struct node *n;
-  autark_build_prepare(true);
+  char buf[PATH_MAX];
+  akassert(getcwd(buf, sizeof(buf)));
+
+  autark_build_prepare(true, script_path);
   int rc = _script_from_file(0, script_path, &n);
   RCGO(rc, finish);
   *out = n->ctx;
+
 finish:
+  chdir(buf);
   return rc;
 }
 

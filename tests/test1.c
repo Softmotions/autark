@@ -1,6 +1,7 @@
 #include "test_utils.h"
 #include "log.h"
 #include "xstr.h"
+#include <unistd.h>
 
 int main(void) {
   int rc = 0;
