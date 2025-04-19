@@ -23,11 +23,13 @@ static void _unit_destroy(struct unit *unit) {
   map_destroy(unit->env);
 }
 
-struct unit* unit_create(const char *unit_path) {
+struct unit* unit_create(const char *unit_path, unsigned flags) {
   akassert(unit_path && !path_is_absolute(unit_path));
   char path[PATH_MAX];
   struct pool *pool = g_env.pool;
   struct unit *unit = pool_calloc(g_env.pool, sizeof(*unit));
+
+  unit->flags = flags;
   unit->env = map_create_str(map_kv_free);
   unit->path_rel = pool_strdup(pool, unit_path);
   unit->basename = path_basename((char*) unit->path_rel);
@@ -48,6 +50,7 @@ struct unit* unit_create(const char *unit_path) {
   if (rc) {
     akfatal(rc, "Failed to create directory: %s", path);
   }
+
   ulist_push(&g_env.units, &unit);
   return unit;
 }
@@ -55,12 +58,17 @@ struct unit* unit_create(const char *unit_path) {
 void unit_push(struct unit *unit) {
   akassert(unit);
   ulist_push(&g_env.units_stack, &unit);
+  unit_ch_dir(unit);
 }
 
 struct unit* unit_pop(void) {
   akassert(g_env.units_stack.num > 0);
   struct unit *unit = *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
   ulist_pop(&g_env.units_stack);
+  struct unit *peek = unit_peek();
+  if (peek) {
+    unit_ch_dir(peek);
+  }
   return unit;
 }
 
@@ -68,8 +76,15 @@ struct unit* unit_peek(void) {
   if (g_env.units_stack.num == 0) {
     return 0;
   }
-  struct unit *unit = *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
-  return unit;
+  return *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
+}
+
+void unit_ch_dir(struct unit *unit) {
+  if (unit->flags & UNIT_FLG_SRC_CWD) {
+    unit_ch_src_dir(unit);
+  } else if (!(unit->flags & UNIT_FLG_NO_CWD)) {
+    unit_ch_cache_dir(unit);
+  }
 }
 
 void unit_ch_cache_dir(struct unit *unit) {
@@ -77,7 +92,7 @@ void unit_ch_cache_dir(struct unit *unit) {
   akcheck(chdir(unit->cache_dir));
 }
 
-void unit_ch_dir(struct unit *unit) {
+void unit_ch_src_dir(struct unit *unit) {
   akassert(unit);
   akcheck(chdir(unit->dir));
 }
@@ -113,9 +128,7 @@ static int _usage_va(const char *err, va_list ap) {
   return AK_ERROR_INVALID_ARGS;
 }
 
-__attribute__((noreturn))
-
-static void _usage(const char *err, ...) {
+__attribute__((noreturn)) static void _usage(const char *err, ...) {
   va_list ap;
   va_start(ap, err);
   _usage_va(err, ap);
@@ -123,7 +136,8 @@ static void _usage(const char *err, ...) {
   _exit(1);
 }
 
-void autark_build_prepare(bool clean, const char *script_path) {
+void autark_build_prepare(const char *script_path) {
+
   static bool _prepared = false;
   if (_prepared) {
     return;
@@ -157,7 +171,7 @@ void autark_build_prepare(bool clean, const char *script_path) {
     g_env.project.cache_dir = "./autark-cache";
   }
 
-  if (clean) {
+  if (g_env.project.clean) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rmdir(g_env.project.cache_dir);
       if (rc) {
@@ -214,9 +228,8 @@ static void _project_env_read(void) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
 
-  struct unit *unit = unit_create(val);
+  struct unit *unit = unit_create(val, 0);
   unit_push(unit);
-  unit_ch_dir(unit);
 }
 
 static void _on_command_set(int argc, char* const *argv) {
@@ -280,12 +293,9 @@ static void _on_command_dep(int argc, char* const *argv) {
 
 void _build(void) {
   struct sctx *x;
-  struct unit *unit = unit_peek();
-  unit_ch_dir(unit);
-
-  int rc = script_open(unit->basename, &x);
+  int rc = script_open(AUTARK_SCRIPT, &x);
   if (rc) {
-    akfatal(rc, "Failed to open script: %s", unit->basename);
+    akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
   script_build(x);
   script_close(&x);
@@ -323,8 +333,6 @@ void autark_run(int argc, char **argv) {
   akassert(argc > 0 && argv[0]);
   autark_init();
 
-  bool clean = false;
-
   static const struct option long_options[] = {
     { "cache", 1, 0, 'C' },
     { "clean", 0, 0, 'c' },
@@ -346,7 +354,7 @@ void autark_run(int argc, char **argv) {
         g_env.quiet = 1;
         break;
       case 'c':
-        clean = true;
+        g_env.project.clean = true;
         break;
       case 'h':
       default:
@@ -368,6 +376,6 @@ void autark_run(int argc, char **argv) {
     }
   }
 
-  autark_build_prepare(clean, "Autark");
+  autark_build_prepare(AUTARK_SCRIPT);
   _build();
 }

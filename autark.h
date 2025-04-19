@@ -9,6 +9,6 @@ void autark_run(int argc, char **argv);
 
 void autark_dispose(void);
 
-void autark_build_prepare(bool clean_cache, const char *script_path);
+void autark_build_prepare(const char *script_path);
 
 #endif

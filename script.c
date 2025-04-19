@@ -8,6 +8,7 @@
 #include "nodes.h"
 #include "autark.h"
 #include "config.h"
+#include "paths.h"
 
 #include <unistd.h>
 #include <stdarg.h>
@@ -330,9 +331,10 @@ static int _script_from_value(
   }
 
   if (file) {
-    x->base.unit = unit_create(file);
+    x->base.unit = unit_create(file, UNIT_FLG_SRC_CWD);
     x->base.unit->impl = x;
     unit_ch_dir(x->base.unit);
+    unit_ch_src_dir(x->base.unit);
   }
 
   x->base.value = pool_strdup(pool, file ? file : "<script>");
@@ -378,6 +380,7 @@ static int _script_from_file(struct node *parent, const char *file, struct node 
   *out = 0;
   struct value buf = utils_file_as_buf(file, CFG_SCRIPT_MAX_SIZE_BYTES);
   if (buf.error) {
+    akerror(buf.error, "Failed to read script file: %s", file);
     return value_destroy(&buf);
   }
   int ret = _script_from_value(parent, file, &buf, out);
@@ -440,15 +443,10 @@ static struct node* _unit_node_find(struct node *n) {
 static void _node_context_push(struct node *n) {
   struct node *s = _unit_node_find(n);
   unit_push(s->unit);
-  unit_ch_cache_dir(s->unit);
 }
 
 static void _node_context_pop(struct node *n) {
   unit_pop();
-  struct unit *u = unit_peek();
-  if (u) {
-    unit_ch_cache_dir(u);
-  }
 }
 
 static void _node_reset(struct node *n) {
@@ -499,8 +497,15 @@ int script_open(const char *file, struct sctx **out) {
   *out = 0;
   int rc = 0;
   struct node *n;
-  autark_build_prepare(false, file);
-  RCC(rc, finish, _script_from_file(0, file, &n));
+  akassert(file);
+  autark_build_prepare(file);
+
+  char buf[PATH_MAX];
+  strncpy(buf, file, PATH_MAX - 1);
+  buf[PATH_MAX - 1] = '\0';
+  const char *path = path_basename(buf);
+
+  RCC(rc, finish, _script_from_file(0, path, &n));
   RCC(rc, finish, _script_bind(n->ctx));
   *out = n->ctx;
 finish:
@@ -626,13 +631,7 @@ int test_script_parse(const char *script_path, struct sctx **out) {
   struct node *n;
   char buf[PATH_MAX];
   akassert(getcwd(buf, sizeof(buf)));
-
-  autark_build_prepare(true, script_path);
-  int rc = _script_from_file(0, script_path, &n);
-  RCGO(rc, finish);
-  *out = n->ctx;
-
-finish:
+  int rc = script_open(script_path, out);
   chdir(buf);
   return rc;
 }
