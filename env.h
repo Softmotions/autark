@@ -14,19 +14,21 @@
                                             // currently.
 #define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
 
-#define UNIT_FLG_SRC_CWD 0x01U // Set project source dir as unit CWD
-#define UNIT_FLG_NO_CWD  0x02U // Do not change CWD for unit
+#define UNIT_FLG_SRC_CWD    0x01U // Set project source dir as unit CWD
+#define UNIT_FLG_NO_CWD     0x02U // Do not change CWD for unit
+#define UNIT_FLG_POOL_OWNER 0x04U // Dispose pool on unit_pop()
 
 /// Current execution unit.
 struct unit {
-  struct map *env;        // Environment associated with unit.
-  const char *path_rel;   // Path to unit relative to the project root and project cache.
-  const char *basename;   // Basename of unit path.
-  const char *dir;        // Absolute path to unit dir.
-  const char *cache_path; // Absolute path to the unit in cache dir.
-  const char *cache_dir;  // Absolute path to the cache directory where unit file is located.
-  unsigned    flags;      // Unit flags
-  void       *impl;
+  struct map  *env;        // Environment associated with unit.
+  const char  *path_rel;   // Path to unit relative to the project root and project cache.
+  const char  *basename;   // Basename of unit path.
+  const char  *dir;        // Absolute path to unit dir.
+  const char  *cache_path; // Absolute path to the unit in cache dir.
+  const char  *cache_dir;  // Absolute path to the cache directory where unit file is located.
+  struct pool *pool;       // Pool used to allocate unit
+  unsigned     flags;      // Unit flags
+  void *impl;
 };
 
 /// Global env
@@ -47,7 +49,7 @@ struct env {
 
 extern struct env g_env;
 
-struct unit* unit_create(const char *unit_path, unsigned flags);
+struct unit* unit_create(const char *unit_path, unsigned flags, struct pool *pool);
 
 void unit_push(struct unit*);
 

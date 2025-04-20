@@ -331,10 +331,16 @@ static int _script_from_value(
   }
 
   if (file) {
-    x->base.unit = unit_create(file, UNIT_FLG_SRC_CWD);
-    x->base.unit->impl = x;
-    unit_ch_dir(x->base.unit);
-    unit_ch_src_dir(x->base.unit);
+    struct unit *unit;
+    if (g_env.units.num == 1) {
+      unit = unit_peek();
+      akassert(unit->impl == 0); // We are the root script
+    } else {
+      unit = unit_create(file, UNIT_FLG_SRC_CWD, g_env.pool);
+    }
+    unit->impl = x;
+    x->base.unit = unit;
+    unit_ch_dir(unit);
   }
 
   x->base.value = pool_strdup(pool, file ? file : "<script>");

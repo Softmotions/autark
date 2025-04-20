@@ -1,7 +1,9 @@
 #include "script.h"
-#include "basedefs.h"
 #include "env.h"
 #include "log.h"
+#include "pool.h"
+#include "spawn.h"
+
 
 #include <limits.h>
 #include <unistd.h>
@@ -13,6 +15,28 @@ static bool _check_is_outdated(struct node *n) {
 }
 
 static void _check_script_run(struct node *n) {
+  int rc = 0;
+  const char *script = n->value;
+  if (!g_env.quiet) {
+    akinfo("Checking %s", script);
+  }
+  struct pool *pool = pool_create_empty();
+  const char *path = pool_printf(pool, ".autark/%s", script);
+
+  struct unit *unit = unit_create(path, UNIT_FLG_POOL_OWNER, pool);
+  unit->impl = n;
+  unit_push(unit);
+
+  const char *env_tmp = pool_printf(pool, "%s.env.tmp", script);
+  unlink(env_tmp);
+
+  //struct spawn *spawn = spawn_create(script, )
+
+
+
+
+  unit_pop();
+
   /*
      int rc = 0, code;
      char unit_path[PATH_MAX], env_path[PATH_MAX], env_path_tmp[PATH_MAX];

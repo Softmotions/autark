@@ -1,9 +1,9 @@
 cd ./tests
-file ./test2
+file ./test3
 set args -V
 
 set confirm off
-set follow-fork-mode child
+set follow-fork-mode parent
 set detach-on-fork on
 set print elements 4096
 

@@ -23,22 +23,22 @@ static void _unit_destroy(struct unit *unit) {
   map_destroy(unit->env);
 }
 
-struct unit* unit_create(const char *unit_path, unsigned flags) {
-  akassert(unit_path && !path_is_absolute(unit_path));
+struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool *pool) {
+  akassert(unit_rel_path && !path_is_absolute(unit_rel_path));
   char path[PATH_MAX];
-  struct pool *pool = g_env.pool;
   struct unit *unit = pool_calloc(g_env.pool, sizeof(*unit));
 
   unit->flags = flags;
+  unit->pool = pool;
   unit->env = map_create_str(map_kv_free);
-  unit->path_rel = pool_strdup(pool, unit_path);
+  unit->path_rel = pool_strdup(pool, unit_rel_path);
   unit->basename = path_basename((char*) unit->path_rel);
 
-  snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_path);
+  snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_rel_path);
   unit->dir = path_normalize(path, pool);
   path_dirname((char*) unit->dir);
 
-  snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_path);
+  snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_rel_path);
   unit->cache_path = path_normalize(path, pool);
 
   strncpy(path, unit->cache_path, sizeof(path));
@@ -59,6 +59,7 @@ void unit_push(struct unit *unit) {
   akassert(unit);
   ulist_push(&g_env.units_stack, &unit);
   unit_ch_dir(unit);
+  setenv(AUTARK_UNIT, unit->basename, 1);
 }
 
 struct unit* unit_pop(void) {
@@ -137,18 +138,17 @@ __attribute__((noreturn)) static void _usage(const char *err, ...) {
 }
 
 void autark_build_prepare(const char *script_path) {
-
   static bool _prepared = false;
   if (_prepared) {
     return;
   }
-  _prepared = true;
 
+  char path_buf[PATH_MAX];
+  _prepared = true;
   autark_init();
 
   if (!g_env.project.root_dir) {
     if (script_path) {
-      char path_buf[PATH_MAX];
       strncpy(path_buf, script_path, PATH_MAX - 1);
       path_buf[PATH_MAX - 1] = '\0';
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
@@ -163,9 +163,14 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
 
-  akcheck(chdir(root_dir));
+  strncpy(path_buf, script_path, PATH_MAX - 1);
+  path_buf[PATH_MAX - 1] = '\0';
+  const char *path = path_basename(path_buf);
+
+  struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
   g_env.project.root_dir = root_dir;
-  g_env.cwd = root_dir;
+  g_env.cwd = unit->dir;
+  unit_push(unit);
 
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = "./autark-cache";
@@ -200,10 +205,12 @@ void autark_build_prepare(const char *script_path) {
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
-      "AUTARK_ROOT_DIR:  %s\n"
-      "AUTARK_CACHE_DIR: %s\n",
+      "\nAUTARK_ROOT_DIR:  %s\n"
+      "AUTARK_CACHE_DIR: %s\n"
+      "AUTARK_UNIT: %s\n",
       g_env.project.root_dir,
-      g_env.project.cache_dir);
+      g_env.project.cache_dir,
+      unit->path_rel);
   }
 }
 
@@ -228,7 +235,7 @@ static void _project_env_read(void) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
 
-  struct unit *unit = unit_create(val, 0);
+  struct unit *unit = unit_create(val, 0, g_env.pool);
   unit_push(unit);
 }
 
