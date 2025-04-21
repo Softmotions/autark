@@ -1,2 +1,3 @@
 /autark-cache
-/test[0-9]*
+/test[0-9]
+/test[0-9][0-9]
