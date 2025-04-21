@@ -594,7 +594,7 @@ const char* node_env_get(struct node *n, const char *key) {
   const char *ret = 0;
   for ( ; n; n = n->parent) {
     if (n->unit) {
-      ret = map_get(n->unit->env, key);
+      ret = unit_env_get(n->unit, key);
       if (ret) {
         return ret;
       }
@@ -603,14 +603,13 @@ const char* node_env_get(struct node *n, const char *key) {
   return 0;
 }
 
-void node_env_set(struct node *n, const char *key, const char *val_) {
-  char *val = val_ ? xstrdup(val_) : 0;
+void node_env_set(struct node *n, const char *key, const char *val) {
   for ( ; n; n = n->parent) {
     if (n->unit) {
       if (val) {
-        map_put_str(n->unit->env, key, val);
+        unit_env_set(n->unit, key, val);
       } else {
-        map_remove(n->unit->env, key);
+        unit_env_remove(n->unit, key);
       }
       return;
     }
@@ -634,7 +633,6 @@ int node_env_load(struct node *n, const char *path) {
 
 int test_script_parse(const char *script_path, struct sctx **out) {
   *out = 0;
-  struct node *n;
   char buf[PATH_MAX];
   akassert(getcwd(buf, sizeof(buf)));
   int rc = script_open(script_path, out);

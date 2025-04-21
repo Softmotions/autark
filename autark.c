@@ -4,6 +4,8 @@
 #include "paths.h"
 #include "script.h"
 #include "autark.h"
+#include "map.h"
+#include "alloc.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -22,6 +24,21 @@ struct env g_env = {
 static void _unit_destroy(struct unit *unit) {
   map_destroy(unit->env);
 }
+
+void unit_env_set(struct unit *u, const char *key, const char *val_) {
+  char *val = val_ ? xstrdup(val_) : 0;
+  map_put_str(u->env, key, val);
+}
+
+const char* unit_env_get(struct unit *u, const char *key) {
+  return map_get(u->env, key);
+}
+
+void unit_env_remove(struct unit *u, const char *key) {
+  map_remove(u->env, key);
+}
+
+const char* unit_env_get(struct unit*, const char *key);
 
 struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool *pool) {
   akassert(unit_rel_path && !path_is_absolute(unit_rel_path));
@@ -130,7 +147,7 @@ static int _usage_va(const char *err, va_list ap) {
           "  Sets key/value pair as output for check script.\n");
   fprintf(stderr,
           "\nautark dep <file>\n"
-          "  Marks a given file as dependency for a check script.\n");
+          "  Registers a given file as dependency for check script.\n");
 
   fprintf(stderr, "\n");
   return AK_ERROR_INVALID_ARGS;
@@ -240,7 +257,7 @@ static void _project_env_read(void) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
 
-  struct unit *unit = unit_create(val, 0, g_env.pool);
+  struct unit *unit = unit_create(val, UNIT_FLG_NO_CWD, g_env.pool);
   unit_push(unit);
 }
 
@@ -261,9 +278,7 @@ static void _on_command_set(int argc, const char **argv) {
   }
 
   struct unit *unit = unit_peek();
-  unit_ch_cache_dir(unit);
-
-  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->basename, "env.tmp");
+  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "env.tmp");
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
@@ -271,14 +286,6 @@ static void _on_command_set(int argc, const char **argv) {
   fprintf(f, "%s=%s\n", key, val);
   fclose(f);
 }
-
-#ifdef TESTS
-
-void on_command_set(int argc, const char **argv) {
-  _on_command_set(argc, argv);
-}
-
-#endif
 
 static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
@@ -291,11 +298,8 @@ static void _on_command_dep_impl(const char *file) {
       ts = stat.mtime / 1000U;
     }
   }
-
   struct unit *unit = unit_peek();
-  unit_ch_cache_dir(unit);
-
-  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->basename, ".deps");
+  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "deps");
   FILE *f = fopen(deps_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", deps_path);
@@ -311,6 +315,18 @@ static void _on_command_dep(int argc, const char **argv) {
   }
   _on_command_dep_impl(argv[optind]);
 }
+
+#ifdef TESTS
+
+void on_command_set(int argc, const char **argv) {
+  _on_command_set(argc, argv);
+}
+
+void on_command_dep(int argc, const char **argv) {
+  _on_command_dep(argc, argv);
+}
+
+#endif
 
 void _build(void) {
   struct sctx *x;

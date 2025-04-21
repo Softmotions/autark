@@ -65,4 +65,10 @@ void unit_ch_cache_dir(struct unit*);
 
 void unit_ch_src_dir(struct unit*);
 
+void unit_env_set(struct unit*, const char* key, const char *val);
+
+const char* unit_env_get(struct unit*, const char *key);
+
+void unit_env_remove(struct unit*, const char* key);
+
 #endif
