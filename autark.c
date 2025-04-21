@@ -31,14 +31,21 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   unit->flags = flags;
   unit->pool = pool;
   unit->env = map_create_str(map_kv_free);
-  unit->path_rel = pool_strdup(pool, unit_rel_path);
-  unit->basename = path_basename((char*) unit->path_rel);
+  unit->rel_path = pool_strdup(pool, unit_rel_path);
+  unit->basename = path_basename((char*) unit->rel_path);
 
   snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_rel_path);
-  unit->dir = path_normalize(path, pool);
-  path_dirname((char*) unit->dir);
+  path[sizeof(path) - 1] = '\0';
+  unit->source_path = path_normalize(path, pool);
+
+  strncpy(path, unit->source_path, sizeof(path));
+  path[sizeof(path) - 1] = '\0';
+  path_dirname(path);
+  unit->dir = pool_strdup(pool, path);
+
 
   snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_rel_path);
+  path[sizeof(path) - 1] = '\0';
   unit->cache_path = path_normalize(path, pool);
 
   strncpy(path, unit->cache_path, sizeof(path));
@@ -113,7 +120,7 @@ static int _usage_va(const char *err, va_list ap) {
           "\nautark [sources_dir] [options]\n"
           "  Build project in given sources dir.\n");
   fprintf(stderr,
-          "    -C, --cache=<>              Project cache/build dir. Default: ./autark-cache\n");
+          "    -C, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
   fprintf(stderr,
           "    -c, --clean                 Clean build cache dir.\n");
   fprintf(stderr, "\nautark <cmd> [options]\n");
@@ -163,19 +170,9 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
 
-  strncpy(path_buf, script_path, PATH_MAX - 1);
-  path_buf[PATH_MAX - 1] = '\0';
-  const char *path = path_basename(path_buf);
-
-  struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
-  g_env.project.root_dir = root_dir;
-  g_env.cwd = unit->dir;
-  unit_push(unit);
-
   if (!g_env.project.cache_dir) {
-    g_env.project.cache_dir = "./autark-cache";
+    g_env.project.cache_dir = AUTARK_CACHE_DIR;
   }
-
   if (g_env.project.clean) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rmdir(g_env.project.cache_dir);
@@ -185,10 +182,16 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
-  int rc = path_mkdirs(g_env.project.cache_dir);
-  if (rc) {
-    akfatal(rc, "Failed to create directory: %s", g_env.project.cache_dir);
-  }
+  g_env.project.root_dir = root_dir;
+  g_env.cwd = root_dir;
+  akcheck(chdir(root_dir));
+
+  strncpy(path_buf, script_path, PATH_MAX - 1);
+  path_buf[PATH_MAX - 1] = '\0';
+  const char *path = path_basename(path_buf);
+
+  struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
+  unit_push(unit);
 
   if (!path_is_dir(g_env.project.cache_dir) || !path_is_accesible_read(g_env.project.cache_dir)) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
@@ -205,16 +208,18 @@ void autark_build_prepare(const char *script_path) {
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
     akinfo(
-      "\nAUTARK_ROOT_DIR:  %s\n"
-      "AUTARK_CACHE_DIR: %s\n"
-      "AUTARK_UNIT: %s\n",
+      "\n\tAUTARK_ROOT_DIR:  %s\n"
+      "\tAUTARK_CACHE_DIR: %s\n"
+      "\tAUTARK_UNIT: %s\n",
       g_env.project.root_dir,
       g_env.project.cache_dir,
-      unit->path_rel);
+      unit->rel_path);
   }
 }
 
 static void _project_env_read(void) {
+  autark_init();
+
   const char *val = getenv(AUTARK_CACHE_DIR);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_CACHE_DIR env variable", 0);
@@ -239,8 +244,9 @@ static void _project_env_read(void) {
   unit_push(unit);
 }
 
-static void _on_command_set(int argc, char* const *argv) {
+static void _on_command_set(int argc, const char **argv) {
   _project_env_read();
+
   const char *key;
   const char *val = "";
   if (optind >= argc) {
@@ -257,7 +263,7 @@ static void _on_command_set(int argc, char* const *argv) {
   struct unit *unit = unit_peek();
   unit_ch_cache_dir(unit);
 
-  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->basename, ".env.tmp");
+  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->basename, "env.tmp");
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
@@ -265,6 +271,14 @@ static void _on_command_set(int argc, char* const *argv) {
   fprintf(f, "%s=%s\n", key, val);
   fclose(f);
 }
+
+#ifdef TESTS
+
+void on_command_set(int argc, const char **argv) {
+  _on_command_set(argc, argv);
+}
+
+#endif
 
 static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
@@ -290,7 +304,7 @@ static void _on_command_dep_impl(const char *file) {
   fclose(f);
 }
 
-static void _on_command_dep(int argc, char* const *argv) {
+static void _on_command_dep(int argc, const char **argv) {
   _project_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
@@ -336,7 +350,7 @@ AK_DESTRUCTOR void autark_dispose(void) {
   }
 }
 
-void autark_run(int argc, char **argv) {
+void autark_run(int argc, const char **argv) {
   akassert(argc > 0 && argv[0]);
   autark_init();
 
@@ -349,7 +363,7 @@ void autark_run(int argc, char **argv) {
     { 0 }
   };
 
-  for (int ch; (ch = getopt_long(argc, argv, "+C:chVq", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVq", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'C':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);

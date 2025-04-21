@@ -5,7 +5,7 @@
 
 void autark_init(void);
 
-void autark_run(int argc, char **argv);
+void autark_run(int argc, const char **argv);
 
 void autark_dispose(void);
 

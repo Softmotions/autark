@@ -174,7 +174,7 @@ static int _rmfile(const char *pathname, const struct stat *sbuf, int type, stru
 
 int path_rmdir(const char *path) {
   if (nftw(path, _rmfile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
-    return errno;
+    return errno != ENOENT ? errno : 0;
   }
   return 0;
 }

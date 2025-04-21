@@ -36,6 +36,8 @@ static const char* _error_get(int code) {
       return "Build script error (AK_ERROR_SCRIPT_ERROR)";
     case AK_ERROR_NOT_IMPLEMENTED:
       return "Not implemented (AK_ERROR_NOT_IMPLEMENTED)";
+    case AK_ERROR_EXTERNAL_COMMAND:
+      return "External command failed (AK_ERROR_EXTERNAL_COMMAND)";
     case AK_ERROR_OK:
       return "OK";
     default:

@@ -15,7 +15,8 @@ enum akecode {
   AK_ERROR_SCRIPT_SYNTAX     = -10,
   AK_ERROR_CYCLIC_BUILD_DEPS = -11,
   AK_ERROR_SCRIPT_ERROR      = -12,
-  AK_ERROR_NOT_IMPLEMENTED   = -13
+  AK_ERROR_NOT_IMPLEMENTED   = -13,
+  AK_ERROR_EXTERNAL_COMMAND  = -14,
 };
 
 __attribute__((noreturn))

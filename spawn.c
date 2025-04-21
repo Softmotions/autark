@@ -20,6 +20,7 @@ struct spawn {
   struct pool *pool;
   struct ulist args;
   struct ulist env;
+  const char  *exec;
 
   size_t (*stdin_provider)(char *buf, size_t buflen, struct spawn*);
   void   (*stdout_handler)(char *buf, size_t buflen, struct spawn*);
@@ -41,16 +42,17 @@ struct spawn* spawn_create(const char *exec, void *user_data) {
     },
     .user_data = user_data,
   };
-  spawn_arg_add(s, exec);
+  s->exec = spawn_arg_add(s, exec);
   return s;
 }
 
-void spawn_arg_add(struct spawn *s, const char *arg) {
+const char* spawn_arg_add(struct spawn *s, const char *arg) {
   if (!arg) {
     arg = "";
   }
   const char *v = pool_strdup(s->pool, arg);
   ulist_push(&s->args, &v);
+  return v;
 }
 
 void spawn_env_set(struct spawn *s, const char *key, const char *val) {
@@ -108,7 +110,7 @@ static char** _env_create(struct spawn *s) {
 
 static char** _args_create(struct spawn *s) {
   char **args = pool_alloc(s->pool, sizeof(*args) * (s->args.num + 1));
-  for (int i = 0; i > s->args.num; ++i) {
+  for (int i = 0; i < s->args.num; ++i) {
     char *v = *(char**) ulist_get(&s->args, i);
     args[i] = v;
   }
@@ -144,11 +146,11 @@ void spawn_set_stdout_handler(
 }
 
 static void _default_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  fprintf(stdout, "%s", buf);
+  fprintf(stdout, "%s: %s", s->exec, buf);
 }
 
 static void _default_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  fprintf(stderr, "%s", buf);
+  fprintf(stderr, "%s: %s", s->exec, buf);
 }
 
 void spawn_set_stderr_handler(
@@ -211,12 +213,14 @@ int spawn_do(struct spawn *s) {
       perror("dup2");
       _exit(EXIT_FAILURE);
     }
+    close(pipe_stdout[1]);
 
     close(pipe_stderr[0]);
     if (dup2(pipe_stderr[1], STDERR_FILENO) == -1) {
       perror("dup2");
       _exit(EXIT_FAILURE);
     }
+    close(pipe_stderr[1]);
 
     execve(file, args, envp);
     perror("execve");
@@ -250,7 +254,8 @@ int spawn_do(struct spawn *s) {
       { .fd = pipe_stderr[0], .events = POLLIN }
     };
 
-    while (1) {
+    int c = sizeof(fds) / sizeof(fds[0]);
+    while (c > 0) {
       int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
       if (ret == -1) {
         rc = ret;
@@ -269,6 +274,7 @@ int spawn_do(struct spawn *s) {
           } else {
             close(fds[i].fd);
             fds[i].fd = -1;
+            --c;
           }
         }
       }

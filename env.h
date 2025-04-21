@@ -7,27 +7,29 @@
 
 #include <stdbool.h>
 
-#define AUTARK_SCRIPT    "Autark"
+#define AUTARK_CACHE  "autark-cache"
+#define AUTARK_SCRIPT "Autark"
+
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
 #define AUTARK_UNIT      "AUTARK_UNIT"      // Path relative to AUTARK_ROOT_DIR of build process unit executed
                                             // currently.
 #define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
 
-#define UNIT_FLG_SRC_CWD    0x01U // Set project source dir as unit CWD
-#define UNIT_FLG_NO_CWD     0x02U // Do not change CWD for unit
-#define UNIT_FLG_POOL_OWNER 0x04U // Dispose pool on unit_pop()
+#define UNIT_FLG_SRC_CWD 0x01U // Set project source dir as unit CWD
+#define UNIT_FLG_NO_CWD  0x02U // Do not change CWD for unit
 
 /// Current execution unit.
 struct unit {
-  struct map  *env;        // Environment associated with unit.
-  const char  *path_rel;   // Path to unit relative to the project root and project cache.
-  const char  *basename;   // Basename of unit path.
-  const char  *dir;        // Absolute path to unit dir.
-  const char  *cache_path; // Absolute path to the unit in cache dir.
-  const char  *cache_dir;  // Absolute path to the cache directory where unit file is located.
-  struct pool *pool;       // Pool used to allocate unit
-  unsigned     flags;      // Unit flags
+  struct map  *env;         // Environment associated with unit.
+  const char  *rel_path;    // Path to unit relative to the project root and project cache.
+  const char  *basename;    // Basename of unit path.
+  const char  *dir;         // Absolute path to unit dir.
+  const char  *source_path; // Unit source path.
+  const char  *cache_path;  // Absolute path to the unit in cache dir.
+  const char  *cache_dir;   // Absolute path to the cache directory where unit file is located.
+  struct pool *pool;        // Pool used to allocate unit
+  unsigned     flags;       // Unit flags
   void *impl;
 };
 

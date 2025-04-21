@@ -7,7 +7,17 @@
 
 #include <limits.h>
 #include <unistd.h>
-#include <stdbool.h>
+#include <stdio.h>
+
+static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
+  struct unit *u = spawn_user_data(s);
+  fprintf(stderr, "%s: %s\n", u->rel_path, buf);
+}
+
+static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
+  struct unit *u = spawn_user_data(s);
+  fprintf(stdout, "%s: %s\n", u->rel_path, buf);
+}
 
 static bool _check_is_outdated(struct node *n) {
   // TODO:
@@ -15,7 +25,6 @@ static bool _check_is_outdated(struct node *n) {
 }
 
 static void _check_script_run(struct node *n) {
-  int rc = 0;
   const char *script = n->value;
   if (!g_env.quiet) {
     akinfo("Checking %s", script);
@@ -23,43 +32,33 @@ static void _check_script_run(struct node *n) {
   struct pool *pool = pool_create_empty();
   const char *path = pool_printf(pool, ".autark/%s", script);
 
-  struct unit *unit = unit_create(path, UNIT_FLG_POOL_OWNER, pool);
+  struct unit *unit = unit_create(path, 0, pool);
   unit->impl = n;
   unit_push(unit);
 
   const char *env_tmp = pool_printf(pool, "%s.env.tmp", script);
   unlink(env_tmp);
 
-  //struct spawn *spawn = spawn_create(script, )
+  struct spawn *spawn = spawn_create(unit->source_path, unit);
 
+  spawn_set_stdout_handler(spawn, _stdout_handler);
+  spawn_set_stderr_handler(spawn, _stderr_handler);
 
+  int rc = spawn_do(spawn);
+  if (rc) {
+    node_fatal(rc, n, "%s", script);
+  } else {
+    int code = spawn_exit_code(spawn);
+    if (code != 0) {
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", script, code);
+    }
+  }
 
-
+  spawn_destroy(spawn);
   unit_pop();
+  pool_destroy(pool);
 
   /*
-     int rc = 0, code;
-     char unit_path[PATH_MAX], env_path[PATH_MAX], env_path_tmp[PATH_MAX];
-
-     const char *unit = n->value;
-     if (!g_env.quiet) {
-     fprintf(stderr, "Checking %s\n", unit);
-     }
-
-     snprintf(unit_path, sizeof(unit_path), ".autark/%s", unit);
-     snprintf(env_path_tmp, sizeof(env_path_tmp), "%s/.autark/%s.env.tmp", g_env.unit.cache_dir, unit);
-     unlink(env_path_tmp);
-
-     struct spawn *spawn = spawn_create(unit_path, n);
-     spawn_env_set(spawn, AUTARK_UNIT, unit_path);
-     RCC(rc, finish, spawn_do(spawn));
-
-     code = spawn_exit_code(spawn);
-     if (code != 0) {
-     rc = akerror(AK_ERROR_FAIL, "Check program: %s exited with non-zero code: %d", code);
-     goto finish;
-     }
-
      snprintf(env_path, sizeof(env_path), "%s/.autark/%s.env", g_env.unit.cache_dir, unit);
      if (path_is_accesible_read(env_path_tmp)) {
      RCC(rc, finish, utils_rename_file(env_path_tmp, env_path));

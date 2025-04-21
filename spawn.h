@@ -14,7 +14,7 @@ pid_t spawn_pid(struct spawn*);
 
 int spawn_exit_code(struct spawn*);
 
-void spawn_arg_add(struct spawn*, const char *arg);
+const char* spawn_arg_add(struct spawn*, const char *arg);
 
 void spawn_env_set(struct spawn*, const char *key, const char *val);
 
@@ -27,5 +27,6 @@ void spawn_set_stderr_handler(struct spawn*, void (*handler)(char *buf, size_t b
 int spawn_do(struct spawn*);
 
 void spawn_destroy(struct spawn*);
+
 
 #endif
