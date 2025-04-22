@@ -29,8 +29,9 @@ int main(void) {
   on_command_dep(argc, argv);
   unit_pop();
 
-  // TODO:
-  //
+  snprintf(path, sizeof(path), "%s/%s", path2, "test4.deps");
+  ASSERT(assert, access(path, R_OK) == 0);
+
 
   return 0;
 assert:

@@ -2,6 +2,7 @@
 #include "log.h"
 #include "ulist.h"
 #include "pool.h"
+#include "xstr.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -62,6 +63,18 @@ void spawn_env_set(struct spawn *s, const char *key, const char *val) {
   }
   const char *v = pool_printf(s->pool, "%s=%s", key, val);
   ulist_push(&s->env, &v);
+}
+
+void spawn_env_path_prepend(struct spawn *s, const char *path) {
+  const char *path_env = getenv("PATH");
+  if (path_env) {
+    struct xstr *xstr = xstr_create_empty();
+    xstr_printf(xstr, "%s:%s", path, path_env);
+    spawn_env_set(s, "PATH", xstr_ptr(xstr));
+    xstr_destroy(xstr);
+  } else {
+    spawn_env_set(s, "PATH", path);
+  }
 }
 
 static char* _env_find(struct spawn *s, const char *key, size_t keylen) {

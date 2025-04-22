@@ -40,9 +40,12 @@ static void _check_script_run(struct node *n) {
   unlink(env_tmp);
 
   struct spawn *spawn = spawn_create(unit->source_path, unit);
-
   spawn_set_stdout_handler(spawn, _stdout_handler);
   spawn_set_stderr_handler(spawn, _stderr_handler);
+  spawn_env_path_prepend(spawn, g_env.project.cache_dir);
+  if (g_env.check.extra_env_paths) {
+    spawn_env_path_prepend(spawn, g_env.check.extra_env_paths);
+  }
 
   int rc = spawn_do(spawn);
   if (rc) {

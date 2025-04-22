@@ -9,11 +9,13 @@
 #include "xstr.h"
 #include "script.h"
 #include "autark.h"
+#include "env.h"
+#include "paths.h"
 
-#define ASSERT(label__, expr__)                                         \
-        if (!(expr__)) {                                                \
+#define ASSERT(label__, expr__)                                       \
+        if (!(expr__)) {                                              \
           fputs(__FILE__ ":" Q(__LINE__) " " Q(expr__) "\n", stderr); \
-          goto label__;                                                 \
+          goto label__;                                               \
         }
 
 int test_script_parse(const char *script_path, struct sctx **out);
@@ -34,4 +36,10 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
   int ret = memcmp(val.buf, xstr_ptr(xstr), sz);
   value_destroy(&val);
   return ret;
+}
+
+static inline void test_init(void) {
+  g_env.verbose = true;
+  autark_init();
+  g_env.check.extra_env_paths = path_normalize(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
 }
