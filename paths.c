@@ -58,22 +58,25 @@ bool path_is_accesible_exec(const char *path) {
   return path_is_accesible(path, AKPATH_EXEC);
 }
 
-const char* path_real(const char *path, struct pool *pool) {
-  char buf[PATH_MAX];
-  char *ret = realpath(path, buf);
-  if (!ret) {
-    return 0;
-  }
-  return pool_strdup(pool, ret);
+const char* path_real(const char *path, char buf[PATH_MAX]) {
+  return realpath(path, buf);
 }
 
-const char* path_normalize(const char *path, struct pool *pool) {
+const char* path_real_pool(const char *path, struct pool *pool) {
   char buf[PATH_MAX];
+  if (path_real(path, buf)) {
+    return pool_strdup(pool, buf);
+  } else {
+    return 0;
+  }
+}
+
+const char* path_normalize(const char *path, char buf[PATH_MAX]) {
   if (path[0] == '/') {
     strncpy(buf, path, PATH_MAX - 1);
     buf[PATH_MAX - 1] = '\0';
   } else {
-    if (!getcwd(buf, sizeof(buf))) {
+    if (!getcwd(buf, PATH_MAX)) {
       return 0;
     }
     size_t len = strlen(buf);
@@ -132,8 +135,16 @@ const char* path_normalize(const char *path, struct pool *pool) {
       free(segments[i]);
     }
   }
+  return buf;
+}
 
-  return pool_strdup(pool, buf);
+const char* path_normalize_pool(const char *path, struct pool *pool) {
+  char buf[PATH_MAX];
+  if (path_normalize(path, buf)) {
+    return pool_strdup(pool, buf);
+  } else {
+    return 0;
+  }
 }
 
 int path_mkdirs(const char *path) {
@@ -222,8 +233,12 @@ int path_stat(const char *path, struct akpath_stat *stat) {
   return _stat(path, -1, stat);
 }
 
-int path_statfd(int fd, struct akpath_stat *stat) {
+int path_stat_fd(int fd, struct akpath_stat *stat) {
   return _stat(0, fd, stat);
+}
+
+int path_stat_file(FILE *file, struct akpath_stat *stat) {
+  return _stat(0, fileno(file), stat);
 }
 
 bool path_is_dir(const char *path) {

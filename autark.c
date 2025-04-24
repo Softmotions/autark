@@ -6,6 +6,7 @@
 #include "autark.h"
 #include "map.h"
 #include "alloc.h"
+#include "deps.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -53,7 +54,7 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
 
   snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_rel_path);
   path[sizeof(path) - 1] = '\0';
-  unit->source_path = path_normalize(path, pool);
+  unit->source_path = path_normalize_pool(path, pool);
 
   strncpy(path, unit->source_path, sizeof(path));
   path[sizeof(path) - 1] = '\0';
@@ -63,7 +64,7 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
 
   snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_rel_path);
   path[sizeof(path) - 1] = '\0';
-  unit->cache_path = path_normalize(path, pool);
+  unit->cache_path = path_normalize_pool(path, pool);
 
   strncpy(path, unit->cache_path, sizeof(path));
   path[sizeof(path) - 1] = '\0';
@@ -182,7 +183,7 @@ void autark_build_prepare(const char *script_path) {
     akassert(g_env.project.root_dir);
   }
 
-  const char *root_dir = path_real(g_env.project.root_dir, g_env.pool);
+  const char *root_dir = path_real_pool(g_env.project.root_dir, g_env.pool);
   if (!root_dir) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
@@ -214,7 +215,7 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
 
-  g_env.project.cache_dir = path_normalize(g_env.project.cache_dir, g_env.pool);
+  g_env.project.cache_dir = path_normalize_pool(g_env.project.cache_dir, g_env.pool);
   if (!g_env.project.cache_dir) {
     akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
@@ -291,21 +292,22 @@ static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
     akinfo("dep %s", file);
   }
-  unsigned ts = 0;
+  int type = DEPS_TYPE_FILE;
   if (strcmp(file, "-") != 0) {
-    struct akpath_stat stat = { 0 };
-    if (!path_stat(file, &stat)) {
-      ts = stat.mtime / 1000U;
-    }
+    type = DEPS_TYPE_OUTDATED;
   }
+  struct deps deps;
   struct unit *unit = unit_peek();
   const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "deps");
-  FILE *f = fopen(deps_path, "a+");
-  if (!f) {
-    akfatal(errno, "Failed to open file: %s", deps_path);
+  int rc = deps_open(deps_path, false, &deps);
+  if (rc) {
+    akfatal(rc, "Failed to open deps file: %s", deps_path);
   }
-  fprintf(f, "%s:%u\n", file, ts);
-  fclose(f);
+  rc = deps_register(&deps, type, file);
+  if (rc) {
+    akfatal(rc, "Failed to write deps file: %s", deps_path);
+  }
+  deps_close(&deps);
 }
 
 static void _on_command_dep(int argc, const char **argv) {

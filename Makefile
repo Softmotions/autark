@@ -12,6 +12,7 @@ SRC = xstr.c \
 			autark.c \
 			script.c \
 			spawn.c \
+			deps.c \
 			node_script.c \
 			node_meta.c \
 			node_consumes.c \
@@ -39,6 +40,7 @@ HDRS = config.h \
 			 autark.h \
 			 script.h \
 			 spawn.h \
+			 deps.h \
 			 scriptx.h \
 			 nodes.h
 
