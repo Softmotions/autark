@@ -9,6 +9,7 @@
 #include "autark.h"
 #include "config.h"
 #include "paths.h"
+#include "deps.h"
 
 #include <unistd.h>
 #include <stdarg.h>

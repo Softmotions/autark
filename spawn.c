@@ -3,6 +3,7 @@
 #include "ulist.h"
 #include "pool.h"
 #include "xstr.h"
+#include "env.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,6 +45,15 @@ struct spawn* spawn_create(const char *exec, void *user_data) {
     .user_data = user_data,
   };
   s->exec = spawn_arg_add(s, exec);
+
+  if (g_env.project.cache_dir) {
+    spawn_env_path_prepend(s, g_env.project.cache_dir);
+  }
+
+  if (g_env.spawn.extra_env_paths) {
+    spawn_env_path_prepend(s, g_env.spawn.extra_env_paths);
+  }
+
   return s;
 }
 

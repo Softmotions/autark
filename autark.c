@@ -298,7 +298,7 @@ static void _on_command_dep_impl(const char *file) {
   }
   struct deps deps;
   struct unit *unit = unit_peek();
-  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "deps");
+  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "deps.tmp");
   int rc = deps_open(deps_path, false, &deps);
   if (rc) {
     akfatal(rc, "Failed to open deps file: %s", deps_path);

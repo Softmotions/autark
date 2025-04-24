@@ -22,7 +22,7 @@ int deps_open(const char *path, bool truncate, struct deps *d) {
   return rc;
 }
 
-bool deps_next(struct deps *d) {
+bool deps_cur_next(struct deps *d) {
   int rc;
   if (d && d->file) {
     if (!fgets(d->buf, sizeof(d->buf), d->file)) {
@@ -49,7 +49,7 @@ bool deps_next(struct deps *d) {
   return false;
 }
 
-bool deps_is_outdated(struct deps *d) {
+bool deps_cur_is_outdated(struct deps *d) {
   if (d) {
     if (d->type == DEPS_TYPE_FILE) {
       struct akpath_stat st;

@@ -46,8 +46,8 @@ struct env {
     bool clean;            // Clean project cache before build
   } project;
   struct {
-    const char *extra_env_paths; // Extra PATH environment for any check spawn
-  } check;
+    const char *extra_env_paths; // Extra PATH environment for any program spawn
+  } spawn;
   struct ulist units_stack; // Stack of nested units
   struct ulist units;       // All created units.
 };

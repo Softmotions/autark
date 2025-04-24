@@ -5,9 +5,9 @@
 #include <stdbool.h>
 #include <limits.h>
 
-#define DEPS_TYPE_FILE 102
+#define DEPS_TYPE_FILE     102
 #define DEPS_TYPE_OUTDATED 111
-#define DEPS_BUF_SZ    4096
+#define DEPS_BUF_SZ        4096
 
 struct deps {
   int       type;
@@ -19,9 +19,9 @@ struct deps {
 
 int deps_open(const char *path, bool truncate, struct deps *init);
 
-bool deps_next(struct deps*);
+bool deps_cur_next(struct deps*);
 
-bool deps_is_outdated(struct deps*);
+bool deps_cur_is_outdated(struct deps*);
 
 int deps_register(struct deps*, int type, const char *file);
 

@@ -41,5 +41,5 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
 static inline void test_init(void) {
   g_env.verbose = true;
   autark_init();
-  g_env.check.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
+  g_env.spawn.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
 }
