@@ -293,7 +293,7 @@ static void _on_command_dep_impl(const char *file) {
     akinfo("dep %s", file);
   }
   int type = DEPS_TYPE_FILE;
-  if (strcmp(file, "-") != 0) {
+  if (strcmp(file, "-") == 0) {
     type = DEPS_TYPE_OUTDATED;
   }
   struct deps deps;

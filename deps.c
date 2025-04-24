@@ -12,8 +12,11 @@ int deps_open(const char *path, bool truncate, struct deps *d) {
   int rc = 0;
   akassert(path && d);
   memset(d, 0, sizeof(*d));
-  d->file = fopen(path, truncate ? "w+" : "r+");
+  d->file = fopen(path, truncate ? "w+" : "a+");
   if (!d->file) {
+    return errno;
+  }
+  if (fseek(d->file, 0, SEEK_SET) < 0) {
     return errno;
   }
   return rc;
