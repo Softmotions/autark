@@ -99,7 +99,7 @@ static void _dispose(struct node *n) {
 }
 
 int node_check_setup(struct node *n) {
-  n->resolve = _resolve;
+  n->setup = _resolve;
   n->dispose = _dispose;
   return 0;
 }

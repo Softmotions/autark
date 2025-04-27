@@ -25,7 +25,7 @@
 #define NODE(x__)               (struct node*) (x__)
 #define NODE_IS_EXCLUDED(n__)   (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
 #define NODE_IS_INCLUDED(n__)   (!NODE_IS_EXCLUDED(n__))
-#define NODE_IS_RESOLVED(n__)   (((n__)->flags & NODE_FLG_RESOLVED) != 0)
+#define NODE_IS_SETUP(n__)      (((n__)->flags & NODE_FLG_SETUP) != 0)
 
 struct _yycontext;
 
@@ -457,15 +457,15 @@ static void _node_context_pop(struct node *n) {
 }
 
 static void _node_reset(struct node *n) {
-  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_RESOLVED | NODE_FLG_EXCLUDED);
+  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_EXCLUDED);
 }
 
-static void _node_resolve(struct node *n) {
-  if (!(n->flags & NODE_FLG_RESOLVED)) {
-    n->flags |= NODE_FLG_RESOLVED;
-    if (n->resolve) {
+static void _node_setup(struct node *n) {
+  if (!(n->flags & NODE_FLG_SETUP)) {
+    n->flags |= NODE_FLG_SETUP;
+    if (n->setup) {
       _node_context_push(n);
-      n->resolve(n);
+      n->setup(n);
       _node_context_pop(n);
     }
   }
@@ -519,7 +519,7 @@ finish:
   return rc;
 }
 
-void script_resolve(struct sctx *s) {
+void script_setup(struct sctx *s) {
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
     _node_reset(n);
@@ -527,24 +527,24 @@ void script_resolve(struct sctx *s) {
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
     if (n->type == NODE_TYPE_CHECK && NODE_IS_INCLUDED(n)) {
-      _node_resolve(n);
+      _node_setup(n);
     }
   }
-  int resolved;
+  int nsetup;
   do {
-    resolved = 0;
+    nsetup = 0;
     for (int i = 0; i < s->nodes.num; ++i) {
       struct node *n = NODE_AT(&s->nodes, i);
-      if (n->type != NODE_TYPE_CHECK && NODE_IS_INCLUDED(n) && !NODE_IS_RESOLVED(n)) {
-        ++resolved;
-        _node_resolve(n);
+      if (n->type != NODE_TYPE_CHECK && NODE_IS_INCLUDED(n) && !NODE_IS_SETUP(n)) {
+        ++nsetup;
+        _node_setup(n);
       }
     }
-  } while (resolved > 0);
+  } while (nsetup > 0);
 }
 
 void script_build(struct sctx *s) {
-  script_resolve(s);
+  script_setup(s);
   for (int i = 0; i < s->nodes.num; ++i) {
     struct node *n = NODE_AT(&s->nodes, i);
     node_build(n);

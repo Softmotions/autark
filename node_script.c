@@ -14,7 +14,7 @@ static void _dispose(struct node *n) {
 }
 
 int node_script_setup(struct node *n) {
-  n->resolve = _resolve;
+  n->setup = _resolve;
   n->build = _build;
   n->dispose = _dispose;
   return 0;

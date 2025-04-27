@@ -22,7 +22,7 @@
 #define NODE_TYPE_SUBST    0x2000U
 
 #define NODE_FLG_BOUND    0x01U
-#define NODE_FLG_RESOLVED 0x02U // Node built
+#define NODE_FLG_SETUP    0x02U // Node built
 #define NODE_FLG_UPDATED  0x04U // Node product updated as result of build
 #define NODE_FLG_BUILT    0x08U // Node built
 #define NODE_FLG_EXCLUDED 0x10U // Node is excluded from build
@@ -47,7 +47,7 @@ struct node {
   struct sctx *ctx;
   struct unit *unit;
 
-  void (*resolve)(struct node*);
+  void (*setup)(struct node*);
   void (*build)(struct node*);
   void (*dispose)(struct node*);
 
@@ -61,7 +61,7 @@ struct sctx {
 
 int script_open(const char *file, struct sctx **out);
 
-void script_resolve(struct sctx*);
+void script_setup(struct sctx*);
 
 void script_build(struct sctx*);
 
@@ -80,5 +80,6 @@ int node_env_load(struct node*, const char *path);
 void node_fatal(int rc, struct node *n, const char *fmt, ...);
 
 int node_error(int rc, struct node *n, const char *fmt, ...);
+
 
 #endif
