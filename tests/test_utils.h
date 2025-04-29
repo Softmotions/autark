@@ -11,6 +11,7 @@
 #include "autark.h"
 #include "env.h"
 #include "paths.h"
+#include "log.h"
 
 #define ASSERT(label__, expr__)                                       \
         if (!(expr__)) {                                              \

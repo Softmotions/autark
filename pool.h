@@ -10,14 +10,17 @@ struct  pool_unit {
 };
 
 struct pool {
-  size_t usiz;                   /**< Used size */
-  size_t asiz;                   /**< Allocated size */
-  struct pool_unit *unit;        /**< Current heap unit */
-  void *user_data;               /**< Associated user data */
-  char *heap;                    /**< Current pool heap ptr */
+  size_t usiz;                            /// Used size
+  size_t asiz;                            /// Allocated size
+  struct pool_unit *unit;                 /// Current heap unit
+  void *user_data;                        /// Associated user data
+  char *heap;                             /// Current pool heap ptr
+  void  (*on_pool_destroy)(struct pool*); /// Called when pool destroyed
 };
 
 struct pool* pool_create_empty(void);
+
+struct pool* pool_create(void (*)(struct pool*));
 
 void pool_destroy(struct pool*);
 

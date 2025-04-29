@@ -8,11 +8,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int deps_open(const char *path, bool truncate, struct deps *d) {
+int deps_open(const char *path, int omode, struct deps *d) {
   int rc = 0;
   akassert(path && d);
   memset(d, 0, sizeof(*d));
-  d->file = fopen(path, truncate ? "w+" : "a+");
+  d->file = fopen(path, (omode & DEPS_OPEN_TRUNCATE) ? "w+" : ((omode & DEPS_OPEN_READONLY) ? "r" : "a+"));
   if (!d->file) {
     return errno;
   }
@@ -85,6 +85,9 @@ int deps_register(struct deps *d, int type, const char *file) {
     rc = errno;
   }
   fseek(d->file, off, SEEK_SET);
+  if (!rc) {
+    ++d->num_registered;
+  }
   return rc;
 }
 
@@ -95,6 +98,6 @@ void deps_close(struct deps *d) {
   }
 }
 
-void deps_remove(const char *path) {
+void deps_prune_all(const char *path) {
   unlink(path);
 }

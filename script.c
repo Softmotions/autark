@@ -335,11 +335,11 @@ static int _script_from_value(
     struct unit *unit;
     if (g_env.units.num == 1) {
       unit = unit_peek();
-      akassert(unit->impl == 0); // We are the root script
+      akassert(unit->n == 0); // We are the root script
     } else {
       unit = unit_create(file, UNIT_FLG_SRC_CWD, g_env.pool);
     }
-    unit->impl = x;
+    unit->n = &x->base;
     x->base.unit = unit;
     unit_ch_dir(unit);
   }
@@ -617,17 +617,72 @@ void node_env_set(struct node *n, const char *key, const char *val) {
   }
 }
 
-int node_env_load(struct node *n, const char *path) {
-  int rc = 0;
-  FILE *f = fopen(path, "r+");
-  if (!f) {
-    return errno;
+void node_resolve(struct node_resolve *r) {
+  akassert(r && r->path);
+
+  struct deps deps;
+  struct pool *pool = pool_create_empty();
+
+  const char *deps_path = pool_printf(pool, "%s.deps", r->path);
+  const char *env_path = pool_printf(pool, "%s.env", r->path);
+  const char *deps_path_tmp = pool_printf(pool, "%s.deps.tmp", r->path);
+  const char *env_path_tmp = pool_printf(pool, "%s.env.tmp", r->path);
+
+  unlink(deps_path_tmp);
+  unlink(env_path_tmp);
+
+  r->num_deps = 0;
+  r->num_outdated = 0;
+
+  if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
+    while (deps_cur_next(&deps)) {
+      ++r->num_deps;
+      if (deps_cur_is_outdated(&deps)) {
+        ++r->num_outdated;
+        if (r->on_outdated_dependency) {
+          r->on_outdated_dependency(r, &deps);
+        }
+      }
+    }
+  }
+  if (deps.file) {
+    deps_close(&deps);
   }
 
-  // TODO:
+  if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
+    int rc = deps_open(deps_path_tmp, DEPS_OPEN_TRUNCATE, &deps);
+    if (!rc) {
+      akfatal(rc, "Failed to open dependency file: %s", deps_path_tmp);
+    }
+    r->on_resolve(r, &deps);
+    deps_close(&deps);
+    rc = utils_rename_file(deps_path_tmp, deps_path);
+    if (rc) {
+      akfatal(rc, "Rename failed of %s to %s", deps_path_tmp, deps_path);
+    }
+    if (r->on_env_value && !access(env_path_tmp, R_OK)) {
+      rc = utils_rename_file(env_path_tmp, env_path);
+      if (rc) {
+        akfatal(rc, "Rename failed of %s to %s", env_path_tmp, env_path);
+      }
+      char buf[4096];
+      FILE *f = fopen(env_path, "r");
+      if (f) {
+        while (fgets(buf, sizeof(buf), f)) {
+          char *p = strchr(buf, '=');
+          if (p) {
+            *p = '\0';
+            r->on_env_value(r, buf, p + 1);
+          }
+        }
+        fclose(f);
+      } else {
+        akfatal(rc, "Failed to open env file: %s", env_path);
+      }
+    }
+  }
 
-  fclose(f);
-  return rc;
+  pool_destroy(pool);
 }
 
 #ifdef TESTS

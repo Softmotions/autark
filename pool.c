@@ -13,9 +13,18 @@ struct pool* pool_create_empty(void) {
   return p;
 }
 
+struct pool* pool_create(void (*on_pool_destroy)(struct pool*)) {
+  struct pool *pool = pool_create_empty();
+  pool->on_pool_destroy = on_pool_destroy;
+  return pool;
+}
+
 void pool_destroy(struct pool *pool) {
   if (!pool) {
     return;
+  }
+  if (pool->on_pool_destroy) {
+    pool->on_pool_destroy(pool);
   }
   for (struct pool_unit *u = pool->unit, *next; u; u = next) {
     next = u->next;

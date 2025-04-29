@@ -7,17 +7,22 @@
 
 #define DEPS_TYPE_FILE     102
 #define DEPS_TYPE_OUTDATED 111
-#define DEPS_BUF_SZ        4096
+
+#define DEPS_OPEN_TRUNCATE 0x01U
+#define DEPS_OPEN_READONLY 0x02U
+
+#define DEPS_BUF_SZ 4096
 
 struct deps {
   int       type;
+  int       num_registered; /// Number of deps registerd in the current session
   long long serial;
   const char *resource;
   FILE       *file;
   char buf[DEPS_BUF_SZ];
 };
 
-int deps_open(const char *path, bool truncate, struct deps *init);
+int deps_open(const char *path, int omode, struct deps *init);
 
 bool deps_cur_next(struct deps*);
 
@@ -27,6 +32,6 @@ int deps_register(struct deps*, int type, const char *file);
 
 void deps_close(struct deps*);
 
-void deps_remove(const char *path);
+void deps_prune_all(const char *path);
 
 #endif

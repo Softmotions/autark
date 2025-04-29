@@ -2,9 +2,11 @@
 #define SCRIPT_H
 
 //#include "basedefs.h"
-#include "pool.h"
 #include "ulist.h"
 #include "xstr.h"
+#include "deps.h"
+
+#include <stdbool.h>
 
 #define NODE_TYPE_VALUE    0x01U
 #define NODE_TYPE_SCRIPT   0x02U
@@ -75,7 +77,17 @@ const char* node_env_get(struct node*, const char *key);
 
 void node_env_set(struct node*, const char *key, const char *val);
 
-int node_env_load(struct node*, const char *path);
+struct node_resolve {
+  const char *path;
+  void       *user_data;
+  void (*on_env_value)(struct node_resolve*, const char *key, const char *val);
+  void (*on_outdated_dependency)(struct node_resolve*, const struct deps *dep);
+  void (*on_resolve)(struct node_resolve*, struct deps *dep);
+  int  num_outdated; // Number of outdated dependencies
+  int  num_deps;     // Number of dependencies
+};
+
+void node_resolve(struct node_resolve*);
 
 void node_fatal(int rc, struct node *n, const char *fmt, ...);
 

@@ -30,7 +30,8 @@ struct unit {
   const char  *cache_dir;   // Absolute path to the cache directory where unit file is located.
   struct pool *pool;        // Pool used to allocate unit
   unsigned     flags;       // Unit flags
-  void *impl;
+  struct node *n;           // Node this unit associated. May be zero.
+  void *impl;               // Arbirary implementation data
 };
 
 /// Global env
@@ -48,13 +49,18 @@ struct env {
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;
-  struct ulist units_stack; // Stack of nested units
-  struct ulist units;       // All created units.
+  struct map  *map_path_to_unit; // Path to unit mapping
+  struct ulist stack_units;      // Stack of nested units
+  struct ulist units;            // All created units.
 };
 
 extern struct env g_env;
 
+void on_unit_pool_destroy(struct pool*);
+
 struct unit* unit_create(const char *unit_path, unsigned flags, struct pool *pool);
+
+struct unit* unit_for_path(const char *path);
 
 void unit_push(struct unit*);
 

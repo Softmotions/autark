@@ -18,7 +18,7 @@
 #include <errno.h>
 
 struct env g_env = {
-  .units_stack = { .usize = sizeof(struct unit*) },
+  .stack_units = { .usize = sizeof(struct unit*) },
   .units = { .usize = sizeof(struct unit*) }
 };
 
@@ -40,6 +40,23 @@ void unit_env_remove(struct unit *u, const char *key) {
 }
 
 const char* unit_env_get(struct unit*, const char *key);
+
+void on_unit_pool_destroy(struct pool *pool) {
+  for (int i = 0; i < g_env.units.num; ++i) {
+    struct unit *unit = *(struct unit**) ulist_get(&g_env.units, i);
+    if (unit->pool == pool) {
+      map_remove(g_env.map_path_to_unit, unit->source_path);
+      map_remove(g_env.map_path_to_unit, unit->cache_path);
+      ulist_remove(&g_env.units, i);
+      --i;
+    }
+  }
+}
+
+struct unit* unit_for_path(const char *path) {
+  struct unit *unit = map_get(g_env.map_path_to_unit, path);
+  return unit;
+}
 
 struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool *pool) {
   akassert(unit_rel_path && !path_is_absolute(unit_rel_path));
@@ -76,21 +93,24 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
     akfatal(rc, "Failed to create directory: %s", path);
   }
 
+  map_put_str(g_env.map_path_to_unit, unit->source_path, unit);
+  map_put_str(g_env.map_path_to_unit, unit->cache_path, unit);
   ulist_push(&g_env.units, &unit);
+
   return unit;
 }
 
 void unit_push(struct unit *unit) {
   akassert(unit);
-  ulist_push(&g_env.units_stack, &unit);
+  ulist_push(&g_env.stack_units, &unit);
   unit_ch_dir(unit);
   setenv(AUTARK_UNIT, unit->basename, 1);
 }
 
 struct unit* unit_pop(void) {
-  akassert(g_env.units_stack.num > 0);
-  struct unit *unit = *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
-  ulist_pop(&g_env.units_stack);
+  akassert(g_env.stack_units.num > 0);
+  struct unit *unit = *(struct unit**) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
+  ulist_pop(&g_env.stack_units);
   struct unit *peek = unit_peek();
   if (peek) {
     unit_ch_dir(peek);
@@ -99,10 +119,10 @@ struct unit* unit_pop(void) {
 }
 
 struct unit* unit_peek(void) {
-  if (g_env.units_stack.num == 0) {
+  if (g_env.stack_units.num == 0) {
     return 0;
   }
-  return *(struct unit**) ulist_get(&g_env.units_stack, g_env.units_stack.num - 1);
+  return *(struct unit**) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
 }
 
 void unit_ch_dir(struct unit *unit) {
@@ -279,7 +299,7 @@ static void _on_command_set(int argc, const char **argv) {
   }
 
   struct unit *unit = unit_peek();
-  const char *env_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "env.tmp");
+  const char *env_path = pool_printf(g_env.pool, "%s.env.tmp", unit->cache_path);
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
@@ -351,6 +371,7 @@ void autark_init(void) {
     g_env.cwd = pool_strdup(g_env.pool, buf);
     akcheck(utils_exec_path(buf));
     g_env.program = pool_strdup(g_env.pool, buf);
+    g_env.map_path_to_unit = map_create_str(0);
   }
 }
 
@@ -363,7 +384,8 @@ AK_DESTRUCTOR void autark_dispose(void) {
       _unit_destroy(unit);
     }
     ulist_destroy_keep(&g_env.units);
-    ulist_destroy_keep(&g_env.units_stack);
+    ulist_destroy_keep(&g_env.stack_units);
+    map_destroy(g_env.map_path_to_unit);
     pool_destroy(pool);
   }
 }
