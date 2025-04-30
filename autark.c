@@ -47,6 +47,7 @@ void on_unit_pool_destroy(struct pool *pool) {
     if (unit->pool == pool) {
       map_remove(g_env.map_path_to_unit, unit->source_path);
       map_remove(g_env.map_path_to_unit, unit->cache_path);
+      _unit_destroy(unit);
       ulist_remove(&g_env.units, i);
       --i;
     }
@@ -93,8 +94,8 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
     akfatal(rc, "Failed to create directory: %s", path);
   }
 
-  map_put_str(g_env.map_path_to_unit, unit->source_path, unit);
-  map_put_str(g_env.map_path_to_unit, unit->cache_path, unit);
+  map_put_str_no_copy(g_env.map_path_to_unit, unit->source_path, unit);
+  map_put_str_no_copy(g_env.map_path_to_unit, unit->cache_path, unit);
   ulist_push(&g_env.units, &unit);
 
   return unit;
@@ -104,7 +105,7 @@ void unit_push(struct unit *unit) {
   akassert(unit);
   ulist_push(&g_env.stack_units, &unit);
   unit_ch_dir(unit);
-  setenv(AUTARK_UNIT, unit->basename, 1);
+  setenv(AUTARK_UNIT, unit->rel_path, 1);
 }
 
 struct unit* unit_pop(void) {
@@ -208,8 +209,12 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
 
+  g_env.project.root_dir = root_dir;
+  g_env.cwd = root_dir;
+  akcheck(chdir(root_dir));
+
   if (!g_env.project.cache_dir) {
-    g_env.project.cache_dir = AUTARK_CACHE_DIR;
+    g_env.project.cache_dir = AUTARK_CACHE;
   }
   if (g_env.project.clean) {
     if (path_is_dir(g_env.project.cache_dir)) {
@@ -219,10 +224,6 @@ void autark_build_prepare(const char *script_path) {
       }
     }
   }
-
-  g_env.project.root_dir = root_dir;
-  g_env.cwd = root_dir;
-  akcheck(chdir(root_dir));
 
   strncpy(path_buf, script_path, PATH_MAX - 1);
   path_buf[PATH_MAX - 1] = '\0';
@@ -285,17 +286,13 @@ static void _project_env_read(void) {
 static void _on_command_set(int argc, const char **argv) {
   _project_env_read();
 
-  const char *key;
-  const char *val = "";
+  const char *kv;
   if (optind >= argc) {
     _usage("Missing <key> argument");
   }
-  key = argv[optind++];
-  if (optind < argc) {
-    val = argv[optind];
-  }
+  kv = argv[optind++];
   if (g_env.verbose) {
-    akinfo("set %s=%s\n", key, val);
+    akinfo("autark set %s\n", kv);
   }
 
   struct unit *unit = unit_peek();
@@ -304,13 +301,13 @@ static void _on_command_set(int argc, const char **argv) {
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
   }
-  fprintf(f, "%s=%s\n", key, val);
+  fprintf(f, "%s\n", kv);
   fclose(f);
 }
 
 static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
-    akinfo("dep %s", file);
+    akinfo("autark dep %s", file);
   }
   int type = DEPS_TYPE_FILE;
   if (strcmp(file, "-") == 0) {
@@ -420,6 +417,13 @@ void autark_run(int argc, const char **argv) {
       case 'h':
       default:
         _usage(0);
+    }
+  }
+
+  if (!g_env.verbose) {
+    const char *v = getenv(AUTARK_VERBOSE);
+    if (v && *v == '1') {
+      g_env.verbose = true;
     }
   }
 

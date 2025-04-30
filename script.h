@@ -82,7 +82,7 @@ struct node_resolve {
   void       *user_data;
   void (*on_env_value)(struct node_resolve*, const char *key, const char *val);
   void (*on_outdated_dependency)(struct node_resolve*, const struct deps *dep);
-  void (*on_resolve)(struct node_resolve*, struct deps *dep);
+  void (*on_resolve)(struct node_resolve*);
   int  num_outdated; // Number of outdated dependencies
   int  num_deps;     // Number of dependencies
 };

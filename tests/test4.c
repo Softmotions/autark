@@ -29,7 +29,7 @@ int main(void) {
   on_command_dep(argc, argv);
   unit_pop();
 
-  snprintf(path, sizeof(path), "%s/%s", path2, "test4.deps");
+  snprintf(path, sizeof(path), "%s/%s", path2, "test4.deps.tmp");
   ASSERT(assert, access(path, R_OK) == 0);
 
 

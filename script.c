@@ -620,6 +620,7 @@ void node_env_set(struct node *n, const char *key, const char *val) {
 void node_resolve(struct node_resolve *r) {
   akassert(r && r->path);
 
+  int rc;
   struct deps deps;
   struct pool *pool = pool_create_empty();
 
@@ -650,15 +651,12 @@ void node_resolve(struct node_resolve *r) {
   }
 
   if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
-    int rc = deps_open(deps_path_tmp, DEPS_OPEN_TRUNCATE, &deps);
-    if (!rc) {
-      akfatal(rc, "Failed to open dependency file: %s", deps_path_tmp);
-    }
-    r->on_resolve(r, &deps);
-    deps_close(&deps);
-    rc = utils_rename_file(deps_path_tmp, deps_path);
-    if (rc) {
-      akfatal(rc, "Rename failed of %s to %s", deps_path_tmp, deps_path);
+    r->on_resolve(r);
+    if (access(deps_path_tmp, R_OK) == 0) {
+      rc = utils_rename_file(deps_path_tmp, deps_path);
+      if (rc) {
+        akfatal(rc, "Rename failed of %s to %s", deps_path_tmp, deps_path);
+      }
     }
     if (r->on_env_value && !access(env_path_tmp, R_OK)) {
       rc = utils_rename_file(env_path_tmp, env_path);

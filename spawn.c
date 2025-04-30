@@ -125,7 +125,7 @@ static char** _env_create(struct spawn *s) {
     }
   }
   for (c = 0; c < s->env.num; ++c, ++i) {
-    nenv[i] = *(char**) ulist_get(&s->env, i);
+    nenv[i] = *(char**) ulist_get(&s->env, c);
   }
   nenv[i] = 0;
   return nenv;
@@ -285,7 +285,7 @@ int spawn_do(struct spawn *s) {
         goto finish;
       }
       for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
-        if (fds[i].events & POLLIN) {
+        if ((fds[i].events & POLLIN) && fds[i].fd != -1) {
           ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
           if (n > 0) {
             buf[n] = '\0';

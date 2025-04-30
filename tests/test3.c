@@ -22,7 +22,7 @@ int main(void) {
   setenv(AUTARK_CACHE_DIR, path2, 1);
   setenv(AUTARK_UNIT, "test3", 1);
 
-  const char *argv[] = { "test3", "set", "foo", "bar" };
+  const char *argv[] = { "test3", "set", "foo=bar" };
   int argc = sizeof(argv) / sizeof(argv[0]);
   ++optind;
 

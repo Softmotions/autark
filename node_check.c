@@ -22,10 +22,13 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 static void _check_on_env_value(struct node_resolve *nr, const char *key, const char *val) {
   struct unit *unit = nr->user_data;
   akassert(unit->n);
+  if (!g_env.quiet) {
+    akinfo("%s %s=%s", unit->rel_path, key, val);
+  }
   node_env_set(unit->n, key, val);
 }
 
-static void _check_on_resolve(struct node_resolve *nr, struct deps *dep) {
+static void _check_on_resolve(struct node_resolve *nr) {
   struct unit *unit = nr->user_data;
   struct spawn *spawn = spawn_create(unit->source_path, unit);
   spawn_set_stdout_handler(spawn, _stdout_handler);

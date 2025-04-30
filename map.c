@@ -308,6 +308,10 @@ void map_put_str(struct map *hm, const char *key_, void *val) {
   map_put(hm, key, val);
 }
 
+void map_put_str_no_copy(struct map *hm, const char *key, void *val) {
+  map_put(hm, (void*) key, val);
+}
+
 int map_remove(struct map *hm, const void *key) {
   uint32_t hash = hm->hash_key_fn(key);
   struct bucket *bucket = hm->buckets + (hash & hm->buckets_mask);

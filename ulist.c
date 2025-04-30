@@ -74,10 +74,10 @@ void ulist_insert(struct ulist *list, unsigned idx, const void *data) {
     list->anum = anum;
     list->array = nptr;
   }
-  memmove(list->array + ((size_t) index + 1) * list->usize,
-          list->array + (size_t) index * list->usize,
+  memmove(list->array + ((size_t) idx + 1) * list->usize,
+          list->array + (size_t) idx * list->usize,
           (list->start + (size_t) list->num - idx) * list->usize);
-  memcpy(list->array + (size_t) index * list->usize, data, list->usize);
+  memcpy(list->array + (size_t) idx * list->usize, data, list->usize);
   ++list->num;
 }
 
@@ -95,7 +95,7 @@ void ulist_remove(struct ulist *list, unsigned idx) {
   }
   idx += list->start;
   --list->num;
-  memmove(list->array + (size_t) index * list->usize, list->array + ((size_t) index + 1) * list->usize,
+  memmove(list->array + (size_t) idx * list->usize, list->array + ((size_t) idx + 1) * list->usize,
           (list->start + (size_t) list->num - idx) * list->usize);
   if ((list->anum > _ALLOC_UNIT) && (list->anum >= list->num * 2)) {
     if (list->start) {
@@ -110,14 +110,14 @@ void ulist_remove(struct ulist *list, unsigned idx) {
 }
 
 void ulist_push(struct ulist *list, const void *data) {
-  size_t index = list->start + list->num;
-  if (index >= list->anum) {
+  size_t idx = list->start + list->num;
+  if (idx >= list->anum) {
     size_t anum = list->anum + list->num + 1;
     void *nptr = xrealloc(list->array, anum * list->usize);
     list->anum = anum;
     list->array = nptr;
   }
-  memcpy(list->array + index * list->usize, data, list->usize);
+  memcpy(list->array + idx * list->usize, data, list->usize);
   ++list->num;
 }
 

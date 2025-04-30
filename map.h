@@ -37,6 +37,8 @@ void map_put_u64(struct map*, uint64_t key, void *val);
 
 void map_put_str(struct map*, const char *key, void *val);
 
+void map_put_str_no_copy(struct map*, const char *key, void *val);
+
 int map_remove(struct map*, const void *key);
 
 int map_remove_u64(struct map*, uint64_t key);
