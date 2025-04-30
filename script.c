@@ -658,10 +658,9 @@ void node_resolve(struct node_resolve *r) {
     deps_close(&deps);
   }
 
-  bool outdated = false;
+  bool env_created = false;
 
   if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
-    outdated = true;
     r->on_resolve(r);
     if (access(deps_path_tmp, R_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
@@ -674,10 +673,11 @@ void node_resolve(struct node_resolve *r) {
       if (rc) {
         akfatal(rc, "Rename failed of %s to %s", env_path_tmp, env_path);
       }
+      env_created = true;
     }
   }
 
-  if (r->on_env_value && (outdated || (r->mode & NODE_RESOLVE_ENV_ALWAYS)) && !access(env_path, R_OK)) {
+  if (r->on_env_value && (r->mode & NODE_RESOLVE_ENV_ALWAYS) && (env_created || !access(env_path, R_OK))) {
     char buf[4096];
     FILE *f = fopen(env_path, "r");
     if (f) {
