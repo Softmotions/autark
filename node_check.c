@@ -28,8 +28,8 @@ static void _check_on_env_value(struct node_resolve *nr, const char *key, const 
   node_env_set(unit->n, key, val);
 }
 
-static void _check_on_resolve(struct node_resolve *nr) {
-  struct unit *unit = nr->user_data;
+static void _check_on_resolve(struct node_resolve *r) {
+  struct unit *unit = r->user_data;
   struct spawn *spawn = spawn_create(unit->source_path, unit);
   spawn_set_stdout_handler(spawn, _stdout_handler);
   spawn_set_stderr_handler(spawn, _stderr_handler);

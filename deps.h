@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <stdint.h>
 
 #define DEPS_TYPE_FILE     102
 #define DEPS_TYPE_OUTDATED 111
@@ -14,9 +15,9 @@
 #define DEPS_BUF_SZ 4096
 
 struct deps {
-  int       type;
-  int       num_registered; /// Number of deps registerd in the current session
-  long long serial;
+  int     type;
+  int     num_registered;   /// Number of deps registerd in the current session
+  int64_t serial;
   const char *resource;
   FILE       *file;
   char buf[DEPS_BUF_SZ];

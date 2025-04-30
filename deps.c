@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 int deps_open(const char *path, int omode, struct deps *d) {
   int rc = 0;
@@ -32,7 +33,7 @@ bool deps_cur_next(struct deps *d) {
     d->type = *rp;
     ++rp;
     d->resource = rp;
-    for ( ; *rp && *rp != '\1'; ++rp);
+    for ( ; *rp && *rp != '\1'; ++rp) ;
     if (*rp == '\1') {
       *rp = 0;
       if (d->type == DEPS_TYPE_FILE) {
@@ -53,7 +54,7 @@ bool deps_cur_is_outdated(struct deps *d) {
   if (d) {
     if (d->type == DEPS_TYPE_FILE) {
       struct akpath_stat st;
-      if (!path_stat_file(d->file, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime / 1000 > d->serial) {
+      if (path_stat_file(d->file, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime / 10 > d->serial / 10) {
         return true;
       }
     } else if (d->type == DEPS_TYPE_OUTDATED) {
@@ -65,7 +66,7 @@ bool deps_cur_is_outdated(struct deps *d) {
 
 int deps_register(struct deps *d, int type, const char *file) {
   int rc = 0;
-  long long serial = 0;
+  int64_t serial = 0;
   char buf[PATH_MAX];
 
   if (type == DEPS_TYPE_FILE) {
@@ -73,7 +74,7 @@ int deps_register(struct deps *d, int type, const char *file) {
     file = buf;
     struct akpath_stat st;
     if (!path_stat(file, &st) && st.ftype != AKPATH_NOT_EXISTS) {
-      serial = st.mtime / 1000;
+      serial = st.mtime;
     }
   }
   long int off = ftell(d->file);
@@ -81,7 +82,7 @@ int deps_register(struct deps *d, int type, const char *file) {
     return errno;
   }
   fseek(d->file, 0, SEEK_END);
-  if (fprintf(d->file, "%c%s\1%lld\n", (char) type, file, serial) < 0) {
+  if (fprintf(d->file, "%c%s\1%" PRId64 "\n", (char) type, file, serial) < 0) {
     rc = errno;
   }
   fseek(d->file, off, SEEK_SET);

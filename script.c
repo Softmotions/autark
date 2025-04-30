@@ -123,8 +123,12 @@ static int _input(struct _yycontext *yy, char *buf, int max_size) {
 }
 
 static void _xnode_destroy(struct xnode *x) {
+  struct node *n = &x->base;
+  if (n->unit && n->unit->n == n) {
+    n->unit->n = 0;
+  }
   if (x->base.dispose) {
-    x->base.dispose(&x->base);
+    x->base.dispose(n);
   }
   _xparse_destroy(x->xp);
   x->xp = 0;
@@ -632,8 +636,12 @@ void node_resolve(struct node_resolve *r) {
   unlink(deps_path_tmp);
   unlink(env_path_tmp);
 
+  r->pool = pool;
   r->num_deps = 0;
   r->num_outdated = 0;
+  r->deps_path_tmp = deps_path_tmp;
+  r->env_path_tmp = env_path_tmp;
+
 
   if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     while (deps_cur_next(&deps)) {
@@ -671,7 +679,7 @@ void node_resolve(struct node_resolve *r) {
           if (p) {
             *p = '\0';
             char *val = p + 1;
-            for (int vlen = strlen(val); vlen >= 0 && val[vlen - 1] == '\n'; --vlen) {
+            for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
               val[vlen - 1] = '\0';
             }
             r->on_env_value(r, buf, val);

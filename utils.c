@@ -136,7 +136,7 @@ long long utils_strtoll(const char *v, int base, int *rcp) {
   *rcp = 0;
   char *ep = 0;
   long long ret = strtoll(v, &ep, base);
-  if (*ep != '\0' || errno == ERANGE) {
+  if ((*ep != '\0' && *ep != '\n') || errno == ERANGE) {
     *rcp = AK_ERROR_INVALID_ARGS;
     return 0;
   }

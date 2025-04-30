@@ -54,14 +54,14 @@ void akinfo(const char *fmt, ...);
 #define akassert(exp__)                                \
         do {                                           \
           if (!(exp__)) {                              \
-            akfatal(AK_ERROR_ASSERTION, Q(expr__), 0); \
+            akfatal(AK_ERROR_ASSERTION, Q(exp__), 0); \
           }                                            \
         } while (0)
 
 #define akcheck(exp__)                     \
         do {                               \
           int e = (exp__);                 \
-          if (e) akfatal(e, Q(expr__), 0); \
+          if (e) akfatal(e, Q(exp__), 0); \
         } while (0)
 
 
