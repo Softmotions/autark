@@ -292,7 +292,7 @@ static void _on_command_set(int argc, const char **argv) {
   }
   kv = argv[optind++];
   if (g_env.verbose) {
-    akinfo("autark set %s\n", kv);
+    akinfo("autark set %s", kv);
   }
 
   struct unit *unit = unit_peek();

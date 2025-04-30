@@ -11,12 +11,12 @@
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   struct unit *u = spawn_user_data(s);
-  fprintf(stderr, "%s: %s\n", u->rel_path, buf);
+  fprintf(stderr, "%s: %s", u->rel_path, buf);
 }
 
 static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   struct unit *u = spawn_user_data(s);
-  fprintf(stdout, "%s: %s\n", u->rel_path, buf);
+  fprintf(stdout, "%s: %s", u->rel_path, buf);
 }
 
 static void _check_on_env_value(struct node_resolve *nr, const char *key, const char *val) {

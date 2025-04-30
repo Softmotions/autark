@@ -670,7 +670,11 @@ void node_resolve(struct node_resolve *r) {
           char *p = strchr(buf, '=');
           if (p) {
             *p = '\0';
-            r->on_env_value(r, buf, p + 1);
+            char *val = p + 1;
+            for (int vlen = strlen(val); vlen >= 0 && val[vlen - 1] == '\n'; --vlen) {
+              val[vlen - 1] = '\0';
+            }
+            r->on_env_value(r, buf, val);
           }
         }
         fclose(f);
