@@ -86,9 +86,12 @@ struct node_resolve {
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
   struct pool *pool;
+  unsigned mode;
   int num_outdated; // Number of outdated dependencies
   int num_deps;     // Number of dependencies
 };
+
+#define NODE_RESOLVE_ENV_ALWAYS 0x01U
 
 void node_resolve(struct node_resolve*);
 

@@ -27,6 +27,9 @@ int main(void) {
   // Now do the second run
   akassert(script_open("./data/test5/Autark", &sctx) == 0);
   script_build(sctx);
+
+
+
   script_close(&sctx);
 
   akassert(path_stat("autark-cache/.autark/test-file.txt", &st2) == 0);

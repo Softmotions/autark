@@ -658,7 +658,10 @@ void node_resolve(struct node_resolve *r) {
     deps_close(&deps);
   }
 
+  bool outdated = false;
+
   if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
+    outdated = true;
     r->on_resolve(r);
     if (access(deps_path_tmp, R_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
@@ -671,24 +674,27 @@ void node_resolve(struct node_resolve *r) {
       if (rc) {
         akfatal(rc, "Rename failed of %s to %s", env_path_tmp, env_path);
       }
-      char buf[4096];
-      FILE *f = fopen(env_path, "r");
-      if (f) {
-        while (fgets(buf, sizeof(buf), f)) {
-          char *p = strchr(buf, '=');
-          if (p) {
-            *p = '\0';
-            char *val = p + 1;
-            for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
-              val[vlen - 1] = '\0';
-            }
-            r->on_env_value(r, buf, val);
+    }
+  }
+
+  if (r->on_env_value && (outdated || (r->mode & NODE_RESOLVE_ENV_ALWAYS)) && !access(env_path, R_OK)) {
+    char buf[4096];
+    FILE *f = fopen(env_path, "r");
+    if (f) {
+      while (fgets(buf, sizeof(buf), f)) {
+        char *p = strchr(buf, '=');
+        if (p) {
+          *p = '\0';
+          char *val = p + 1;
+          for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
+            val[vlen - 1] = '\0';
           }
+          r->on_env_value(r, buf, val);
         }
-        fclose(f);
-      } else {
-        akfatal(rc, "Failed to open env file: %s", env_path);
       }
+      fclose(f);
+    } else {
+      akfatal(rc, "Failed to open env file: %s", env_path);
     }
   }
 

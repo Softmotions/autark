@@ -57,6 +57,7 @@ static void _node_check_script(struct node *n) {
   unit_push(unit);
 
   struct node_resolve nr = {
+    .mode = NODE_RESOLVE_ENV_ALWAYS,
     .path = unit->cache_path,
     .user_data = unit,
     .on_env_value = _check_on_env_value,
