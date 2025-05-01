@@ -285,23 +285,25 @@ static void _project_env_read(void) {
 
 static void _on_command_set(int argc, const char **argv) {
   _project_env_read();
-
   const char *kv;
   if (optind >= argc) {
     _usage("Missing <key> argument");
   }
-  kv = argv[optind++];
-  if (g_env.verbose) {
-    akinfo("autark set %s", kv);
-  }
-
   struct unit *unit = unit_peek();
   const char *env_path = pool_printf(g_env.pool, "%s.env.tmp", unit->cache_path);
   FILE *f = fopen(env_path, "a+");
   if (!f) {
     akfatal(errno, "Failed to open file: %s", env_path);
   }
-  fprintf(f, "%s\n", kv);
+  for ( ; optind < argc; ++optind) {
+    kv = argv[optind];
+    if (strchr(kv, '=')) {
+      if (g_env.verbose) {
+        akinfo("autark set %s", kv);
+      }
+      fprintf(f, "%s\n", kv);
+    }
+  }
   fclose(f);
 }
 

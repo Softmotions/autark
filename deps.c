@@ -54,7 +54,7 @@ bool deps_cur_is_outdated(struct deps *d) {
   if (d) {
     if (d->type == DEPS_TYPE_FILE) {
       struct akpath_stat st;
-      if (path_stat_file(d->file, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime / 10 > d->serial / 10) {
+      if (path_stat(d->resource, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime > d->serial) {
         return true;
       }
     } else if (d->type == DEPS_TYPE_OUTDATED) {

@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <errno.h>
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
@@ -23,9 +22,6 @@
 #define XNODE_PEEK(list__)      ((list__)->num ? XNODE(*(struct node**) ulist_peek(list__)) : 0)
 #define XCTX(n__)               (n__)->base.ctx
 #define NODE(x__)               (struct node*) (x__)
-#define NODE_IS_EXCLUDED(n__)   (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
-#define NODE_IS_INCLUDED(n__)   (!NODE_IS_EXCLUDED(n__))
-#define NODE_IS_SETUP(n__)      (((n__)->flags & NODE_FLG_SETUP) != 0)
 
 struct _yycontext;
 
@@ -460,11 +456,11 @@ static void _node_context_pop(struct node *n) {
   unit_pop();
 }
 
-static void _node_reset(struct node *n) {
+void node_reset(struct node *n) {
   n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_EXCLUDED);
 }
 
-static void _node_setup(struct node *n) {
+void node_setup(struct node *n) {
   if (!(n->flags & NODE_FLG_SETUP)) {
     n->flags |= NODE_FLG_SETUP;
     if (n->setup) {
@@ -524,34 +520,16 @@ finish:
 }
 
 void script_setup(struct sctx *s) {
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    _node_reset(n);
+  akassert(s->root);
+  if (s->root->setup && !node_is_setup(s->root)) {
+    s->root->setup(s->root);
   }
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    if (n->type == NODE_TYPE_CHECK && NODE_IS_INCLUDED(n)) {
-      _node_setup(n);
-    }
-  }
-  int nsetup;
-  do {
-    nsetup = 0;
-    for (int i = 0; i < s->nodes.num; ++i) {
-      struct node *n = NODE_AT(&s->nodes, i);
-      if (n->type != NODE_TYPE_CHECK && NODE_IS_INCLUDED(n) && !NODE_IS_SETUP(n)) {
-        ++nsetup;
-        _node_setup(n);
-      }
-    }
-  } while (nsetup > 0);
 }
 
 void script_build(struct sctx *s) {
   script_setup(s);
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    node_build(n);
+  if (s->root->build) {
+    s->root->build(s->root);
   }
 }
 

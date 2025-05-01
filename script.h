@@ -29,8 +29,11 @@
 #define NODE_FLG_BUILT    0x08U // Node built
 #define NODE_FLG_EXCLUDED 0x10U // Node is excluded from build
 
-#define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
-#define node_is_rule(n__)  !node_is_value(n__)
+#define node_is_excluded(n__) (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
+#define node_is_included(n__) (!node_is_excluded(n__))
+#define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
+#define node_is_value(n__)    ((n__)->type & NODE_TYPE_VALUE)
+#define node_is_rule(n__)     !node_is_value(n__)
 
 #define NODE_PRINT_INDENT 2
 
@@ -71,11 +74,15 @@ void script_close(struct sctx**);
 
 void script_dump(struct sctx*, struct xstr *out);
 
-void node_build(struct node *n);
-
 const char* node_env_get(struct node*, const char *key);
 
 void node_env_set(struct node*, const char *key, const char *val);
+
+void node_reset(struct node *n);
+
+void node_setup(struct node *n);
+
+void node_build(struct node *n);
 
 struct node_resolve {
   const char *path;
@@ -86,7 +93,7 @@ struct node_resolve {
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
   struct pool *pool;
-  unsigned mode;
+  unsigned     mode;
   int num_outdated; // Number of outdated dependencies
   int num_deps;     // Number of dependencies
 };
