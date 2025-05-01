@@ -558,7 +558,7 @@ YY_RULE(int) yy_RULES(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
   yyprintf((stderr, "%s\n", "RULES"));
   l45:;	
-  {  int yypos46= yy->__pos, yythunkpos46= yy->__thunkpos;  if (!yy_RULE(yy)) goto l46;  goto l45;
+  {  int yypos46= yy->__pos, yythunkpos46= yy->__thunkpos;  if (!yy_RULE(yy)) goto l46;  if (!yy__(yy)) goto l46;  goto l45;
   l46:;	  yy->__pos= yypos46; yy->__thunkpos= yythunkpos46;
   }  if (!yy__(yy)) goto l44;  if (!yy_EOF(yy)) goto l44;  yyDo(yy, yy_1_RULES, yy->__begin, yy->__end);
   yyprintf((stderr, "  ok   %s @ %s\n", "RULES", yy->__buf+yy->__pos));

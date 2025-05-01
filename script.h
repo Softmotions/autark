@@ -22,6 +22,7 @@
 #define NODE_TYPE_INCLUDE  0x800U
 #define NODE_TYPE_IF       0x1000U
 #define NODE_TYPE_SUBST    0x2000U
+#define NODE_TYPE_RUN      0x4000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_SETUP    0x02U // Node built

@@ -153,6 +153,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_INCLUDE;
   } else if (strcmp(key, "if") == 0) {
     return NODE_TYPE_IF;
+  } else if (strcmp(key, "run") == 0) {
+    return NODE_TYPE_RUN;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -433,6 +435,8 @@ static int _node_bind(struct node *n) {
         return node_if_setup(n);
       case NODE_TYPE_SUBST:
         return node_subst_setup(n);
+      case NODE_TYPE_RUN:
+        return node_run_setup(n);
     }
   }
   return 0;

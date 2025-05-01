@@ -1,3 +1,15 @@
 check {
   check1.sh
 }
+
+run {
+  run1.sh
+  depends {
+    run1-dep1.txt
+    run1-dep2.txt
+  }
+  products {
+    run1-product1.txt
+    run1-product2.txt
+  }
+}
