@@ -4,7 +4,6 @@
 #include "pool.h"
 #include "spawn.h"
 
-
 #include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -70,29 +69,20 @@ static void _node_check_script(struct node *n) {
 }
 
 static void _node_check_special(struct node *n) {
-}
-
-static void _node_check(struct node *n) {
-  if (n->type == NODE_TYPE_VALUE) {
-    _node_check_script(n);
-  } else if (n->type == NODE_TYPE_BAG) {
-    _node_check_special(n);
-  } else {
-    node_fatal(AK_ERROR_SCRIPT_ERROR, n, "Check is unsupported for script node");
-  }
+  // TODO:
 }
 
 static void _setup(struct node *n) {
-  for (struct node *c = n->child; c; c = c->next) {
-    _node_check(c);
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    if (nn->type == NODE_TYPE_VALUE) {
+      _node_check_script(nn);
+    } else if (n->type == NODE_TYPE_BAG) {
+      _node_check_special(nn);
+    }
   }
-}
-
-static void _dispose(struct node *n) {
 }
 
 int node_check_setup(struct node *n) {
   n->setup = _setup;
-  n->dispose = _dispose;
   return 0;
 }
