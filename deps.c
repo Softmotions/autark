@@ -64,7 +64,7 @@ bool deps_cur_is_outdated(struct deps *d) {
   return false;
 }
 
-int deps_register(struct deps *d, int type, const char *file) {
+int deps_add(struct deps *d, int type, const char *file) {
   int rc = 0;
   int64_t serial = 0;
   char buf[PATH_MAX];

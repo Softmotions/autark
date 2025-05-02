@@ -3,6 +3,7 @@
 #include "log.h"
 #include "pool.h"
 #include "spawn.h"
+#include "deps.h"
 
 #include <limits.h>
 #include <unistd.h>
@@ -42,6 +43,15 @@ static void _check_on_resolve(struct node_resolve *r) {
     }
   }
   spawn_destroy(spawn);
+
+  // Good, now add dependency on itself
+  struct deps deps;
+  rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
+  }
+  deps_add(&deps, DEPS_TYPE_FILE, unit->source_path);
+  deps_close(&deps);
 }
 
 static void _node_check_script(struct node *n) {

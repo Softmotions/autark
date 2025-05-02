@@ -322,7 +322,7 @@ static void _on_command_dep_impl(const char *file) {
   if (rc) {
     akfatal(rc, "Failed to open deps file: %s", deps_path);
   }
-  rc = deps_register(&deps, type, file);
+  rc = deps_add(&deps, type, file);
   if (rc) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }

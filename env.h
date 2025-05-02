@@ -25,7 +25,7 @@ struct unit {
   const char  *rel_path;    // Path to unit relative to the project root and project cache.
   const char  *basename;    // Basename of unit path.
   const char  *dir;         // Absolute path to unit dir.
-  const char  *source_path; // Unit source path.
+  const char  *source_path; // Absolute unit source path.
   const char  *cache_path;  // Absolute path to the unit in cache dir.
   const char  *cache_dir;   // Absolute path to the cache directory where unit file is located.
   struct pool *pool;        // Pool used to allocate unit

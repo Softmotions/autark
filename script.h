@@ -5,6 +5,7 @@
 #include "ulist.h"
 #include "xstr.h"
 #include "deps.h"
+#include "map.h"
 
 #include <stdbool.h>
 
@@ -41,10 +42,11 @@
 struct node {
   unsigned type;
   unsigned flags;
-  unsigned index;     // Own index in env::nodes
-  unsigned pos;       // Node position
+  unsigned index;     /// Own index in env::nodes
+  unsigned pos;       /// Node position
 
-  const char *value;  ///< Key or value
+  const char *name;   /// Internal node name
+  const char *value;  /// Key or value
 
   struct node *child;
   struct node *next;
@@ -62,7 +64,8 @@ struct node {
 
 struct sctx {
   struct node *root;
-  struct ulist nodes;    // ulist<struct node*>
+  struct ulist nodes;    /// ulist<struct node*>
+  struct map  *products; /// Products of nodes  (product name -> node)
 };
 
 int script_open(const char *file, struct sctx **out);
@@ -78,6 +81,10 @@ void script_dump(struct sctx*, struct xstr *out);
 const char* node_env_get(struct node*, const char *key);
 
 void node_env_set(struct node*, const char *key, const char *val);
+
+struct node* node_by_product(struct node*, const char *prod);
+
+void node_product_add(struct node*, const char *prod);
 
 void node_reset(struct node *n);
 

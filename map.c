@@ -238,19 +238,18 @@ struct map* map_create(
 }
 
 void map_destroy(struct map *hm) {
-  if (!hm) {
-    return;
-  }
-  for (struct bucket *b = hm->buckets, *be = hm->buckets + _n_buckets(hm); b < be; ++b) {
-    if (b->entries) {
-      for (struct entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
-        hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
+  if (hm) {
+    for (struct bucket *b = hm->buckets, *be = hm->buckets + _n_buckets(hm); b < be; ++b) {
+      if (b->entries) {
+        for (struct entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
+          hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
+        }
+        free(b->entries);
       }
-      free(b->entries);
     }
+    free(hm->buckets);
+    free(hm);
   }
-  free(hm->buckets);
-  free(hm);
 }
 
 struct map* map_create_u64(void (*kv_free_fn)(void*, void*)) {

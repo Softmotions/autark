@@ -29,7 +29,7 @@ bool deps_cur_next(struct deps*);
 
 bool deps_cur_is_outdated(struct deps*);
 
-int deps_register(struct deps*, int type, const char *file);
+int deps_add(struct deps*, int type, const char *file);
 
 void deps_close(struct deps*);
 

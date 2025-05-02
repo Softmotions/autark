@@ -9,7 +9,6 @@
 #include "autark.h"
 #include "config.h"
 #include "paths.h"
-#include "deps.h"
 
 #include <unistd.h>
 #include <stdarg.h>
@@ -176,9 +175,9 @@ void node_fatal(int rc, struct node *n, const char *fmt, ...) {
     va_start(ap, fmt);
     xstr_printf_va(xstr, fmt, ap);
     va_end(ap);
-    akfatal(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, xstr_ptr(xstr));
+    akfatal(rc, "%s %s", n->name, xstr_ptr(xstr));
   } else {
-    akfatal(rc, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
+    akfatal(rc, n->name, 0);
   }
   xstr_destroy(xstr);
 }
@@ -323,6 +322,7 @@ static int _script_from_value(
   if (!parent) {
     struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
     ulist_init(&ctx->nodes, 64, sizeof(struct node*));
+    ctx->products = map_create_str(0);
 
     x = pool_calloc(pool, sizeof(*x));
     x->base.ctx = ctx;
@@ -397,17 +397,19 @@ static int _script_from_file(struct node *parent, const char *file, struct node 
   return ret;
 }
 
-static void _script_destroy(struct sctx *e) {
-  if (e) {
-    for (int i = 0; i < e->nodes.num; ++i) {
-      struct xnode *x = XNODE_AT(&e->nodes, i);
+static void _script_destroy(struct sctx *s) {
+  if (s) {
+    for (int i = 0; i < s->nodes.num; ++i) {
+      struct xnode *x = XNODE_AT(&s->nodes, i);
       _xnode_destroy(x);
     }
-    ulist_destroy_keep(&e->nodes);
+    map_destroy(s->products);
+    ulist_destroy_keep(&s->nodes);
   }
 }
 
 static int _node_bind(struct node *n) {
+  n->name = pool_printf(g_env.pool, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
   if (!(n->flags & NODE_FLG_BOUND)) {
     n->flags |= NODE_FLG_BOUND;
     switch (n->type) {
@@ -601,6 +603,24 @@ void node_env_set(struct node *n, const char *key, const char *val) {
       return;
     }
   }
+}
+
+void node_product_add(struct node *n, const char *prod) {
+  struct sctx *s = n->ctx;
+  struct node *nn = map_get(s->products, prod);
+  if (nn) {
+    if (nn == n) {
+      return;
+    }
+    node_fatal(AK_ERROR_FAIL, n, "Product: '%s' was registered by other rule: %s", prod, nn->name);
+  }
+  map_put_str_no_copy(s->products, prod, n);
+}
+
+struct node* node_by_product(struct node *n, const char *prod) {
+  struct sctx *s = n->ctx;
+  struct node *nn = map_get(s->products, prod);
+  return nn;
 }
 
 void node_resolve(struct node_resolve *r) {
