@@ -43,7 +43,6 @@ struct node {
   unsigned type;
   unsigned flags;
   unsigned index;     /// Own index in env::nodes
-  unsigned pos;       /// Node position
 
   const char *name;   /// Internal node name
   const char *value;  /// Key or value
@@ -91,6 +90,8 @@ void node_reset(struct node *n);
 void node_setup(struct node *n);
 
 void node_build(struct node *n);
+
+struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node_resolve {
   const char *path;

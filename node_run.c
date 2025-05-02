@@ -14,6 +14,14 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 }
 
 static void _setup(struct node *n) {
+  struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
+  if (nn) {
+    for (nn = nn->child; nn; nn = nn->child) {
+      if (nn->type == NODE_TYPE_VALUE) {
+        akinfo("%s: Product %s", n->name, nn->value);
+      }
+    }
+  }
 }
 
 static void _build(struct node *n) {
@@ -25,10 +33,10 @@ static void _build(struct node *n) {
     }
   }
   if (!run_cmd) {
-    return;
+    node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
-  if (!g_env.verbose) {
-    akinfo("Run: %s", run_cmd);
+  if (!g_env.quiet) {
+    akinfo("%s: %s", n->name, run_cmd);
   }
 }
 

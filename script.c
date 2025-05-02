@@ -189,9 +189,9 @@ int node_error(int rc, struct node *n, const char *fmt, ...) {
     va_start(ap, fmt);
     xstr_printf_va(xstr, fmt, ap);
     va_end(ap);
-    akerror(rc, "%s:%d %s:0x%x %s", _node_file(n), n->pos, n->value, n->type, xstr_ptr(xstr));
+    akerror(rc, "%s %s:0x%x %s", _node_file(n), n->value, n->type, xstr_ptr(xstr));
   } else {
-    akerror(rc, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
+    akerror(rc, "%s %s:0x%x", _node_file(n), n->value, n->type);
   }
   xstr_destroy(xstr);
   return rc;
@@ -215,7 +215,6 @@ static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
   x->base.value = pool_strdup(g_env.pool, text);
   x->base.ctx = ctx;
   x->base.type = NODE_TYPE_VALUE;
-  x->base.pos = yy->__pos;
   return x;
 }
 
@@ -409,7 +408,7 @@ static void _script_destroy(struct sctx *s) {
 }
 
 static int _node_bind(struct node *n) {
-  n->name = pool_printf(g_env.pool, "%s:%d %s:0x%x", _node_file(n), n->pos, n->value, n->type);
+  n->name = pool_printf(g_env.pool, "%s %s:0x%x", _node_file(n), n->value, n->type);
   if (!(n->flags & NODE_FLG_BOUND)) {
     n->flags |= NODE_FLG_BOUND;
     switch (n->type) {
@@ -621,6 +620,19 @@ struct node* node_by_product(struct node *n, const char *prod) {
   struct sctx *s = n->ctx;
   struct node *nn = map_get(s->products, prod);
   return nn;
+}
+
+struct node* node_find_direct_child(struct node *n, int type, const char *val) {
+  if (n) {
+    for (struct node *nn = n->child; nn; nn = nn->next) {
+      if (type == 0 || nn->type == type) {
+        if (val == 0 || strcmp(nn->value, val) == 0) {
+          return nn;
+        }
+      }
+    }
+  }
+  return 0;
 }
 
 void node_resolve(struct node_resolve *r) {
