@@ -20,6 +20,12 @@ static void _setup(struct node *n) {
   }
 }
 
+static void _setup2(struct node *n) {
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    node_setup2(nn);
+  }
+}
+
 static void _build(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (node_is_included(nn)) {
@@ -33,6 +39,7 @@ static void _dispose(struct node *n) {
 
 int node_script_setup(struct node *n) {
   n->setup = _setup;
+  n->setup2 = _setup2,
   n->build = _build;
   n->dispose = _dispose;
   return 0;

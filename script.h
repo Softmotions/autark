@@ -26,14 +26,16 @@
 #define NODE_TYPE_RUN      0x4000U
 
 #define NODE_FLG_BOUND    0x01U
-#define NODE_FLG_SETUP    0x02U // Node built
-#define NODE_FLG_UPDATED  0x04U // Node product updated as result of build
-#define NODE_FLG_BUILT    0x08U // Node built
-#define NODE_FLG_EXCLUDED 0x10U // Node is excluded from build
+#define NODE_FLG_SETUP    0x02U
+#define NODE_FLG_SETUP2   0x04U
+#define NODE_FLG_UPDATED  0x08U // Node product updated as result of build
+#define NODE_FLG_BUILT    0x10U // Node built
+#define NODE_FLG_EXCLUDED 0x20U // Node is excluded from build
 
 #define node_is_excluded(n__) (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
 #define node_is_included(n__) (!node_is_excluded(n__))
 #define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
+#define node_is_setup2(n__)    (((n__)->flags & NODE_FLG_SETUP2) != 0)
 #define node_is_value(n__)    ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)     !node_is_value(n__)
 
@@ -45,6 +47,7 @@ struct node {
   unsigned index;     /// Own index in env::nodes
 
   const char *name;   /// Internal node name
+  const char *vfile;  /// Node virtual file
   const char *value;  /// Key or value
 
   struct node *child;
@@ -55,6 +58,7 @@ struct node {
   struct unit *unit;
 
   void (*setup)(struct node*);
+  void (*setup2)(struct node*);
   void (*build)(struct node*);
   void (*dispose)(struct node*);
 
@@ -89,6 +93,8 @@ void node_reset(struct node *n);
 
 void node_setup(struct node *n);
 
+void node_setup2(struct node *n);
+
 void node_build(struct node *n);
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val);
@@ -97,7 +103,7 @@ struct node_resolve {
   const char *path;
   void       *user_data;
   void (*on_env_value)(struct node_resolve*, const char *key, const char *val);
-  void (*on_outdated_dependency)(struct node_resolve*, const struct deps *dep);
+  void (*on_outdated)(struct node_resolve*, const struct deps *dep);
   void (*on_resolve)(struct node_resolve*);
   const char  *deps_path_tmp;
   const char  *env_path_tmp;

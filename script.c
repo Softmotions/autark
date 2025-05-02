@@ -408,7 +408,10 @@ static void _script_destroy(struct sctx *s) {
 }
 
 static int _node_bind(struct node *n) {
-  n->name = pool_printf(g_env.pool, "%s %s:0x%x", _node_file(n), n->value, n->type);
+  // Tree has been built since its safe to compute node name
+  n->name = pool_printf(g_env.pool, "%s[%u]%s", _node_file(n), n->index, n->value);
+  n->vfile = pool_printf(g_env.pool, ".%u", n->index);
+
   if (!(n->flags & NODE_FLG_BOUND)) {
     n->flags |= NODE_FLG_BOUND;
     switch (n->type) {
@@ -476,6 +479,17 @@ void node_setup(struct node *n) {
   }
 }
 
+void node_setup2(struct node *n) {
+  if (!(n->flags & NODE_FLG_SETUP2)) {
+    n->flags |= NODE_FLG_SETUP2;
+    if (n->setup2) {
+      _node_context_push(n);
+      n->setup2(n);
+      _node_context_pop(n);
+    }
+  }
+}
+
 void node_build(struct node *n) {
   if (!(n->flags & NODE_FLG_BUILT)) {
     if (n->build) {
@@ -528,6 +542,9 @@ void script_setup(struct sctx *s) {
   akassert(s->root);
   if (s->root->setup && !node_is_setup(s->root)) {
     s->root->setup(s->root);
+  }
+  if (s->root->setup2 && !node_is_setup2(s->root)) {
+    s->root->setup2(s->root);
   }
 }
 
@@ -662,8 +679,8 @@ void node_resolve(struct node_resolve *r) {
       ++r->num_deps;
       if (deps_cur_is_outdated(&deps)) {
         ++r->num_outdated;
-        if (r->on_outdated_dependency) {
-          r->on_outdated_dependency(r, &deps);
+        if (r->on_outdated) {
+          r->on_outdated(r, &deps);
         }
       }
     }
