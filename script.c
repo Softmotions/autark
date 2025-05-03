@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <errno.h>
 
 #define XNODE(n__)              ((struct xnode*) (n__))
 #define NODE_AT(list__, idx__)  *(struct node**) ulist_get(list__, idx__)
@@ -134,8 +135,6 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
-  } else if (strcmp(key, "consumes") == 0) {
-    return NODE_TYPE_CONSUMES;
   } else if (strcmp(key, "check") == 0) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "sources") == 0) {
@@ -342,7 +341,7 @@ static int _script_from_value(
     }
     unit->n = &x->base;
     x->base.unit = unit;
-    unit_ch_dir(unit);
+    unit_ch_dir(unit, 0);
   }
 
   x->base.value = pool_strdup(pool, file ? file : "<script>");
@@ -419,8 +418,6 @@ static int _node_bind(struct node *n) {
         return node_script_setup(n);
       case NODE_TYPE_META:
         return node_meta_setup(n);
-      case NODE_TYPE_CONSUMES:
-        return node_consumes_setup(n);
       case NODE_TYPE_CHECK:
         return node_check_setup(n);
       case NODE_TYPE_SOURCES:
@@ -621,8 +618,16 @@ void node_env_set(struct node *n, const char *key, const char *val) {
   }
 }
 
-void node_product_add(struct node *n, const char *prod) {
+void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) {
   struct sctx *s = n->ctx;
+  char buf[PATH_MAX];
+  if (!pathbuf) {
+    pathbuf = buf;
+  }
+  prod = path_normalize(prod, pathbuf);
+  if (!prod) {
+    node_fatal(errno, n, 0);
+  }
   struct node *nn = map_get(s->products, prod);
   if (nn) {
     if (nn == n) {
@@ -633,8 +638,16 @@ void node_product_add(struct node *n, const char *prod) {
   map_put_str_no_copy(s->products, prod, n);
 }
 
-struct node* node_by_product(struct node *n, const char *prod) {
+struct node* node_by_product(struct node *n, const char *prod, char pathbuf[PATH_MAX]) {
   struct sctx *s = n->ctx;
+  char buf[PATH_MAX];
+  if (!pathbuf) {
+    pathbuf = buf;
+  }
+  prod = path_normalize(prod, pathbuf);
+  if (!prod) {
+    node_fatal(errno, n, 0);
+  }
   struct node *nn = map_get(s->products, prod);
   return nn;
 }
@@ -650,6 +663,60 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val) {
     }
   }
   return 0;
+}
+
+void node_consumes_process(struct node *n) {
+  char prevcwd[PATH_MAX];
+  char pathbuf[PATH_MAX];
+
+  struct unit *unit = unit_peek();
+  akassert(unit);
+
+  struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "consumes");
+  if (nn && nn->child) {
+    unsigned nc = 0;
+    for (struct node *cn = nn->child; cn; cn = cn->next) {
+      if (cn->type == NODE_TYPE_VALUE) {
+        cn->flags &= ~NODE_FLG_IN_ANY;
+        ++nc;
+      }
+    }
+    unit_ch_cache_dir(unit, prevcwd);
+    for (struct node *cn = nn->child; cn; cn = cn->next) {
+      if (cn->type == NODE_TYPE_VALUE) {
+        const char *d = cn->value;
+        struct node *pn = node_by_product(n, d, pathbuf);
+        if (pn) {
+          node_build(pn);
+          if (path_is_exist(pathbuf)) {
+            --nc;
+            cn->flags |= NODE_FLG_IN_CACHE;
+          } else {
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "Failed to resolve dependency: '%s' by %s", d, pn->name);
+          }
+        } else if (path_is_exist(d)) {
+          --nc;
+          cn->flags |= NODE_FLG_IN_CACHE;
+        }
+      }
+    }
+    akcheck(chdir(prevcwd));
+    if (nc > 0) {
+      unit_ch_src_dir(unit, prevcwd);
+      for (struct node *cn = nn->child; cn; cn = cn->next) {
+        if (cn->type == NODE_TYPE_VALUE && !(cn->flags & NODE_FLG_IN_CACHE)) {
+          const char *d = cn->value;
+          akassert(path_normalize(d, pathbuf));
+          if (path_is_exist(pathbuf)) {
+            cn->flags |= NODE_FLG_IN_SRC;
+          } else {
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "I don't know how to resolve dependency: '%s'", d);
+          }
+        }
+      }
+      akcheck(chdir(prevcwd));
+    }
+  }
 }
 
 void node_resolve(struct node_resolve *r) {

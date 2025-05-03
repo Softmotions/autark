@@ -56,6 +56,8 @@ int path_stat_fd(int fd, struct akpath_stat *stat);
 
 int path_stat_file(FILE *file, struct akpath_stat *stat);
 
+uint64_t path_mtime(const char *path);
+
 bool path_is_accesible(const char *path, enum akpath_access a);
 
 bool path_is_accesible_read(const char *path);

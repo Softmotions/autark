@@ -68,11 +68,11 @@ struct unit* unit_pop(void);
 
 struct unit* unit_peek(void);
 
-void unit_ch_dir(struct unit*);
+void unit_ch_dir(struct unit*, char *prevcwd);
 
-void unit_ch_cache_dir(struct unit*);
+void unit_ch_cache_dir(struct unit*, char *prevcwd);
 
-void unit_ch_src_dir(struct unit*);
+void unit_ch_src_dir(struct unit*, char *prevcwd);
 
 void unit_env_set(struct unit*, const char *key, const char *val);
 

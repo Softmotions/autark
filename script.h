@@ -9,21 +9,20 @@
 
 #include <stdbool.h>
 
-#define NODE_TYPE_VALUE    0x01U
-#define NODE_TYPE_SCRIPT   0x02U
-#define NODE_TYPE_BAG      0x04U
-#define NODE_TYPE_META     0x08U
-#define NODE_TYPE_CONSUMES 0x10U
-#define NODE_TYPE_CHECK    0x20U
-#define NODE_TYPE_SOURCES  0x40U
-#define NODE_TYPE_FLAGS    0x80U
-#define NODE_TYPE_EXEC     0x100U
-#define NODE_TYPE_STATIC   0x200U
-#define NODE_TYPE_SHARED   0x400U
-#define NODE_TYPE_INCLUDE  0x800U
-#define NODE_TYPE_IF       0x1000U
-#define NODE_TYPE_SUBST    0x2000U
-#define NODE_TYPE_RUN      0x4000U
+#define NODE_TYPE_VALUE   0x01U
+#define NODE_TYPE_SCRIPT  0x02U
+#define NODE_TYPE_BAG     0x04U
+#define NODE_TYPE_META    0x08U
+#define NODE_TYPE_CHECK   0x20U
+#define NODE_TYPE_SOURCES 0x40U
+#define NODE_TYPE_FLAGS   0x80U
+#define NODE_TYPE_EXEC    0x100U
+#define NODE_TYPE_STATIC  0x200U
+#define NODE_TYPE_SHARED  0x400U
+#define NODE_TYPE_INCLUDE 0x800U
+#define NODE_TYPE_IF      0x1000U
+#define NODE_TYPE_SUBST   0x2000U
+#define NODE_TYPE_RUN     0x4000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_SETUP    0x02U
@@ -31,11 +30,15 @@
 #define NODE_FLG_UPDATED  0x08U // Node product updated as result of build
 #define NODE_FLG_BUILT    0x10U // Node built
 #define NODE_FLG_EXCLUDED 0x20U // Node is excluded from build
+#define NODE_FLG_IN_CACHE 0x40U
+#define NODE_FLG_IN_SRC   0x80U
+
+#define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE)
 
 #define node_is_excluded(n__) (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
 #define node_is_included(n__) (!node_is_excluded(n__))
 #define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
-#define node_is_setup2(n__)    (((n__)->flags & NODE_FLG_SETUP2) != 0)
+#define node_is_setup2(n__)   (((n__)->flags & NODE_FLG_SETUP2) != 0)
 #define node_is_value(n__)    ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)     !node_is_value(n__)
 
@@ -44,7 +47,8 @@
 struct node {
   unsigned type;
   unsigned flags;
-  unsigned index;     /// Own index in env::nodes
+  unsigned flags_owner; /// Extra flaghs set by owner node
+  unsigned index;       /// Own index in env::nodes
 
   const char *name;   /// Internal node name
   const char *vfile;  /// Node virtual file
@@ -85,9 +89,9 @@ const char* node_env_get(struct node*, const char *key);
 
 void node_env_set(struct node*, const char *key, const char *val);
 
-struct node* node_by_product(struct node*, const char *prod);
+struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
-void node_product_add(struct node*, const char *prod);
+void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
 void node_reset(struct node *n);
 
@@ -98,6 +102,8 @@ void node_setup2(struct node *n);
 void node_build(struct node *n);
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val);
+
+void node_consumes_process(struct node *n);
 
 struct node_resolve {
   const char *path;

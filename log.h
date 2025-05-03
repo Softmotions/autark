@@ -5,18 +5,19 @@
 #include <stdarg.h>
 
 enum akecode {
-  AK_ERROR_OK                = 0,
-  AK_ERROR_FAIL              = -1,
-  AK_ERROR_UNIMPLEMETED      = -2,
-  AK_ERROR_INVALID_ARGS      = -3,
-  AK_ERROR_ASSERTION         = -4,
-  AK_ERROR_OVERFLOW          = -5,
-  AK_ERROR_IO                = -6,
-  AK_ERROR_SCRIPT_SYNTAX     = -10,
-  AK_ERROR_CYCLIC_BUILD_DEPS = -11,
-  AK_ERROR_SCRIPT_ERROR      = -12,
-  AK_ERROR_NOT_IMPLEMENTED   = -13,
-  AK_ERROR_EXTERNAL_COMMAND  = -14,
+  AK_ERROR_OK                    = 0,
+  AK_ERROR_FAIL                  = -1,
+  AK_ERROR_UNIMPLEMETED          = -2,
+  AK_ERROR_INVALID_ARGS          = -3,
+  AK_ERROR_ASSERTION             = -4,
+  AK_ERROR_OVERFLOW              = -5,
+  AK_ERROR_IO                    = -6,
+  AK_ERROR_SCRIPT_SYNTAX         = -10,
+  AK_ERROR_CYCLIC_BUILD_DEPS     = -11,
+  AK_ERROR_SCRIPT_ERROR          = -12,
+  AK_ERROR_NOT_IMPLEMENTED       = -13,
+  AK_ERROR_EXTERNAL_COMMAND      = -14,
+  AK_ERROR_DEPENDENCY_UNRESOLVED = -15,
 };
 
 __attribute__((noreturn))
@@ -51,16 +52,16 @@ void akinfo(const char *fmt, ...);
 #define akverbose(fmt__, ...) \
         _akverbose(__FILE__, __LINE__, (fmt__), __VA_ARGS__)
 
-#define akassert(exp__)                                \
-        do {                                           \
-          if (!(exp__)) {                              \
+#define akassert(exp__)                               \
+        do {                                          \
+          if (!(exp__)) {                             \
             akfatal(AK_ERROR_ASSERTION, Q(exp__), 0); \
-          }                                            \
+          }                                           \
         } while (0)
 
-#define akcheck(exp__)                     \
-        do {                               \
-          int e = (exp__);                 \
+#define akcheck(exp__)                    \
+        do {                              \
+          int e = (exp__);                \
           if (e) akfatal(e, Q(exp__), 0); \
         } while (0)
 

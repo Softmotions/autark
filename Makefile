@@ -15,7 +15,6 @@ SRC = xstr.c \
 			deps.c \
 			node_script.c \
 			node_meta.c \
-			node_consumes.c \
 			node_check.c \
 			node_sources.c \
 			node_flags.c \

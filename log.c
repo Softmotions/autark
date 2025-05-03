@@ -38,6 +38,8 @@ static const char* _error_get(int code) {
       return "Not implemented (AK_ERROR_NOT_IMPLEMENTED)";
     case AK_ERROR_EXTERNAL_COMMAND:
       return "External command failed (AK_ERROR_EXTERNAL_COMMAND)";
+    case AK_ERROR_DEPENDENCY_UNRESOLVED:
+      return "Dependency does't exists and don't know how to get it (AK_ERROR_DEPENDENCY_UNRESOLVED)";
     case AK_ERROR_OK:
       return "OK";
     default:
@@ -52,7 +54,7 @@ static char* _basename(char *path) {
   }
   i = strlen(path) - 1;
   for ( ; i && path[i] == '/'; i--) path[i] = 0;
-  for ( ; i && path[i - 1] != '/'; i--);
+  for ( ; i && path[i - 1] != '/'; i--) ;
   return path + i;
 }
 

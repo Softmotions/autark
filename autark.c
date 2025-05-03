@@ -104,7 +104,7 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
 void unit_push(struct unit *unit) {
   akassert(unit);
   ulist_push(&g_env.stack_units, &unit);
-  unit_ch_dir(unit);
+  unit_ch_dir(unit, 0);
   setenv(AUTARK_UNIT, unit->rel_path, 1);
 }
 
@@ -114,7 +114,7 @@ struct unit* unit_pop(void) {
   ulist_pop(&g_env.stack_units);
   struct unit *peek = unit_peek();
   if (peek) {
-    unit_ch_dir(peek);
+    unit_ch_dir(peek, 0);
   }
   return unit;
 }
@@ -126,21 +126,27 @@ struct unit* unit_peek(void) {
   return *(struct unit**) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
 }
 
-void unit_ch_dir(struct unit *unit) {
+void unit_ch_dir(struct unit *unit, char *prevcwd) {
   if (unit->flags & UNIT_FLG_SRC_CWD) {
-    unit_ch_src_dir(unit);
+    unit_ch_src_dir(unit, prevcwd);
   } else if (!(unit->flags & UNIT_FLG_NO_CWD)) {
-    unit_ch_cache_dir(unit);
+    unit_ch_cache_dir(unit, prevcwd);
   }
 }
 
-void unit_ch_cache_dir(struct unit *unit) {
+void unit_ch_cache_dir(struct unit *unit, char *prevcwd) {
   akassert(unit);
+  if (prevcwd) {
+    akassert(getcwd(prevcwd, PATH_MAX));
+  }
   akcheck(chdir(unit->cache_dir));
 }
 
-void unit_ch_src_dir(struct unit *unit) {
+void unit_ch_src_dir(struct unit *unit, char *prevcwd) {
   akassert(unit);
+  if (prevcwd) {
+    akassert(getcwd(prevcwd, PATH_MAX));
+  }
   akcheck(chdir(unit->dir));
 }
 

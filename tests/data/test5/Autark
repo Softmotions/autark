@@ -4,7 +4,7 @@ check {
 
 run {
   run1.sh
-  depends {
+  consumes {
     run1-dep1.txt
     run1-dep2.txt
   }

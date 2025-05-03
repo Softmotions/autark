@@ -241,6 +241,14 @@ int path_stat_file(FILE *file, struct akpath_stat *stat) {
   return _stat(0, fileno(file), stat);
 }
 
+uint64_t path_mtime(const char *path) {
+  struct akpath_stat st;
+  if (path_stat(path, &st)) {
+    return 0;
+  }
+  return st.mtime;
+}
+
 bool path_is_dir(const char *path) {
   struct akpath_stat st;
   if (path_stat(path, &st)) {
@@ -316,6 +324,6 @@ char* path_basename(char *path) {
   }
   i = strlen(path) - 1;
   for ( ; i && path[i] == '/'; i--) path[i] = 0;
-  for ( ; i && path[i - 1] != '/'; i--);
+  for ( ; i && path[i - 1] != '/'; i--) ;
   return path + i;
 }
