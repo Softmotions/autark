@@ -55,7 +55,7 @@ static void _on_outdated(struct node_resolve *r, const struct deps *dep) {
 }
 
 static void _build(struct node *n) {
-  node_consumes_process(n);
+  node_consumes_resolve(n);
 
   node_resolve(&(struct node_resolve) {
     .path = n->vfile,

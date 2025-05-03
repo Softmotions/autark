@@ -665,7 +665,7 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val) {
   return 0;
 }
 
-void node_consumes_process(struct node *n) {
+void node_consumes_resolve(struct node *n) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];
 
