@@ -47,20 +47,11 @@ static void _setup2(struct node *n) {
   }
 }
 
-static void _on_outdated(struct node_resolve *r, const struct deps *dep) {
-  struct node *n = r->user_data;
-  if (!path_is_exist(dep->resource)) {
-    node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "Dependency: %s", dep->resource);
-  }
-}
-
 static void _build(struct node *n) {
   node_consumes_resolve(n);
-
   node_resolve(&(struct node_resolve) {
     .path = n->vfile,
     .user_data = n,
-    .on_outdated = _on_outdated,
     .on_resolve = _on_resolve,
   });
 }

@@ -665,7 +665,7 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val) {
   return 0;
 }
 
-void node_consumes_resolve(struct node *n) {
+struct node* node_consumes_resolve(struct node *n) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];
 
@@ -692,7 +692,7 @@ void node_consumes_resolve(struct node *n) {
             --nc;
             cn->flags |= NODE_FLG_IN_CACHE;
           } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "Failed to resolve dependency: '%s' by %s", d, pn->name);
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", d, pn->name);
           }
         } else if (path_is_exist(d)) {
           --nc;
@@ -710,13 +710,14 @@ void node_consumes_resolve(struct node *n) {
           if (path_is_exist(pathbuf)) {
             cn->flags |= NODE_FLG_IN_SRC;
           } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "I don't know how to resolve dependency: '%s'", d);
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", d);
           }
         }
       }
       akcheck(chdir(prevcwd));
     }
   }
+  return nn;
 }
 
 void node_resolve(struct node_resolve *r) {
@@ -740,15 +741,15 @@ void node_resolve(struct node_resolve *r) {
   r->deps_path_tmp = deps_path_tmp;
   r->env_path_tmp = env_path_tmp;
 
+  if (r->on_init) {
+    r->on_init(r);
+  }
 
   if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
       if (deps_cur_is_outdated(&deps)) {
         ++r->num_outdated;
-        if (r->on_outdated) {
-          r->on_outdated(r, &deps);
-        }
       }
     }
   }

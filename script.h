@@ -103,13 +103,13 @@ void node_build(struct node *n);
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
-void node_consumes_resolve(struct node *n);
+struct node* node_consumes_resolve(struct node *n);
 
 struct node_resolve {
   const char *path;
   void       *user_data;
+  void (*on_init)(struct node_resolve*);
   void (*on_env_value)(struct node_resolve*, const char *key, const char *val);
-  void (*on_outdated)(struct node_resolve*, const struct deps *dep);
   void (*on_resolve)(struct node_resolve*);
   const char  *deps_path_tmp;
   const char  *env_path_tmp;

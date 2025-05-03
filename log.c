@@ -39,7 +39,7 @@ static const char* _error_get(int code) {
     case AK_ERROR_EXTERNAL_COMMAND:
       return "External command failed (AK_ERROR_EXTERNAL_COMMAND)";
     case AK_ERROR_DEPENDENCY_UNRESOLVED:
-      return "Dependency does't exists and don't know how to get it (AK_ERROR_DEPENDENCY_UNRESOLVED)";
+      return "I don't know how to build dependency (AK_ERROR_DEPENDENCY_UNRESOLVED)";
     case AK_ERROR_OK:
       return "OK";
     default:
