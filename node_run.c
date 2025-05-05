@@ -18,19 +18,23 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 
 static void _on_resolve(struct node_resolve *r) {
   struct node *n = r->user_data;
-  const char *run_cmd = n->value;
-  for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE) {
-      run_cmd = nn->value;
-      break;
-    }
-  }
-  if (!run_cmd) {
+  const char *cmd = n->child ? n->child->value : 0;
+  if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
   if (!g_env.quiet) {
-    akinfo("%s: %s", n->name, run_cmd);
+    akinfo("%s: %s", n->name, cmd);
   }
+
+  int rc;
+
+  struct deps deps;
+  rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
+  }
+  node_add_unit_deps(&deps);
+  deps_close(&deps);
 }
 
 static void _setup2(struct node *n) {

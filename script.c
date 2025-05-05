@@ -720,6 +720,17 @@ struct node* node_consumes_resolve(struct node *n) {
   return nn;
 }
 
+void node_add_unit_deps(struct deps *deps) {
+  const char *prev_path = 0;
+  for (int i = g_env.units.num - 1; i >= 0; --i) {
+    struct unit *u = *(struct unit**) ulist_get(&g_env.units, i);
+    if (path_is_exist(u->source_path) && (prev_path == 0 || strcmp(prev_path, u->source_path) != 0)) {
+      prev_path = u->source_path;
+      deps_add(deps, DEPS_TYPE_FILE, u->source_path);
+    }
+  }
+}
+
 void node_resolve(struct node_resolve *r) {
   akassert(r && r->path);
 

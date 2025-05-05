@@ -105,6 +105,8 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node* node_consumes_resolve(struct node *n);
 
+void node_add_unit_deps(struct deps*);
+
 struct node_resolve {
   const char *path;
   void       *user_data;

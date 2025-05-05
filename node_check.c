@@ -30,16 +30,23 @@ static void _check_on_env_value(struct node_resolve *nr, const char *key, const 
 
 static void _check_on_resolve(struct node_resolve *r) {
   struct unit *unit = r->user_data;
+  struct node *n = unit->n;
   struct spawn *spawn = spawn_create(unit->source_path, unit);
   spawn_set_stdout_handler(spawn, _stdout_handler);
   spawn_set_stderr_handler(spawn, _stderr_handler);
+  for (struct node *nn = n->child; nn; nn = nn->child) {
+    if (nn->type == NODE_TYPE_VALUE) {
+      spawn_arg_add(spawn, nn->value);
+    }
+  }
+
   int rc = spawn_do(spawn);
   if (rc) {
     node_fatal(rc, unit->n, "%s", unit->source_path);
   } else {
     int code = spawn_exit_code(spawn);
     if (code != 0) {
-      node_fatal(AK_ERROR_EXTERNAL_COMMAND, unit->n, "%s: %d", unit->source_path, code);
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", unit->source_path, code);
     }
   }
   spawn_destroy(spawn);
@@ -50,7 +57,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
   }
-  deps_add(&deps, DEPS_TYPE_FILE, unit->source_path);
+  node_add_unit_deps(&deps);
   deps_close(&deps);
 }
 
