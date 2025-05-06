@@ -49,6 +49,7 @@ struct node {
   unsigned flags;
   unsigned flags_owner; /// Extra flaghs set by owner node
   unsigned index;       /// Own index in env::nodes
+  unsigned lnum;        /// Node line number
 
   const char *name;   /// Internal node name
   const char *vfile;  /// Node virtual file

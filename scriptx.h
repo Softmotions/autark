@@ -285,6 +285,20 @@ YY_RULE(int) yy__(yycontext *yy); /* 3 */
 YY_RULE(int) yy_RULE(yycontext *yy); /* 2 */
 YY_RULE(int) yy_RULES(yycontext *yy); /* 1 */
 
+YY_ACTION(void) yy_1_EOL(yycontext *yy, char *yytext, int yyleng)
+{
+#define __ yy->__
+#define yypos yy->__pos
+#define yythunkpos yy->__thunkpos
+  yyprintf((stderr, "do yy_1_EOL\n"));
+  {
+#line 22
+   ++yy->x->lnum; ;
+  }
+#undef yythunkpos
+#undef yypos
+#undef yy
+}
 YY_ACTION(void) yy_1_STRQQ(yycontext *yy, char *yytext, int yyleng)
 {
 #define __ yy->__
@@ -365,7 +379,7 @@ YY_RULE(int) yy_EOL(yycontext *yy)
   l3:;	  yy->__pos= yypos2; yy->__thunkpos= yythunkpos2;  if (!yymatchChar(yy, '\n')) goto l4;  goto l2;
   l4:;	  yy->__pos= yypos2; yy->__thunkpos= yythunkpos2;  if (!yymatchChar(yy, '\r')) goto l1;
   }
-  l2:;	
+  l2:;	  yyDo(yy, yy_1_EOL, yy->__begin, yy->__end);
   yyprintf((stderr, "  ok   %s @ %s\n", "EOL", yy->__buf+yy->__pos));
   return 1;
   l1:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;

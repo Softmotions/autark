@@ -37,6 +37,7 @@ struct xnode {
   struct node    base;
   struct xparse *xp;        // Used only by root script node
   unsigned       bld_calls; // Build calls counter in order to detect cyclic build deps
+  unsigned       lnum;
 };
 
 //#define YY_DEBUG
@@ -214,6 +215,7 @@ static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
   x->base.value = pool_strdup(g_env.pool, text);
   x->base.ctx = ctx;
   x->base.type = NODE_TYPE_VALUE;
+  x->base.lnum = yy->x->lnum + 1;
   return x;
 }
 
@@ -408,7 +410,7 @@ static void _script_destroy(struct sctx *s) {
 
 static int _node_bind(struct node *n) {
   // Tree has been built since its safe to compute node name
-  n->name = pool_printf(g_env.pool, "%s[%u]%s", _node_file(n), n->index, n->value);
+  n->name = pool_printf(g_env.pool, "%s:%u %s", _node_file(n), n->lnum, n->value);
   n->vfile = pool_printf(g_env.pool, ".%u", n->index);
 
   if (!(n->flags & NODE_FLG_BOUND)) {

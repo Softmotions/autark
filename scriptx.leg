@@ -19,7 +19,7 @@ __ = SPACE+
 
 SPACE = ' ' | '\t' | EOL
 
-EOL = ('\r\n' | '\n' | '\r')
+EOL = ('\r\n' | '\n' | '\r')                         { ++yy->x->lnum; }
 
 EOF = !.
 
