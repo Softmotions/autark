@@ -65,8 +65,12 @@ static void _on_resolve(struct node_resolve *r) {
 
 static void _setup2(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
-  if (nn) {
-    for (nn = nn->child; nn; nn = nn->child) {
+  if (nn && nn->child) {
+    char prevcwd[PATH_MAX];
+    struct unit *unit = unit_peek();
+    akassert(unit);
+    unit_ch_cache_dir(unit, prevcwd);
+    for (nn = nn->child; nn; nn = nn->next) {
       if (nn->type == NODE_TYPE_VALUE) {
         if (g_env.verbose) {
           akinfo("%s: Product %s", n->name, nn->value);
@@ -74,6 +78,7 @@ static void _setup2(struct node *n) {
         node_product_add(n, nn->value, 0);
       }
     }
+    akcheck(chdir(prevcwd));
   }
 }
 

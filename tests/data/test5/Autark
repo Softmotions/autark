@@ -3,13 +3,22 @@ check {
 }
 
 run {
-  run1.sh { arg1 arg2 }
+  run2.sh
   consumes {
-    run1-dep1.txt
-    run1-dep2.txt
+    run1-product1.txt
+    run1-product2.txt
   }
+  products {
+    run2-product1.txt
+    run2-product2.txt
+  }
+}
+
+run {
+  run1.sh { arg1 arg2 }
   products {
     run1-product1.txt
     run1-product2.txt
   }
+
 }

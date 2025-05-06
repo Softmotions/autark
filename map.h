@@ -15,6 +15,7 @@ struct map_iter {
 };
 
 void map_kv_free(void *key, void *val);
+void map_k_free(void *key, void *val);
 
 struct map* map_create(
   int (*cmp_fn)(const void*, const void*),

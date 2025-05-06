@@ -322,7 +322,7 @@ static int _script_from_value(
   if (!parent) {
     struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
     ulist_init(&ctx->nodes, 64, sizeof(struct node*));
-    ctx->products = map_create_str(0);
+    ctx->products = map_create_str(map_k_free);
 
     x = pool_calloc(pool, sizeof(*x));
     x->base.ctx = ctx;
@@ -637,7 +637,7 @@ void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) 
     }
     node_fatal(AK_ERROR_FAIL, n, "Product: '%s' was registered by other rule: %s", prod, nn->name);
   }
-  map_put_str_no_copy(s->products, prod, n);
+  map_put_str(s->products, prod, n);
 }
 
 struct node* node_by_product(struct node *n, const char *prod, char pathbuf[PATH_MAX]) {

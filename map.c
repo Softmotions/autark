@@ -212,6 +212,10 @@ void map_kv_free(void *key, void *val) {
   free(val);
 }
 
+void map_k_free(void *key, void *val) {
+  free(key);
+}
+
 struct map* map_create(
   int (*cmp_fn)(const void*, const void*),
   uint32_t (*hash_key_fn)(const void*),

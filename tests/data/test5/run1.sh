@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo "!!! Run1"
+echo "!!! Run1 $1 $2"
