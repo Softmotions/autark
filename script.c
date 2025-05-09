@@ -684,7 +684,7 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val) {
   return 0;
 }
 
-struct node* node_consumes_resolve(struct node *n) {
+struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const char *path, void*), void *opq) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];
 
@@ -710,6 +710,9 @@ struct node* node_consumes_resolve(struct node *n) {
           if (path_is_exist(pathbuf)) {
             --nc;
             cn->flags |= NODE_FLG_IN_CACHE;
+            if (on_resolved) {
+              on_resolved(pathbuf, opq);
+            }
           } else {
             node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", d, pn->name);
           }
@@ -728,6 +731,9 @@ struct node* node_consumes_resolve(struct node *n) {
           akassert(path_normalize(d, pathbuf));
           if (path_is_exist(pathbuf)) {
             cn->flags |= NODE_FLG_IN_SRC;
+            if (on_resolved) {
+              on_resolved(pathbuf, opq);
+            }
           } else {
             node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", d);
           }

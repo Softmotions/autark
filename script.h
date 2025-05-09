@@ -104,7 +104,7 @@ void node_build(struct node *n);
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
-struct node* node_consumes_resolve(struct node *n);
+struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const char *path, void *opq), void *opq);
 
 void node_add_unit_deps(struct deps*);
 

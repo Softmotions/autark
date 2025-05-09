@@ -21,8 +21,15 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stdout, "%s: %s", d->cmd, buf);
 }
 
+struct _on_resolve_ctx {
+  struct node *n;
+  struct node_resolve *r;
+  struct ulist consumes; // sizeof(char*)
+};
+
 static void _on_resolve(struct node_resolve *r) {
-  struct node *n = r->user_data;
+  struct _on_resolve_ctx *ctx = r->user_data;
+  struct node *n = ctx->n;
   struct node *ncmd = n->child;
   const char *cmd = ncmd ? ncmd->value : 0;
   if (!cmd) {
@@ -66,6 +73,11 @@ static void _on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
+
+  for (int i = 0; i < ctx->consumes.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
+    deps_add(&deps, DEPS_TYPE_FILE, path);
+  }
   node_add_unit_deps(&deps);
   deps_close(&deps);
 }
@@ -84,13 +96,31 @@ static void _setup2(struct node *n) {
   }
 }
 
+static void _on_consumed_resolved(const char *path_, void *d) {
+  struct _on_resolve_ctx *ctx = d;
+  const char *path = pool_strdup(ctx->r->pool, path_);
+  ulist_push(&ctx->consumes, &path);
+}
+
+static void _on_init(struct node_resolve *r) {
+  struct _on_resolve_ctx *ctx = r->user_data;
+  ctx->r = r;
+  struct node *n = ctx->n;
+  node_consumes_resolve(n, _on_consumed_resolved, ctx);
+}
+
 static void _build(struct node *n) {
-  node_consumes_resolve(n);
+  struct _on_resolve_ctx ctx = {
+    .n = n,
+    .consumes = { .usize = sizeof(char*) }
+  };
   node_resolve(&(struct node_resolve) {
     .path = n->vfile,
-    .user_data = n,
+    .user_data = &ctx,
+    .on_init = _on_init,
     .on_resolve = _on_resolve,
   });
+  ulist_destroy_keep(&ctx.consumes);
 }
 
 int node_run_setup(struct node *n) {

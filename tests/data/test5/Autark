@@ -3,7 +3,7 @@ check {
 }
 
 run {
-  run2.sh
+  run2.sh { arg1 arg2 }
   consumes {
     run1-product1.txt
     run1-product2.txt

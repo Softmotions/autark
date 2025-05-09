@@ -17,20 +17,26 @@ int main(void) {
   script_build(sctx);
   script_close(&sctx);
 
-  akassert(access("autark-cache/.autark/check1.sh.deps", R_OK) == 0);
-  akassert(access("autark-cache/.autark/check1.sh.env", R_OK) == 0);
-  akassert(access("autark-cache/.autark/test-file.txt", R_OK) == 0);
+  akassert(access("autark-cache/.autark/check1.sh.deps", F_OK) == 0);
+  akassert(access("autark-cache/.autark/check1.sh.env", F_OK) == 0);
+  akassert(access("autark-cache/.autark/test-file.txt", F_OK) == 0);
 
-  struct akpath_stat st, st2;
-  akassert(path_stat("autark-cache/.autark/test-file.txt", &st) == 0);
+  struct akpath_stat st[6];
+  akassert(path_stat("autark-cache/.autark/test-file.txt", &st[0]) == 0);
+  akassert(path_stat("autark-cache/run1-product1.txt", &st[2]) == 0);
+  akassert(path_stat("autark-cache/run2-product1.txt", &st[4]) == 0);
 
   // Now do the second run
   akassert(script_open("./data/test5/Autark", &sctx) == 0);
   script_build(sctx);
   script_close(&sctx);
 
-  akassert(path_stat("autark-cache/.autark/test-file.txt", &st2) == 0);
-  akassert(st.mtime == st2.mtime);
+  akassert(path_stat("autark-cache/.autark/test-file.txt", &st[1]) == 0);
+  akassert(path_stat("autark-cache/run1-product1.txt", &st[3]) == 0);
+  akassert(path_stat("autark-cache/run2-product1.txt", &st[5]) == 0);
+  akassert(st[0].mtime == st[1].mtime);
+  akassert(st[2].mtime == st[3].mtime);
+  akassert(st[4].mtime == st[5].mtime);
 
   chdir(cwd_prev);
   return 0;
