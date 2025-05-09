@@ -89,7 +89,7 @@ static void _node_check_special(struct node *n) {
   // TODO:
 }
 
-static void _setup(struct node *n) {
+static void _init(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE) {
       _node_check_script(nn);
@@ -100,6 +100,6 @@ static void _setup(struct node *n) {
 }
 
 int node_check_setup(struct node *n) {
-  n->setup = _setup;
+  n->init = _init;
   return 0;
 }

@@ -7,7 +7,7 @@ static void _dispose(struct node *n) {
 }
 
 int node_subst_setup(struct node *n) {
-  n->setup = _setup;
+  n->init = _setup;
   n->dispose = _dispose;
   return 0;
 }

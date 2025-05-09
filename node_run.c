@@ -82,7 +82,7 @@ static void _on_resolve(struct node_resolve *r) {
   deps_close(&deps);
 }
 
-static void _setup2(struct node *n) {
+static void _setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
@@ -126,7 +126,7 @@ static void _build(struct node *n) {
 
 int node_run_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
-  n->setup2 = _setup2;
+  n->setup = _setup;
   n->build = _build;
   return 0;
 }

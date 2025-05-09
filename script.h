@@ -63,8 +63,8 @@ struct node {
   struct unit *unit;
 
   const char* (*value_get)(struct node*);
+  void (*init)(struct node*);
   void (*setup)(struct node*);
-  void (*setup2)(struct node*);
   void (*build)(struct node*);
   void (*dispose)(struct node*);
 
@@ -99,9 +99,9 @@ void node_reset(struct node *n);
 
 const char* node_value(struct node *n);
 
-void node_setup(struct node *n);
+void node_init(struct node *n);
 
-void node_setup2(struct node *n);
+void node_setup(struct node *n);
 
 void node_build(struct node *n);
 

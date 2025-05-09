@@ -493,23 +493,23 @@ void node_reset(struct node *n) {
   n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_EXCLUDED);
 }
 
-void node_setup(struct node *n) {
+void node_init(struct node *n) {
   if (!(n->flags & NODE_FLG_SETUP)) {
     n->flags |= NODE_FLG_SETUP;
-    if (n->setup) {
+    if (n->init) {
       _node_context_push(n);
-      n->setup(n);
+      n->init(n);
       _node_context_pop(n);
     }
   }
 }
 
-void node_setup2(struct node *n) {
+void node_setup(struct node *n) {
   if (!(n->flags & NODE_FLG_SETUP2)) {
     n->flags |= NODE_FLG_SETUP2;
-    if (n->setup2) {
+    if (n->setup) {
       _node_context_push(n);
-      n->setup2(n);
+      n->setup(n);
       _node_context_pop(n);
     }
   }
@@ -568,11 +568,11 @@ finish:
 
 void script_setup(struct sctx *s) {
   akassert(s->root);
-  if (s->root->setup && !node_is_setup(s->root)) {
-    s->root->setup(s->root);
+  if (s->root->init && !node_is_setup(s->root)) {
+    s->root->init(s->root);
   }
-  if (s->root->setup2 && !node_is_setup2(s->root)) {
-    s->root->setup2(s->root);
+  if (s->root->setup && !node_is_setup2(s->root)) {
+    s->root->setup(s->root);
   }
 }
 
