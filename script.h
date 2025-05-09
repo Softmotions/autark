@@ -62,6 +62,7 @@ struct node {
   struct sctx *ctx;
   struct unit *unit;
 
+  const char* (*value_get)(struct node*);
   void (*setup)(struct node*);
   void (*setup2)(struct node*);
   void (*build)(struct node*);
@@ -95,6 +96,8 @@ struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_M
 void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
 void node_reset(struct node *n);
+
+const char* node_value(struct node *n);
 
 void node_setup(struct node *n);
 

@@ -477,6 +477,18 @@ static void _node_context_pop(struct node *n) {
   unit_pop();
 }
 
+const char* node_value(struct node *n) {
+  if (n) {
+    if (n->value_get) {
+      return n->value_get(n);
+    } else {
+      return n->value;
+    }
+  } else {
+    return 0;
+  }
+}
+
 void node_reset(struct node *n) {
   n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_EXCLUDED);
 }

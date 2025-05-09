@@ -31,7 +31,7 @@ static void _on_resolve(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
   struct node *n = ctx->n;
   struct node *ncmd = n->child;
-  const char *cmd = ncmd ? ncmd->value : 0;
+  const char *cmd = node_value(ncmd);
   if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
@@ -51,8 +51,8 @@ static void _on_resolve(struct node_resolve *r) {
 
   if (ncmd->child) {
     for (struct node *nn = ncmd->child; nn; nn = nn->next) {
-      if (nn->type == NODE_TYPE_VALUE) {
-        spawn_arg_add(spawn, nn->value);
+      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+        spawn_arg_add(spawn, node_value(nn));
       }
     }
   }
@@ -86,11 +86,12 @@ static void _setup2(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
-      if (nn->type == NODE_TYPE_VALUE) {
+      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+        const char *value = node_value(nn);
         if (g_env.verbose) {
-          node_info(n, "Product: %s", nn->value);
+          node_info(n, "Product: %s", value);
         }
-        node_product_add(n, nn->value, 0);
+        node_product_add(n, value, 0);
       }
     }
   }
