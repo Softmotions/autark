@@ -126,7 +126,10 @@ struct node_resolve {
 
 void node_resolve(struct node_resolve*);
 
+__attribute__((noreturn))
 void node_fatal(int rc, struct node *n, const char *fmt, ...);
+
+void node_info(struct node *n, const char *fmt, ...);
 
 int node_error(int rc, struct node *n, const char *fmt, ...);
 

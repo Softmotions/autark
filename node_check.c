@@ -64,13 +64,13 @@ static void _check_on_resolve(struct node_resolve *r) {
 static void _node_check_script(struct node *n) {
   const char *script = n->value;
   if (!g_env.quiet) {
-    akinfo("%s: %s", n->name, script);
+    node_info(n->parent, "%s", script);
   }
   struct pool *pool = pool_create(on_unit_pool_destroy);
   const char *path = pool_printf(pool, ".autark/%s", script);
   struct unit *unit = unit_create(path, 0, pool);
   unit->n = n;
-  unit_push(unit);
+  unit_push(unit, n);
 
   struct node_resolve nr = {
     .mode = NODE_RESOLVE_ENV_ALWAYS,

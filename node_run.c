@@ -23,23 +23,30 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 
 static void _on_resolve(struct node_resolve *r) {
   struct node *n = r->user_data;
-  const char *cmd = n->child ? n->child->value : 0;
+  struct node *ncmd = n->child;
+  const char *cmd = ncmd ? ncmd->value : 0;
   if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
   if (!g_env.quiet) {
-    akinfo("%s: %s", n->name, cmd);
+    node_info(n, "%s", cmd);
   }
 
+  struct unit *unit = unit_peek();
   struct spawn *spawn = spawn_create(cmd, &(struct _spawn_data) {
     .cmd = cmd,
     .n = n
   });
+  spawn_env_path_prepend(spawn, unit->dir);
+  spawn_env_path_prepend(spawn, unit->cache_dir);
   spawn_set_stdout_handler(spawn, _stdout_handler);
   spawn_set_stderr_handler(spawn, _stderr_handler);
-  for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE) {
-      spawn_arg_add(spawn, nn->value);
+
+  if (ncmd->child) {
+    for (struct node *nn = ncmd->child; nn; nn = nn->next) {
+      if (nn->type == NODE_TYPE_VALUE) {
+        spawn_arg_add(spawn, nn->value);
+      }
     }
   }
 
@@ -66,19 +73,14 @@ static void _on_resolve(struct node_resolve *r) {
 static void _setup2(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
   if (nn && nn->child) {
-    char prevcwd[PATH_MAX];
-    struct unit *unit = unit_peek();
-    akassert(unit);
-    unit_ch_cache_dir(unit, prevcwd);
     for (nn = nn->child; nn; nn = nn->next) {
       if (nn->type == NODE_TYPE_VALUE) {
         if (g_env.verbose) {
-          akinfo("%s: Product %s", n->name, nn->value);
+          node_info(n, "Product: %s", nn->value);
         }
         node_product_add(n, nn->value, 0);
       }
     }
-    akcheck(chdir(prevcwd));
   }
 }
 
@@ -92,6 +94,7 @@ static void _build(struct node *n) {
 }
 
 int node_run_setup(struct node *n) {
+  n->flags |= NODE_FLG_IN_CACHE;
   n->setup2 = _setup2;
   n->build = _build;
   return 0;

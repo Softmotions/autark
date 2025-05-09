@@ -168,6 +168,20 @@ static const char* _node_file(struct node *n) {
   return "script";
 }
 
+void node_info(struct node *n, const char *fmt, ...) {
+  struct xstr *xstr = xstr_create_empty();
+  if (fmt) {
+    va_list ap;
+    va_start(ap, fmt);
+    xstr_printf_va(xstr, fmt, ap);
+    va_end(ap);
+    akinfo("%s: %s", n->name, xstr_ptr(xstr));
+  } else {
+    akinfo(n->name, 0);
+  }
+  xstr_destroy(xstr);
+}
+
 void node_fatal(int rc, struct node *n, const char *fmt, ...) {
   struct xstr *xstr = xstr_create_empty();
   if (fmt) {
@@ -343,7 +357,7 @@ static int _script_from_value(
     }
     unit->n = &x->base;
     x->base.unit = unit;
-    unit_ch_dir(unit, 0);
+    unit_ch_dir(&(struct unit_ctx) { unit, 0 }, 0);
   }
 
   x->base.value = pool_strdup(pool, file ? file : "<script>");
@@ -410,7 +424,7 @@ static void _script_destroy(struct sctx *s) {
 
 static int _node_bind(struct node *n) {
   // Tree has been built since its safe to compute node name
-  n->name = pool_printf(g_env.pool, "%s:%u %s", _node_file(n), n->lnum, n->value);
+  n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
   n->vfile = pool_printf(g_env.pool, ".%u", n->index);
 
   if (!(n->flags & NODE_FLG_BOUND)) {
@@ -456,7 +470,7 @@ static struct node* _unit_node_find(struct node *n) {
 
 static void _node_context_push(struct node *n) {
   struct node *s = _unit_node_find(n);
-  unit_push(s->unit);
+  unit_push(s->unit, n);
 }
 
 static void _node_context_pop(struct node *n) {
@@ -492,6 +506,9 @@ void node_setup2(struct node *n) {
 void node_build(struct node *n) {
   if (!(n->flags & NODE_FLG_BUILT)) {
     if (n->build) {
+      if (!g_env.quiet) {
+        node_info(n, "Build");
+      }
       struct xnode *x = (void*) n;
       x->bld_calls++;
       if (x->bld_calls > 1) {
@@ -774,13 +791,13 @@ void node_resolve(struct node_resolve *r) {
 
   if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
     r->on_resolve(r);
-    if (access(deps_path_tmp, R_OK) == 0) {
+    if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
       if (rc) {
         akfatal(rc, "Rename failed of %s to %s", deps_path_tmp, deps_path);
       }
     }
-    if (r->on_env_value && !access(env_path_tmp, R_OK)) {
+    if (r->on_env_value && !access(env_path_tmp, F_OK)) {
       rc = utils_rename_file(env_path_tmp, env_path);
       if (rc) {
         akfatal(rc, "Rename failed of %s to %s", env_path_tmp, env_path);

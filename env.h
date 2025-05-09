@@ -34,6 +34,12 @@ struct unit {
   void *impl;               // Arbirary implementation data
 };
 
+/// Unit context in units stack.
+struct unit_ctx {
+  struct unit *unit;
+  struct node *node;
+};
+
 /// Global env
 struct env {
   const char  *cwd;
@@ -50,7 +56,7 @@ struct env {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;
   struct map  *map_path_to_unit; // Path to unit mapping
-  struct ulist stack_units;      // Stack of nested units
+  struct ulist stack_units;      // Stack of nested unit contexts (struct unit_ctx)
   struct ulist units;            // All created units.
 };
 
@@ -62,13 +68,15 @@ struct unit* unit_create(const char *unit_path, unsigned flags, struct pool *poo
 
 struct unit* unit_for_path(const char *path);
 
-void unit_push(struct unit*);
+void unit_push(struct unit*, struct node*);
 
 struct unit* unit_pop(void);
 
 struct unit* unit_peek(void);
 
-void unit_ch_dir(struct unit*, char *prevcwd);
+struct unit_ctx unit_peek_ctx(void);
+
+void unit_ch_dir(struct unit_ctx*, char *prevcwd);
 
 void unit_ch_cache_dir(struct unit*, char *prevcwd);
 

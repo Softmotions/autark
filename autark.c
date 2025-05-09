@@ -18,7 +18,7 @@
 #include <errno.h>
 
 struct env g_env = {
-  .stack_units = { .usize = sizeof(struct unit*) },
+  .stack_units = { .usize = sizeof(struct unit_ctx) },
   .units = { .usize = sizeof(struct unit*) }
 };
 
@@ -101,36 +101,49 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   return unit;
 }
 
-void unit_push(struct unit *unit) {
+void unit_push(struct unit *unit, struct node *n) {
   akassert(unit);
-  ulist_push(&g_env.stack_units, &unit);
-  unit_ch_dir(unit, 0);
+  struct unit_ctx ctx = { unit, n };
+  ulist_push(&g_env.stack_units, &ctx);
+  unit_ch_dir(&ctx, 0);
   setenv(AUTARK_UNIT, unit->rel_path, 1);
 }
 
 struct unit* unit_pop(void) {
   akassert(g_env.stack_units.num > 0);
-  struct unit *unit = *(struct unit**) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
+  struct unit_ctx *ctx = (struct unit_ctx*) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
   ulist_pop(&g_env.stack_units);
-  struct unit *peek = unit_peek();
-  if (peek) {
-    unit_ch_dir(peek, 0);
+  struct unit_ctx peek = unit_peek_ctx();
+  if (peek.unit) {
+    unit_ch_dir(&peek, 0);
   }
-  return unit;
+  return ctx->unit;
 }
 
 struct unit* unit_peek(void) {
-  if (g_env.stack_units.num == 0) {
-    return 0;
-  }
-  return *(struct unit**) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
+  return unit_peek_ctx().unit;
 }
 
-void unit_ch_dir(struct unit *unit, char *prevcwd) {
-  if (unit->flags & UNIT_FLG_SRC_CWD) {
-    unit_ch_src_dir(unit, prevcwd);
-  } else if (!(unit->flags & UNIT_FLG_NO_CWD)) {
-    unit_ch_cache_dir(unit, prevcwd);
+struct unit_ctx unit_peek_ctx(void) {
+  if (g_env.stack_units.num == 0) {
+    return (struct unit_ctx) {
+             0, 0
+    };
+  }
+  return *(struct unit_ctx*) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
+}
+
+void unit_ch_dir(struct unit_ctx *ctx, char *prevcwd) {
+  if (ctx->node && (ctx->node->flags & NODE_FLG_IN_ANY)) {
+    if (ctx->node->flags & NODE_FLG_IN_SRC) {
+      unit_ch_src_dir(ctx->unit, prevcwd);
+    } else if (ctx->node->flags & NODE_FLG_IN_CACHE) {
+      unit_ch_cache_dir(ctx->unit, prevcwd);
+    }
+  } else if (ctx->unit->flags & UNIT_FLG_SRC_CWD) {
+    unit_ch_src_dir(ctx->unit, prevcwd);
+  } else if (!(ctx->unit->flags & UNIT_FLG_NO_CWD)) {
+    unit_ch_cache_dir(ctx->unit, prevcwd);
   }
 }
 
@@ -236,7 +249,7 @@ void autark_build_prepare(const char *script_path) {
   const char *path = path_basename(path_buf);
 
   struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
-  unit_push(unit);
+  unit_push(unit, 0);
 
   if (!path_is_dir(g_env.project.cache_dir) || !path_is_accesible_read(g_env.project.cache_dir)) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
@@ -286,7 +299,7 @@ static void _project_env_read(void) {
   }
 
   struct unit *unit = unit_create(val, UNIT_FLG_NO_CWD, g_env.pool);
-  unit_push(unit);
+  unit_push(unit, 0);
 }
 
 static void _on_command_set(int argc, const char **argv) {

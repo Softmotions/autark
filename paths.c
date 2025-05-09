@@ -43,6 +43,9 @@ bool path_is_accesible(const char *path, enum akpath_access a) {
   if (a & AKPATH_EXEC) {
     mode |= X_OK;
   }
+  if (mode == 0) {
+    mode = F_OK;
+  }
   return access(path, mode) == 0;
 }
 

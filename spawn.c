@@ -5,13 +5,14 @@
 #include "xstr.h"
 #include "env.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <poll.h>
-#include <sys/wait.h>
-#include <string.h>
 #include <errno.h>
+#include <linux/limits.h>
+#include <poll.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 extern char **environ;
 
@@ -23,6 +24,7 @@ struct spawn {
   struct ulist args;
   struct ulist env;
   const char  *exec;
+  char *path_overriden;
 
   size_t (*stdin_provider)(char *buf, size_t buflen, struct spawn*);
   void   (*stdout_handler)(char *buf, size_t buflen, struct spawn*);
@@ -76,15 +78,49 @@ void spawn_env_set(struct spawn *s, const char *key, const char *val) {
 }
 
 void spawn_env_path_prepend(struct spawn *s, const char *path) {
-  const char *path_env = getenv("PATH");
-  if (path_env) {
-    struct xstr *xstr = xstr_create_empty();
-    xstr_printf(xstr, "%s:%s", path, path_env);
-    spawn_env_set(s, "PATH", xstr_ptr(xstr));
-    xstr_destroy(xstr);
-  } else {
-    spawn_env_set(s, "PATH", path);
+  struct xstr *xstr = xstr_create_empty();
+  const char *old = s->path_overriden;
+  if (!old) {
+    old = getenv("PATH");
   }
+  if (old) {
+    xstr_printf(xstr, "%s:%s", path, old);
+  } else {
+    xstr_cat(xstr, path);
+  }
+  free(s->path_overriden);
+  s->path_overriden = xstr_destroy_keep_ptr(xstr);
+}
+
+static char* _file_resolve_in_path(struct spawn *s, const char *file, char pathbuf[PATH_MAX]) {
+  char buf[PATH_MAX + 1]; // One extra byte for the final '/' in path prefix
+  const char *sp = s->path_overriden;
+  if (!sp) {
+    sp = getenv("PATH");
+  }
+  const char *ep = sp;
+  while (sp) {
+    for ( ; *ep != '\0' && *ep != ':'; ++ep) ;
+    if (ep - sp > 0 && ep - sp < PATH_MAX) {
+      memcpy(buf, sp, ep - sp);
+      if (buf[ep - sp - 1] != '/') {
+        buf[ep - sp] = '/';
+        buf[ep - sp + 1] = '\0';
+      } else {
+        buf[ep - sp] = '\0';
+      }
+      snprintf(pathbuf, PATH_MAX, "%s%s", buf, file);
+      if (!access(pathbuf, F_OK)) {
+        return pathbuf;
+      }
+    }
+    while (*ep == ':') ++ep;
+    if (*ep == '\0') {
+      break;
+    }
+    sp = ep;
+  }
+  return 0;
 }
 
 static char* _env_find(struct spawn *s, const char *key, size_t keylen) {
@@ -103,8 +139,11 @@ static char* _env_find(struct spawn *s, const char *key, size_t keylen) {
 
 static char** _env_create(struct spawn *s) {
   int i = 0, c = 0;
+  if (s->path_overriden) {
+    spawn_env_set(s, "PATH", s->path_overriden);
+  }
 
-  for (char **ep = environ; *ep; ++ep, ++c);
+  for (char **ep = environ; *ep; ++ep, ++c) ;
   c += s->env.num;
 
   char **nenv = pool_alloc(s->pool, sizeof(*nenv) * (c + 1));
@@ -202,7 +241,18 @@ int spawn_do(struct spawn *s) {
   const char *file = args[0];
 
   char buf[1024];
+  char pathbuf[PATH_MAX];
   ssize_t len;
+
+  if (!strchr(file, '/')) {
+    const char *rfile = _file_resolve_in_path(s, file, pathbuf);
+    if (!rfile) {
+      akerror(ENOENT, "Failed to find: '%s' in PATH", rfile);
+      errno = ENOENT;
+      return errno;
+    }
+    file = rfile;
+  }
 
   if (pipe(pipe_stdout) == -1) {
     return errno;
@@ -246,6 +296,7 @@ int spawn_do(struct spawn *s) {
     close(pipe_stderr[1]);
 
     execve(file, args, envp);
+
     perror("execve");
     _exit(EXIT_FAILURE);
   } else {
@@ -316,6 +367,7 @@ finish:
 }
 
 void spawn_destroy(struct spawn *s) {
+  free(s->path_overriden);
   ulist_destroy_keep(&s->args);
   ulist_destroy_keep(&s->env);
   pool_destroy(s->pool);
