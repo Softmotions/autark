@@ -93,7 +93,7 @@ void spawn_env_path_prepend(struct spawn *s, const char *path) {
 }
 
 static char* _file_resolve_in_path(struct spawn *s, const char *file, char pathbuf[PATH_MAX]) {
-  char buf[PATH_MAX + 1]; // One extra byte for the final '/' in path prefix
+  char buf[PATH_MAX];
   const char *sp = s->path_overriden;
   if (!sp) {
     sp = getenv("PATH");
@@ -103,13 +103,12 @@ static char* _file_resolve_in_path(struct spawn *s, const char *file, char pathb
     for ( ; *ep != '\0' && *ep != ':'; ++ep) ;
     if (ep - sp > 0 && ep - sp < PATH_MAX) {
       memcpy(buf, sp, ep - sp);
+      buf[ep - sp] = '\0';
       if (buf[ep - sp - 1] != '/') {
-        buf[ep - sp] = '/';
-        buf[ep - sp + 1] = '\0';
+        snprintf(pathbuf, PATH_MAX, "%s/%s", buf, file);
       } else {
-        buf[ep - sp] = '\0';
+        snprintf(pathbuf, PATH_MAX, "%s%s", buf, file);
       }
-      snprintf(pathbuf, PATH_MAX, "%s%s", buf, file);
       if (!access(pathbuf, F_OK)) {
         return pathbuf;
       }
