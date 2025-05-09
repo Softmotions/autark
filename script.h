@@ -25,8 +25,8 @@
 #define NODE_TYPE_RUN     0x4000U
 
 #define NODE_FLG_BOUND    0x01U
-#define NODE_FLG_SETUP    0x02U
-#define NODE_FLG_SETUP2   0x04U
+#define NODE_FLG_INIT     0x02U
+#define NODE_FLG_SETUP    0x04U
 #define NODE_FLG_UPDATED  0x08U // Node product updated as result of build
 #define NODE_FLG_BUILT    0x10U // Node built
 #define NODE_FLG_EXCLUDED 0x20U // Node is excluded from build
@@ -37,8 +37,8 @@
 
 #define node_is_excluded(n__) (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
 #define node_is_included(n__) (!node_is_excluded(n__))
+#define node_is_init(n__)     (((n__)->flags & NODE_FLG_INIT) != 0)
 #define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
-#define node_is_setup2(n__)   (((n__)->flags & NODE_FLG_SETUP2) != 0)
 #define node_is_value(n__)    ((n__)->type & NODE_TYPE_VALUE)
 #define node_is_rule(n__)     !node_is_value(n__)
 

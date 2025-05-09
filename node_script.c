@@ -9,12 +9,12 @@ static void _init(struct node *n) {
     node_reset(nn);
   }
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_CHECK && !node_is_setup(nn) && node_is_included(nn)) {
+    if (nn->type == NODE_TYPE_CHECK && !node_is_init(nn) && node_is_included(nn)) {
       node_init(nn);
     }
   }
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type != NODE_TYPE_CHECK && !node_is_setup(nn) && node_is_included(nn)) {
+    if (nn->type != NODE_TYPE_CHECK && !node_is_init(nn) && node_is_included(nn)) {
       node_init(nn);
     }
   }
