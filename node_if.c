@@ -61,9 +61,13 @@ static void _pull_else(struct node *n) {
   struct node *prev = node_find_prev_sibling(n);
   struct node *next = n->next;
   struct node *nn = next;
+  bool elz = false;
 
-  if (nn && nn->child && _node_is_else(nn)) { // We have attached else
+  if (_node_is_else(nn)) {
+    elz = true;
     next = nn->next;
+  }
+  if (elz && nn->child) {
     nn = nn->child;
     n->next = nn;
     if (prev) {
@@ -91,7 +95,7 @@ static void _pull_if(struct node *n) {
   struct node *next = n->next;
   struct node *nn = mn->next;
 
-  if (next && next->child && _node_is_else(next)) {
+  if (_node_is_else(next)) {
     next = next->next; // Skip else block
   }
   if (nn) {
