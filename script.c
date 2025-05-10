@@ -494,7 +494,7 @@ void node_reset(struct node *n) {
 }
 
 void node_init(struct node *n) {
-  if (!(n->flags & NODE_FLG_INIT)) {
+  if (!node_is_init(n) && node_is_included(n)) {
     n->flags |= NODE_FLG_INIT;
     if (n->init) {
       _node_context_push(n);
@@ -505,7 +505,7 @@ void node_init(struct node *n) {
 }
 
 void node_setup(struct node *n) {
-  if (!(n->flags & NODE_FLG_SETUP)) {
+  if (!node_is_setup(n) && node_is_included(n)) {
     n->flags |= NODE_FLG_SETUP;
     if (n->setup) {
       _node_context_push(n);
@@ -516,7 +516,7 @@ void node_setup(struct node *n) {
 }
 
 void node_build(struct node *n) {
-  if (!(n->flags & NODE_FLG_BUILT)) {
+  if (!node_is_built(n) && node_is_included(n)) {
     if (n->build) {
       if (!g_env.quiet) {
         node_info(n, "Build");
@@ -715,8 +715,8 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
     unit_ch_cache_dir(unit, prevcwd);
     for (struct node *cn = nn->child; cn; cn = cn->next) {
       if (cn->type == NODE_TYPE_VALUE) {
-        const char *d = cn->value;
-        struct node *pn = node_by_product(n, d, pathbuf);
+        const char *cv = node_value(cn);
+        struct node *pn = node_by_product(n, cv, pathbuf);
         if (pn) {
           node_build(pn);
           if (path_is_exist(pathbuf)) {
@@ -726,9 +726,9 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
               on_resolved(pathbuf, opq);
             }
           } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", d, pn->name);
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", cv, pn->name);
           }
-        } else if (path_is_exist(d)) {
+        } else if (path_is_exist(cv)) {
           --nc;
           cn->flags |= NODE_FLG_IN_CACHE;
         }
@@ -739,15 +739,15 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
       unit_ch_src_dir(unit, prevcwd);
       for (struct node *cn = nn->child; cn; cn = cn->next) {
         if (cn->type == NODE_TYPE_VALUE && !(cn->flags & NODE_FLG_IN_CACHE)) {
-          const char *d = cn->value;
-          akassert(path_normalize(d, pathbuf));
+          const char *cv = node_value(cn);
+          akassert(path_normalize(cv, pathbuf));
           if (path_is_exist(pathbuf)) {
             cn->flags |= NODE_FLG_IN_SRC;
             if (on_resolved) {
               on_resolved(pathbuf, opq);
             }
           } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", d);
+            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", cv);
           }
         }
       }

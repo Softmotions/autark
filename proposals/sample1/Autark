@@ -5,10 +5,7 @@ meta {
       A multi-line
       project description.
       Build OS:
-      if {
-        matched { OS Linux } Linux
-        else { ${OS} }
-      }
+      if { matched { OS Linux } Linux } else { ${OS} }
   }
 }
 
@@ -35,8 +32,10 @@ sources {
   name { main }
   sample1.c
   if {
-    matched { OS FreeBSD } sample1_freebsd.c
-    else { sample1_generic.c }
+    matched { OS FreeBSD }
+    sample1_freebsd.c
+  } else {
+    sample1_generic.c
   }
 }
 

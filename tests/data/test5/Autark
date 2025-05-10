@@ -14,10 +14,14 @@ run {
   }
 }
 
-run {
-  run1.sh { arg1 ${KEY2} }
-  products {
-    run1-product1.txt
-    run1-product2.txt
+if { matched { ${KEY1} VAL1 }
+  run {
+    run1.sh { arg1 ${KEY2} }
+    products {
+      run1-product1.txt
+      run1-product2.txt
+    }
   }
+} else {
+
 }
