@@ -79,9 +79,9 @@ static void _pull_else(struct node *n) {
       }
     }
   } else if (prev) {
-    prev->next = nn;
+    prev->next = next;
   } else {
-    n->parent->child = nn;
+    n->parent->child = next;
   }
 }
 
@@ -91,6 +91,9 @@ static void _pull_if(struct node *n) {
   struct node *next = n->next;
   struct node *nn = mn->next;
 
+  if (next && next->child && _node_is_else(next)) {
+    next = next->next; // Skip else block
+  }
   if (nn) {
     n->next = nn;
     if (prev) {
@@ -106,9 +109,9 @@ static void _pull_if(struct node *n) {
       }
     }
   } else if (prev) {
-    prev->next = n->next;
+    prev->next = next;
   } else {
-    n->parent->child = n->next;
+    n->parent->child = next;
   }
 }
 
