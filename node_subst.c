@@ -1,14 +1,21 @@
 #include "script.h"
 
-static void _setup(struct node *n) {
-}
-
-static void _dispose(struct node *n) {
+static const char* _value(struct node *n) {
+  if (n->child) {
+    const char *key = node_value(n->child);
+    if (!key) {
+      return "";
+    }
+    const char *vv = node_env_get(n, key);
+    if (vv) {
+      return vv;
+    }
+  }
+  return "";
 }
 
 int node_subst_setup(struct node *n) {
-  n->init = _setup;
-  n->dispose = _dispose;
+  n->value_get = _value;
   return 0;
 }
 

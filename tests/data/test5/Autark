@@ -3,7 +3,7 @@ check {
 }
 
 run {
-  run2.sh { arg1 arg2 }
+  run2.sh { arg1 ${KEY2} }
   consumes {
     run1-product1.txt
     run1-product2.txt
@@ -15,7 +15,7 @@ run {
 }
 
 run {
-  run1.sh { arg1 arg2 }
+  run1.sh { arg1 ${KEY2} }
   products {
     run1-product1.txt
     run1-product2.txt

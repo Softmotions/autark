@@ -38,6 +38,16 @@ int main(void) {
   akassert(st[2].mtime == st[3].mtime);
   akassert(st[4].mtime == st[5].mtime);
 
+  struct value v = utils_file_as_buf("autark-cache/run1-product2.txt", 1024);
+  akassert(v.buf);
+  akassert(strcmp(v.buf, "VAL2\n") == 0);
+  value_destroy(&v);
+
+  v = utils_file_as_buf("autark-cache/run2-product2.txt", 1024);
+  akassert(v.buf);
+  akassert(strcmp(v.buf, "VAL2\n") == 0);
+  value_destroy(&v);
+
   chdir(cwd_prev);
   return 0;
 }
