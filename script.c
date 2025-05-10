@@ -696,6 +696,20 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val) {
   return 0;
 }
 
+struct node* node_find_prev_sibling(struct node *n) {
+  if (n) {
+    struct node *p = n->parent;
+    if (p) {
+      for (struct node *prev = 0, *c = p->child; c; prev = c, c = c->next) {
+        if (c == n) {
+          return prev;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const char *path, void*), void *opq) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];

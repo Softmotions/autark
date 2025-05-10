@@ -7,10 +7,7 @@
 static bool _defined_eval(struct node *mn) {
   struct node *n = mn->parent;
   const char *val = node_value(mn->child);
-  if (!val) {
-    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Defined directive must have a body: if { defined { ^ } ... ");
-  }
-  if (node_env_get(n, val)) {
+  if (val && node_env_get(n, val)) {
     return true;
   } else {
     return false;
@@ -18,11 +15,15 @@ static bool _defined_eval(struct node *mn) {
 }
 
 static bool _matched_eval(struct node *mn) {
-  struct node *n = mn->parent;
-
-
-
-  return false;
+  const char *val1 = node_value(mn->child);
+  const char *val2 = mn->child ? node_value(mn->child->child) : 0;
+  if (val1 && val2) {
+    return strcmp(val1, val2) == 0;
+  } else if (val1 == 0 && val2 == 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 static bool _cond_eval(struct node *n, struct node *mn) {
@@ -52,14 +53,76 @@ static bool _cond_eval(struct node *n, struct node *mn) {
   return matched;
 }
 
+static inline bool _node_is_else(struct node *n) {
+  return n && n->value && strcmp(n->value, "else") == 0;
+}
+
+static void _pull_else(struct node *n) {
+  struct node *prev = node_find_prev_sibling(n);
+  struct node *next = n->next;
+  struct node *nn = next;
+
+  if (nn && nn->child && _node_is_else(nn)) { // We have attached else
+    next = nn->next;
+    nn = nn->child;
+    n->next = nn;
+    if (prev) {
+      prev->next = nn;
+    } else {
+      n->parent->child = nn;
+    }
+    for ( ; nn; nn = nn->next) {
+      nn->parent = n->parent;
+      if (nn->next == 0) {
+        nn->next = next;
+        break;
+      }
+    }
+  } else if (prev) {
+    prev->next = nn;
+  } else {
+    n->parent->child = nn;
+  }
+}
+
+static void _pull_if(struct node *n) {
+  struct node *mn = n->child;
+  struct node *prev = node_find_prev_sibling(n);
+  struct node *next = n->next;
+  struct node *nn = mn->next;
+
+  if (nn) {
+    n->next = nn;
+    if (prev) {
+      prev->next = nn;
+    } else {
+      n->parent->child = nn;
+    }
+    for ( ; nn; nn = nn->next) {
+      nn->parent = n->parent;
+      if (nn->next == 0) {
+        nn->next = next;
+        break;
+      }
+    }
+  } else if (prev) {
+    prev->next = n->next;
+  } else {
+    n->parent->child = n->next;
+  }
+}
+
 static void _init(struct node *n) {
-  // Eliminate if block from the Tree according to conditions
-  struct node *pn = n->parent;
   struct node *mn = n->child; // Match node
+  if (!mn) {
+    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "'if {...}' must have a condition clause");
+  }
   bool matched = _cond_eval(n, mn);
-  // TODO: Tree shaking accourding to match result
-
-
+  if (matched) {
+    _pull_if(n);
+  } else {
+    _pull_else(n);
+  }
   n->init = 0; // Protect me from second call in any way
 }
 
