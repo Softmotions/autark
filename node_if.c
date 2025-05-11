@@ -16,7 +16,7 @@ static bool _defined_eval(struct node *mn) {
 
 static bool _matched_eval(struct node *mn) {
   const char *val1 = node_value(mn->child);
-  const char *val2 = mn->child ? node_value(mn->child->child) : 0;
+  const char *val2 = mn->child ? node_value(mn->child->next) : 0;
   if (val1 && val2) {
     return strcmp(val1, val2) == 0;
   } else if (val1 == 0 && val2 == 0) {

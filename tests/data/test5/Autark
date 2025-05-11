@@ -22,6 +22,4 @@ if { matched { ${KEY1} VAL1 }
       run1-product2.txt
     }
   }
-} else {
-
 }
