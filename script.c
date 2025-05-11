@@ -140,7 +140,7 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "sources") == 0) {
     return NODE_TYPE_SOURCES;
-  } else if (strcmp(key, "set") == 0 || strcmp(key, "setflags") == 0 || strcmp(key, "setenv") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "args") == 0 || strcmp(key, "setenv") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "include") == 0) {
     return NODE_TYPE_INCLUDE;

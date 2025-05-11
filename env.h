@@ -88,4 +88,8 @@ const char* unit_env_get(struct unit*, const char *key);
 
 void unit_env_remove(struct unit*, const char *key);
 
+bool env_value_is_list(const char *val);
+
+const char** env_value_to_list(const char *val, struct pool*);
+
 #endif

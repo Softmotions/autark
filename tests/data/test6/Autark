@@ -2,7 +2,12 @@ check {
   env.sh
 }
 
-setflags {
+set {
+  CC
+  ${CC gcc}
+}
+
+args {
   CFLAGS
   ${CFLAGS}
   @{pkgconf --cflags --static libcurl}
@@ -15,8 +20,26 @@ setflags {
   }
 }
 
-setflags {
+args {
   LDFLAGS
   ${LDFLAGS}
   @{pkgconf --libs --static libcurl}
 }
+
+sources {
+  SOURCES
+  main.c
+  util.c
+}
+
+compile {
+  ${CC} ${CFLAGS} ${SOURCES}
+}
+
+link {
+  ${CC} ${LDFLAGS} ${SOURCES}
+  products {
+    hello
+  }
+}
+

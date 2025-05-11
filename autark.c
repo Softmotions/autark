@@ -465,3 +465,38 @@ void autark_run(int argc, const char **argv) {
   autark_build_prepare(AUTARK_SCRIPT);
   _build();
 }
+
+bool env_value_is_list(const char *val) {
+  if (val && strchr(val, '\1')) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const char** env_value_to_list(const char *val, struct pool *pool) {
+  const char *sp = val;
+  const char *ep = sp;
+  int c = 0;
+  for ( ; *ep; ++ep) {
+    if (*ep == '\1' || *(ep + 1) == '\0') {
+      ++c;
+    }
+  }
+  char **ret = pool_alloc(pool, (c + 1) * sizeof(char*));
+  for (c = 0, ep = sp; *ep; ++ep) {
+    if (*ep == '\1' || *(ep + 1) == '\0') {
+      if (ep > sp) {
+        ret[c] = pool_alloc(pool, ep - sp + 1);
+        memcpy(ret[c], sp, ep - sp);
+        ret[c][ep - sp] = '\0';
+      } else {
+        ret[c] = "";
+      }
+      sp = ep + 1;
+      ++c;
+    }
+  }
+  ret[c] = 0;
+  return (const char**) ret;
+}
