@@ -490,12 +490,38 @@ const char* node_value(struct node *n) {
 }
 
 void node_reset(struct node *n) {
-  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_INIT | NODE_FLG_EXCLUDED);
+  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_INIT);
+}
+
+static void _init_subnodes(struct node *n) {
+  int c;
+  do {
+    c = 0;
+    for (struct node *nn = n->child; nn; nn = nn->next) {
+      if (!node_is_init(nn)) {
+        ++c;
+        node_init(nn);
+      }
+    }
+  } while (c > 0);
+}
+
+static void _setup_subnodes(struct node *n) {
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    node_setup(nn);
+  }
+}
+
+static void _build_subnodes(struct node *n) {
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    node_build(nn);
+  }
 }
 
 void node_init(struct node *n) {
-  if (!node_is_init(n) && node_is_included(n)) {
+  if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
+    _init_subnodes(n);
     if (n->init) {
       _node_context_push(n);
       n->init(n);
@@ -505,8 +531,9 @@ void node_init(struct node *n) {
 }
 
 void node_setup(struct node *n) {
-  if (!node_is_setup(n) && node_is_included(n)) {
+  if (!node_is_setup(n)) {
     n->flags |= NODE_FLG_SETUP;
+    _setup_subnodes(n);
     if (n->setup) {
       _node_context_push(n);
       n->setup(n);
@@ -516,7 +543,8 @@ void node_setup(struct node *n) {
 }
 
 void node_build(struct node *n) {
-  if (!node_is_built(n) && node_is_included(n)) {
+  if (!node_is_built(n)) {
+    _build_subnodes(n);
     if (n->build) {
       if (!g_env.quiet) {
         node_info(n, "Build");
@@ -566,21 +594,11 @@ finish:
   return rc;
 }
 
-void script_setup(struct sctx *s) {
-  akassert(s->root);
-  if (s->root->init && !node_is_init(s->root)) {
-    s->root->init(s->root);
-  }
-  if (s->root->setup && !node_is_setup(s->root)) {
-    s->root->setup(s->root);
-  }
-}
-
 void script_build(struct sctx *s) {
-  script_setup(s);
-  if (s->root->build) {
-    s->root->build(s->root);
-  }
+  akassert(s->root);
+  node_init(s->root);
+  node_setup(s->root);
+  node_build(s->root);
 }
 
 void script_close(struct sctx **sp) {

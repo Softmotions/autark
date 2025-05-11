@@ -29,14 +29,11 @@
 #define NODE_FLG_SETUP    0x04U
 #define NODE_FLG_UPDATED  0x08U // Node product updated as result of build
 #define NODE_FLG_BUILT    0x10U // Node built
-#define NODE_FLG_EXCLUDED 0x20U // Node is excluded from build
 #define NODE_FLG_IN_CACHE 0x40U
 #define NODE_FLG_IN_SRC   0x80U
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE)
 
-#define node_is_excluded(n__) (((n__)->flags & NODE_FLG_EXCLUDED) != 0)
-#define node_is_included(n__) (!node_is_excluded(n__))
 #define node_is_init(n__)     (((n__)->flags & NODE_FLG_INIT) != 0)
 #define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
 #define node_is_built(n__)    (((n__)->flags & NODE_FLG_BUILT) != 0)
@@ -79,8 +76,6 @@ struct sctx {
 };
 
 int script_open(const char *file, struct sctx **out);
-
-void script_setup(struct sctx*);
 
 void script_build(struct sctx*);
 
