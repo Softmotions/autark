@@ -2,28 +2,36 @@
 #include "alloc.h"
 #include <stdlib.h>
 
+static const char* _setval(struct node *n, const char *vv, const char *dv) {
+  if (vv) {
+    if (n->impl) {
+      if (strcmp(n->impl, vv) == 0) {
+        return n->impl;
+      }
+      free(n->impl);
+    }
+    n->impl = xstrdup(vv);
+    return n->impl;
+  } else {
+    return dv;
+  }
+}
+
 static const char* _value(struct node *n) {
   if (n->child) {
+    const char *dv = node_value(n->child->next);
+    if (!dv) {
+      dv = "";
+    }
     const char *key = node_value(n->child);
     if (!key) {
-      return "";
+      return _setval(n, 0, dv);
     }
     const char *vv = node_env_get(n, key);
     if (vv) {
-      return vv;
+      return _setval(n, vv, 0);
     }
-    vv = getenv(key);
-    if (vv) {
-      // For the sake of safety, save only copy of env variable
-      if (n->impl) {
-        if (strcmp(n->impl, vv) == 0) {
-          return n->impl;
-        }
-        free(n->impl);
-      }
-      n->impl = xstrdup(vv);
-      return n->impl;
-    }
+    return _setval(n, getenv(key), dv);
   }
   return "";
 }

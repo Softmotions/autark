@@ -16,6 +16,10 @@ consumes {
 check { system.sh }
 check { headers { stdio.h stdlib.h } }
 
+set {
+  CFLAGS
+}
+
 flags {
   c {
     -fPIC

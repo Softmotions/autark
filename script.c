@@ -140,8 +140,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "sources") == 0) {
     return NODE_TYPE_SOURCES;
-  } else if (strcmp(key, "flags") == 0) {
-    return NODE_TYPE_FLAGS;
+  } else if (strcmp(key, "set") == 0) {
+    return NODE_TYPE_SET;
   } else if (strcmp(key, "exec") == 0) {
     return NODE_TYPE_EXEC;
   } else if (strcmp(key, "static") == 0) {
@@ -438,8 +438,8 @@ static int _node_bind(struct node *n) {
         return node_check_setup(n);
       case NODE_TYPE_SOURCES:
         return node_sources_setup(n);
-      case NODE_TYPE_FLAGS:
-        return node_flags_setup(n);
+      case NODE_TYPE_SET:
+        return node_set_setup(n);
       case NODE_TYPE_EXEC:
         return node_exec_setup(n);
       case NODE_TYPE_STATIC:

@@ -7,7 +7,7 @@ int node_script_setup(struct node*);
 int node_meta_setup(struct node*);
 int node_check_setup(struct node*);
 int node_sources_setup(struct node*);
-int node_flags_setup(struct node*);
+int node_set_setup(struct node*);
 int node_exec_setup(struct node*);
 int node_static_setup(struct node*);
 int node_shared_setup(struct node*);
