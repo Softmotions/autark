@@ -182,6 +182,20 @@ void node_info(struct node *n, const char *fmt, ...) {
   xstr_destroy(xstr);
 }
 
+void node_warn(struct node *n, const char *fmt, ...) {
+  struct xstr *xstr = xstr_create_empty();
+  if (fmt) {
+    va_list ap;
+    va_start(ap, fmt);
+    xstr_printf_va(xstr, fmt, ap);
+    va_end(ap);
+    akwarn("%s: %s", n->name, xstr_ptr(xstr));
+  } else {
+    akinfo(n->name, 0);
+  }
+  xstr_destroy(xstr);
+}
+
 void node_fatal(int rc, struct node *n, const char *fmt, ...) {
   struct xstr *xstr = xstr_create_empty();
   if (fmt) {

@@ -37,6 +37,8 @@ void _akverbose(const char *file, int line, const char *fmt, ...);
 
 void akinfo(const char *fmt, ...);
 
+void akwarn(const char *fmt, ...);
+
 #define akfatal(code__, fmt__, ...) \
         _akfatal(__FILE__, __LINE__, (code__), (fmt__), __VA_ARGS__)
 

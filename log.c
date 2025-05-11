@@ -11,8 +11,9 @@
 
 #define LEVEL_VERBOSE 0
 #define LEVEL_INFO    1
-#define LEVEL_ERROR   2
-#define LEVEL_FATAL   3
+#define LEVEL_WARN    2
+#define LEVEL_ERROR   3
+#define LEVEL_FATAL   4
 
 static const char* _error_get(int code) {
   switch (code) {
@@ -76,6 +77,9 @@ static void _event_va(
       break;
     case LEVEL_ERROR:
       xstr_cat2(xstr, "ERROR    ", LLEN("ERROR    "));
+      break;
+    case LEVEL_WARN:
+      xstr_cat2(xstr, "WARN     ", LLEN("ERROR    "));
       break;
     case LEVEL_VERBOSE:
       xstr_cat2(xstr, "VERBOSE ", LLEN("VERBOSE "));
@@ -145,6 +149,13 @@ void akinfo(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
+  va_end(ap);
+}
+
+void akwarn(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  _event_va(LEVEL_WARN, 0, 0, 0, fmt, ap);
   va_end(ap);
 }
 

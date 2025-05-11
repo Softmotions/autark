@@ -1,5 +1,6 @@
 #include "script.h"
 #include "alloc.h"
+
 #include <stdlib.h>
 
 static const char* _setval(struct node *n, const char *vv, const char *dv) {
@@ -19,19 +20,25 @@ static const char* _setval(struct node *n, const char *vv, const char *dv) {
 
 static const char* _value(struct node *n) {
   if (n->child) {
-    const char *dv = node_value(n->child->next);
+    const char *dv_ = node_value(n->child->next);
+    const char *dv = dv_;
     if (!dv) {
       dv = "";
     }
     const char *key = node_value(n->child);
     if (!key) {
+      node_warn(n, "No key specified");
       return _setval(n, 0, dv);
     }
     const char *vv = node_env_get(n, key);
     if (vv) {
       return _setval(n, vv, 0);
     }
-    return _setval(n, getenv(key), dv);
+    const char *ev = getenv(key);
+    if (!ev && !dv_) {
+      node_warn(n, "${%s} env variable not found", key);
+    }
+    return _setval(n, ev, dv);
   }
   return "";
 }

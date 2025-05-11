@@ -1,0 +1,15 @@
+check {
+  env.sh
+}
+
+set {
+  CFLAGS
+  ${CFLAGS}
+  if {
+    match { ${BUILD_TYPE} Release }
+    -O2
+  } else {
+    -O0
+    -g
+  }
+}
