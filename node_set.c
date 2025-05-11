@@ -3,7 +3,6 @@
 /// set { CFLAGS ${CFLAGS} -O1 }
 
 static void _init(struct node *n) {
-
 }
 
 int node_set_setup(struct node *n) {

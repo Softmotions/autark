@@ -2,14 +2,21 @@ check {
   env.sh
 }
 
-set {
+setflags {
   CFLAGS
   ${CFLAGS}
+  @{pkgconf --cflags --static libcurl}
   if {
-    match { ${BUILD_TYPE} Release }
+    match { ${BUILD_TYPE Debug} Release }
     -O2
   } else {
     -O0
     -g
   }
+}
+
+setflags {
+  LDFLAGS
+  ${LDFLAGS}
+  @{pkgconf --libs --static libcurl}
 }

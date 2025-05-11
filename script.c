@@ -140,14 +140,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "sources") == 0) {
     return NODE_TYPE_SOURCES;
-  } else if (strcmp(key, "set") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "setflags") == 0 || strcmp(key, "setenv") == 0) {
     return NODE_TYPE_SET;
-  } else if (strcmp(key, "exec") == 0) {
-    return NODE_TYPE_EXEC;
-  } else if (strcmp(key, "static") == 0) {
-    return NODE_TYPE_STATIC;
-  } else if (strcmp(key, "shared") == 0) {
-    return NODE_TYPE_SHARED;
   } else if (strcmp(key, "include") == 0) {
     return NODE_TYPE_INCLUDE;
   } else if (strcmp(key, "if") == 0) {
@@ -454,12 +448,6 @@ static int _node_bind(struct node *n) {
         return node_sources_setup(n);
       case NODE_TYPE_SET:
         return node_set_setup(n);
-      case NODE_TYPE_EXEC:
-        return node_exec_setup(n);
-      case NODE_TYPE_STATIC:
-        return node_static_setup(n);
-      case NODE_TYPE_SHARED:
-        return node_shared_setup(n);
       case NODE_TYPE_INCLUDE:
         return node_include_setup(n);
       case NODE_TYPE_IF:
