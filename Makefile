@@ -16,7 +16,6 @@ SRC = xstr.c \
 			node_script.c \
 			node_meta.c \
 			node_check.c \
-			node_sources.c \
 			node_set.c \
 			node_include.c \
 			node_if.c \

@@ -7,10 +7,10 @@ set {
   ${CC gcc}
 }
 
-args {
+set {
   CFLAGS
-  ${CFLAGS}
-  @{pkgconf --cflags --static libcurl}
+  ..${CFLAGS}
+  ..@{pkgconf --cflags --static libcurl}
   if {
     match { ${BUILD_TYPE Debug} Release }
     -O2
@@ -20,13 +20,13 @@ args {
   }
 }
 
-args {
+set {
   LDFLAGS
-  ${LDFLAGS}
-  @{pkgconf --libs --static libcurl}
+  ..${LDFLAGS}
+  ..@{pkgconf --libs --static libcurl}
 }
 
-sources {
+set {
   SOURCES
   main.c
   util.c
