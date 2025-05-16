@@ -52,9 +52,21 @@ static void _dispose(struct node *n) {
   }
 }
 
+struct _sctx {
+  struct node *n;
+  struct xstr *xstr;
+  const char *cmd;
+};
+
+static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
+  struct _sctx *ctx = spawn_user_data(s);
+  fprintf(stdout, "%s: %s", ctx->cmd, buf);
+}
+
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct xstr *xstr = spawn_user_data(s);
-  xstr_cat2(xstr, buf, buflen);
+  struct _sctx *ctx = spawn_user_data(s);
+  xstr_cat2(ctx->xstr, buf, buflen);
+  fprintf(stdout, "%s: %s", ctx->cmd, buf);
 }
 
 static const char* _value_proc(struct node *n) {
@@ -65,9 +77,16 @@ static const char* _value_proc(struct node *n) {
   if (cmd == 0) {
     return 0;
   }
+
   struct xstr *xstr = xstr_create_empty();
-  struct spawn *s = spawn_create(cmd, xstr);
+  struct _sctx ctx = {
+    .n = n,
+    .cmd = cmd,
+    .xstr = xstr
+  };
+  struct spawn *s = spawn_create(cmd, &ctx);
   spawn_set_stdout_handler(s, _stdout_handler);
+  spawn_set_stderr_handler(s, _stderr_handler);
   for (struct node *nn = n->child->next; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE) {
       spawn_arg_add(s, nn->value);
