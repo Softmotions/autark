@@ -40,33 +40,33 @@ static void _on_resolve(struct node_resolve *r) {
   }
 
   struct unit *unit = unit_peek();
-  struct spawn *spawn = spawn_create(cmd, &(struct _spawn_data) {
+  struct spawn *s = spawn_create(cmd, &(struct _spawn_data) {
     .cmd = cmd,
     .n = n
   });
-  spawn_env_path_prepend(spawn, unit->dir);
-  spawn_env_path_prepend(spawn, unit->cache_dir);
-  spawn_set_stdout_handler(spawn, _stdout_handler);
-  spawn_set_stderr_handler(spawn, _stderr_handler);
+  spawn_env_path_prepend(s, unit->dir);
+  spawn_env_path_prepend(s, unit->cache_dir);
+  spawn_set_stdout_handler(s, _stdout_handler);
+  spawn_set_stderr_handler(s, _stderr_handler);
 
   if (ncmd->child) {
     for (struct node *nn = ncmd->child; nn; nn = nn->next) {
       if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
-        spawn_arg_add(spawn, node_value(nn));
+        spawn_arg_add(s, node_value(nn));
       }
     }
   }
 
-  int rc = spawn_do(spawn);
+  int rc = spawn_do(s);
   if (rc) {
     node_fatal(rc, n, "%s", cmd);
   } else {
-    int code = spawn_exit_code(spawn);
+    int code = spawn_exit_code(s);
     if (code != 0) {
       node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", cmd, code);
     }
   }
-  spawn_destroy(spawn);
+  spawn_destroy(s);
 
   struct deps deps;
   rc = deps_open(r->deps_path_tmp, 0, &deps);

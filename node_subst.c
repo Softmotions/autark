@@ -1,5 +1,8 @@
 #include "script.h"
 #include "alloc.h"
+#include "spawn.h"
+#include "xstr.h"
+#include "env.h"
 
 #include <stdlib.h>
 
@@ -49,8 +52,48 @@ static void _dispose(struct node *n) {
   }
 }
 
+static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
+  struct xstr *xstr = spawn_user_data(s);
+  xstr_cat2(xstr, buf, buflen);
+}
+
+static const char* _value_proc(struct node *n) {
+  if (n->impl) {
+    return n->impl;
+  }
+  const char *cmd = node_value(n->child);
+  if (cmd == 0) {
+    return 0;
+  }
+  struct xstr *xstr = xstr_create_empty();
+  struct spawn *s = spawn_create(cmd, xstr);
+  spawn_set_stdout_handler(s, _stdout_handler);
+  for (struct node *nn = n->child->next; nn; nn = nn->next) {
+    if (nn->type == NODE_TYPE_VALUE) {
+      spawn_arg_add(s, nn->value);
+    }
+  }
+  int rc = spawn_do(s);
+  if (rc) {
+    node_fatal(rc, n, "%s", cmd);
+  } else {
+    int code = spawn_exit_code(s);
+    if (code != 0) {
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", cmd, code);
+    }
+  }
+  n->impl = xstr_destroy_keep_ptr(xstr);
+  spawn_destroy(s);
+  xstr_destroy(xstr);
+  return n->impl;
+}
+
 int node_subst_setup(struct node *n) {
-  n->value_get = _value;
+  if (strchr(n->value, '@')) {
+    n->value_get = _value_proc;
+  } else {
+    n->value_get = _value;
+  }
   n->dispose = _dispose;
   return 0;
 }

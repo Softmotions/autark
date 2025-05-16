@@ -132,20 +132,21 @@ static void _xnode_destroy(struct xnode *x) {
 }
 
 static unsigned _rule_type(const char *key) {
-  if (strcmp(key, "$") == 0) {
+  if (  strcmp(key, "$") == 0 || strcmp(key, "..$") == 0
+     || strcmp(key, "@") == 0 || strcmp(key, "..@") == 0) {
     return NODE_TYPE_SUBST;
-  } else if (strcmp(key, "meta") == 0) {
-    return NODE_TYPE_META;
-  } else if (strcmp(key, "check") == 0) {
-    return NODE_TYPE_CHECK;
   } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
     return NODE_TYPE_SET;
+  } else if (strcmp(key, "check") == 0) {
+    return NODE_TYPE_CHECK;
   } else if (strcmp(key, "include") == 0) {
     return NODE_TYPE_INCLUDE;
   } else if (strcmp(key, "if") == 0) {
     return NODE_TYPE_IF;
   } else if (strcmp(key, "run") == 0) {
     return NODE_TYPE_RUN;
+  } else if (strcmp(key, "meta") == 0) {
+    return NODE_TYPE_META;
   } else {
     return NODE_TYPE_BAG;
   }

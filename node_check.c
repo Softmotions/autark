@@ -31,25 +31,25 @@ static void _check_on_env_value(struct node_resolve *nr, const char *key, const 
 static void _check_on_resolve(struct node_resolve *r) {
   struct unit *unit = r->user_data;
   struct node *n = unit->n;
-  struct spawn *spawn = spawn_create(unit->source_path, unit);
-  spawn_set_stdout_handler(spawn, _stdout_handler);
-  spawn_set_stderr_handler(spawn, _stderr_handler);
-  for (struct node *nn = n->child; nn; nn = nn->child) {
+  struct spawn *s = spawn_create(unit->source_path, unit);
+  spawn_set_stdout_handler(s, _stdout_handler);
+  spawn_set_stderr_handler(s, _stderr_handler);
+  for (struct node *nn = n->child; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE) {
-      spawn_arg_add(spawn, nn->value);
+      spawn_arg_add(s, nn->value);
     }
   }
 
-  int rc = spawn_do(spawn);
+  int rc = spawn_do(s);
   if (rc) {
     node_fatal(rc, unit->n, "%s", unit->source_path);
   } else {
-    int code = spawn_exit_code(spawn);
+    int code = spawn_exit_code(s);
     if (code != 0) {
       node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", unit->source_path, code);
     }
   }
-  spawn_destroy(spawn);
+  spawn_destroy(s);
 
   // Good, now add dependency on itself
   struct deps deps;
