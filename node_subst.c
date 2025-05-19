@@ -2,7 +2,7 @@
 #include "alloc.h"
 #include "spawn.h"
 #include "xstr.h"
-#include "env.h"
+#include "utils.h"
 
 #include <stdlib.h>
 
@@ -101,9 +101,14 @@ static const char* _value_proc(struct node *n) {
       node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", cmd, code);
     }
   }
-  n->impl = xstr_destroy_keep_ptr(xstr);
+  char *val = xstr_destroy_keep_ptr(xstr);
+  for (int i = strlen(val) - 1; i >= 0; --i) {
+    if (utils_char_is_space(val[i])) {
+      val[i] = '\0';
+    }
+  }
+  n->impl = val;
   spawn_destroy(s);
-  xstr_destroy(xstr);
   return n->impl;
 }
 

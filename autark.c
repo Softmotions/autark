@@ -467,11 +467,7 @@ void autark_run(int argc, const char **argv) {
 }
 
 bool env_value_is_list(const char *val) {
-  if (val && strchr(val, '\1')) {
-    return true;
-  } else {
-    return false;
-  }
+  return (val && *val == '\1');
 }
 
 const char** env_value_to_list(const char *val, struct pool *pool) {
