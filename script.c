@@ -330,15 +330,43 @@ static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct
   return visitor(n, -lvl, ctx);
 }
 
+static void _preprocess_script(struct value *v) {
+  const char *p = v->buf;
+  char *nv = xmalloc(v->len + 1), *w = nv;
+  bool comment = false, eol = true;
+  while (*p) {
+    if (*p == '\n') {
+      eol = true;
+      comment = false;
+    } else if (eol) {
+      if (*p == '#') {
+        comment = true;
+      }
+      eol = false;
+    }
+    if (!comment) {
+      *w++ = *p++;
+    } else {
+      p++;
+    }
+  }
+  *w = '\0';
+  free(v->buf);
+  v->buf = nv;
+  v->len = w - nv;
+}
+
 static int _script_from_value(
-  struct node        *parent,
-  const char         *file,
-  const struct value *val,
-  struct node       **out) {
+  struct node  *parent,
+  const char   *file,
+  struct value *val,
+  struct node **out) {
   int rc = 0;
 
   struct xnode *x = 0;
   struct pool *pool = g_env.pool;
+
+  _preprocess_script(val);
 
   if (!parent) {
     struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));

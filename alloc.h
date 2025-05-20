@@ -16,6 +16,14 @@ AK_ALLOC static inline char* xstrdup(const char *str) {
   return ret;
 }
 
+AK_ALLOC static inline char* xstrndup(const char *str, size_t n) {
+  char *ret = strndup(str, n);
+  if (!ret) {
+    akfatal2("Allocation failed");
+  }
+  return ret;
+}
+
 AK_ALLOC static inline void* xmalloc(size_t size) {
   void *ptr = malloc(size);
   if (!ptr) {
