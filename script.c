@@ -368,8 +368,6 @@ static int _script_from_value(
 
   _preprocess_script(val);
 
-  fprintf(stderr, "!!!%s\n", (char*) val->buf);
-
   if (!parent) {
     struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
     ulist_init(&ctx->nodes, 64, sizeof(struct node*));
