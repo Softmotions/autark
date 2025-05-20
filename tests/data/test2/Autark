@@ -1,5 +1,10 @@
+#
+# Comment 1
+# Comment 2
+
 meta {
   authors { Adamansky Anton }
+# This is a comment
   contacts { adamansky@gmail.com }
   description {
     A multi-line 'Single quotes'

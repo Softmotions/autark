@@ -1,4 +1,4 @@
-RULES = (RULE _)* _ EOF                               { _finish(yy); }
+RULES = _ (RULE _)* _ EOF                             { _finish(yy); }
 
 RULE = k:STRP _ '{' _ (VALR (__ VALR)*)? _ '}'        { _rule(yy, k); }
 
