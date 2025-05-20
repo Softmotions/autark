@@ -5,8 +5,6 @@
 
 #include <string.h>
 
-/// set { CFLAGS ${CFLAGS} -O1 }
-
 static void _split_value_add(struct node *n, const char *v, struct xstr *xstr) {
   if (env_value_is_list(v)) {
     xstr_cat(xstr, v);
@@ -75,6 +73,7 @@ static void _init(struct node *n) {
       xstr_cat(xstr, v);
     }
   }
+  node_env_set(n, name, xstr_ptr(xstr));
   xstr_destroy(xstr);
 }
 

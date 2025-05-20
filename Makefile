@@ -20,7 +20,7 @@ SRC = xstr.c \
 			node_include.c \
 			node_if.c \
 			node_subst.c \
-			node_run.c \
+			node_run.c
 
 
 OBJ = $(SRC:.c=.o)

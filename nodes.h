@@ -11,5 +11,6 @@ int node_include_setup(struct node*);
 int node_if_setup(struct node*);
 int node_subst_setup(struct node*);
 int node_run_setup(struct node*);
+int node_echo_setup(struct node*);
 
 #endif

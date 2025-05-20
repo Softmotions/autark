@@ -657,8 +657,14 @@ void node_env_set(struct node *n, const char *key, const char *val) {
   for ( ; n; n = n->parent) {
     if (n->unit) {
       if (val) {
+        if (g_env.verbose) {
+          node_info(n, "Set %s=%s", key, val);
+        }
         unit_env_set(n->unit, key, val);
       } else {
+        if (g_env.verbose) {
+          node_info(n, "Unset %s=%s", key);
+        }
         unit_env_remove(n->unit, key);
       }
       return;

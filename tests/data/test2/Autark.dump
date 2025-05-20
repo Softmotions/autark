@@ -16,14 +16,14 @@ Autark:0x2 {
 ts:0x1
       
 :0x1
-      if:0x1000 {
+      if:0x100 {
         matched:0x4 {
           OS:0x1
           Linux:0x1
         }
         Linux:0x1
         else:0x4 {
-          $:0x2000 {
+          $:0x200 {
             OS:0x1
           }
         }
