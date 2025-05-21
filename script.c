@@ -135,6 +135,8 @@ static unsigned _rule_type(const char *key) {
   if (  strcmp(key, "$") == 0 || strcmp(key, "..$") == 0
      || strcmp(key, "@") == 0 || strcmp(key, "..@") == 0) {
     return NODE_TYPE_SUBST;
+  } else if (strcmp(key, "^") == 0 || strcmp(key, "..^") == 0) {
+    return NODE_TYPE_JOIN;
   } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "check") == 0) {
@@ -459,7 +461,11 @@ static void _script_destroy(struct sctx *s) {
 
 static int _node_bind(struct node *n) {
   // Tree has been built since its safe to compute node name
-  n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
+  if (n->type != NODE_TYPE_SCRIPT) {
+    n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
+  } else {
+    n->name = pool_printf(g_env.pool, "%s     %5s", _node_file(n), "");
+  }
   n->vfile = pool_printf(g_env.pool, ".%u", n->index);
 
   if (!(n->flags & NODE_FLG_BOUND)) {
@@ -481,6 +487,8 @@ static int _node_bind(struct node *n) {
         return node_subst_setup(n);
       case NODE_TYPE_RUN:
         return node_run_setup(n);
+      case NODE_TYPE_JOIN:
+        return node_join_setup(n);
     }
   }
   return 0;
@@ -686,12 +694,12 @@ void node_env_set(struct node *n, const char *key, const char *val) {
     if (n->unit) {
       if (val) {
         if (g_env.verbose) {
-          node_info(n, "Set %s=%s", key, val);
+          node_info(n, "SET %s=%s", key, val);
         }
         unit_env_set(n->unit, key, val);
       } else {
         if (g_env.verbose) {
-          node_info(n, "Unset %s=%s", key);
+          node_info(n, "UNSET %s=%s", key);
         }
         unit_env_remove(n->unit, key);
       }

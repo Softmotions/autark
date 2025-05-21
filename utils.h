@@ -8,6 +8,14 @@ static inline int utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);
 }
 
+static inline void utils_chars_replace(char *buf, char c, char r) {
+  for (; *buf; ++buf) {
+    if (*buf == c) {
+      *buf = r;
+    }
+  }
+}
+
 long int utils_strtol(const char *v, int base, int *rcp);
 
 long long utils_strtoll(const char *v, int base, int *rcp);

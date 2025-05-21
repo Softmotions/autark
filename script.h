@@ -19,6 +19,7 @@
 #define NODE_TYPE_IF      0x100U
 #define NODE_TYPE_SUBST   0x200U
 #define NODE_TYPE_RUN     0x400U
+#define NODE_TYPE_JOIN    0x800U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U

@@ -2,6 +2,7 @@
 #include "log.h"
 #include "xstr.h"
 #include "alloc.h"
+#include "utils.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -79,7 +80,7 @@ static void _event_va(
       xstr_cat2(xstr, "ERROR    ", LLEN("ERROR    "));
       break;
     case LEVEL_WARN:
-      xstr_cat2(xstr, "WARN     ", LLEN("ERROR    "));
+      xstr_cat2(xstr, "WARN     ", LLEN("WARN    "));
       break;
     case LEVEL_VERBOSE:
       xstr_cat2(xstr, "VERBOSE ", LLEN("VERBOSE "));
@@ -110,6 +111,7 @@ static void _event_va(
     xstr_printf_va(xstr, format, va);
   }
   xstr_cat2(xstr, "\n", 1);
+  utils_chars_replace(xstr_ptr(xstr), '\1', '^');
   fputs(xstr_ptr(xstr), stderr);
   xstr_destroy(xstr);
 }

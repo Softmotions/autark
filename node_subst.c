@@ -3,6 +3,7 @@
 #include "spawn.h"
 #include "xstr.h"
 #include "utils.h"
+#include "env.h"
 
 #include <stdlib.h>
 
@@ -38,8 +39,8 @@ static const char* _value(struct node *n) {
       return _setval(n, vv, 0);
     }
     const char *ev = getenv(key);
-    if (!ev && !dv_) {
-      node_warn(n, "${%s} env variable not found", key);
+    if (!ev && !dv_ && g_env.verbose) {
+      node_warn(n, "No ${%s} variable/env", key);
     }
     return _setval(n, ev, dv);
   }
@@ -55,18 +56,22 @@ static void _dispose(struct node *n) {
 struct _sctx {
   struct node *n;
   struct xstr *xstr;
-  const char *cmd;
+  const char  *cmd;
 };
 
 static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   struct _sctx *ctx = spawn_user_data(s);
-  fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  if (g_env.verbose) {
+    fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  }
 }
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   struct _sctx *ctx = spawn_user_data(s);
   xstr_cat2(ctx->xstr, buf, buflen);
-  fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  if (g_env.verbose) {
+    fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  }
 }
 
 static const char* _value_proc(struct node *n) {
@@ -102,10 +107,8 @@ static const char* _value_proc(struct node *n) {
     }
   }
   char *val = xstr_destroy_keep_ptr(xstr);
-  for (int i = strlen(val) - 1; i >= 0; --i) {
-    if (utils_char_is_space(val[i])) {
-      val[i] = '\0';
-    }
+  for (int i = strlen(val) - 1; i >= 0 && utils_char_is_space(val[i]); --i) {
+    val[i] = '\0';
   }
   n->impl = val;
   spawn_destroy(s);

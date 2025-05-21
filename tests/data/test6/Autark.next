@@ -1,0 +1,44 @@
+check {
+  env.sh
+}
+
+set {
+  CC
+  ${CC gcc}
+}
+
+set {
+  CFLAGS
+  ..${CFLAGS}
+  ..@{pkgconf --cflags --static libcurl}
+  if {
+    match { ${BUILD_TYPE Debug} Release }
+    -O2
+  } else {
+    -O0
+    -g
+  }
+}
+
+set {
+  LDFLAGS
+  ..${LDFLAGS}
+  ..@{pkgconf --libs --static libcurl}
+}
+
+set {
+  SOURCES
+  main.c
+  util.c
+}
+
+compile {
+  ${CC} ${CFLAGS} ${SOURCES}
+}
+
+link {
+  ${CC} ${LDFLAGS} ${SOURCES}
+  products {
+    hello
+  }
+}

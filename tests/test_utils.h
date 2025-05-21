@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdio.h>
-#include <limits.h>
-#include <string.h>
-
 #include "basedefs.h"
 #include "utils.h"
 #include "xstr.h"
@@ -12,6 +8,11 @@
 #include "env.h"
 #include "paths.h"
 #include "log.h"
+
+#include <stdio.h>
+#include <limits.h>
+#include <string.h>
+#include <unistd.h>
 
 #define ASSERT(label__, expr__)                                       \
         if (!(expr__)) {                                              \
@@ -41,6 +42,7 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
 
 static inline void test_init(void) {
   g_env.verbose = true;
+  g_env.project.clean = true;
   autark_init();
   g_env.spawn.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
 }

@@ -21,7 +21,7 @@ static void _split_value_add(struct node *n, const char *v, struct xstr *xstr) {
     char *w = buf;
     char q = 0;
 
-    while (*p && (q || utils_char_is_space(*p))) {
+    while (*p && (q || !utils_char_is_space(*p))) {
       if (*p == '\\') {
         ++p;
         if (*p) {
@@ -42,7 +42,7 @@ static void _split_value_add(struct node *n, const char *v, struct xstr *xstr) {
     }
     *w = '\0';
     xstr_cat(xstr, "\1");
-    xstr_cat(xstr, w);
+    xstr_cat(xstr, buf);
   }
 }
 
@@ -56,7 +56,7 @@ static void _init(struct node *n) {
     node_env_set(n, name, "");
     return;
   }
-  if (!nn->next && (nn->value[0] != '.' || nn->value[1] != '.')) { // Single value
+  if (!nn->next && nn->value[0] != '.') { // Single value
     node_env_set(n, name, node_value(nn));
     return;
   }
