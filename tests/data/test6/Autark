@@ -29,7 +29,7 @@ set {
 }
 
 cc {
+  ${SOURCES}
   ${CC gcc}
   ${CFLAGS}
-  ${SOURCES}
 }
