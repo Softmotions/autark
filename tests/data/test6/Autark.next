@@ -12,7 +12,7 @@ set {
   ..${CFLAGS}
   ..@{pkgconf --cflags --static libcurl}
   if {
-    match { ${BUILD_TYPE Debug} Release }
+    eq { ${BUILD_TYPE Debug} Release }
     -O2
   } else {
     -O0

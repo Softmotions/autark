@@ -132,10 +132,12 @@ static void _xnode_destroy(struct xnode *x) {
 }
 
 static unsigned _rule_type(const char *key) {
-  if (  strcmp(key, "$") == 0 || strcmp(key, "..$") == 0
-     || strcmp(key, "@") == 0 || strcmp(key, "..@") == 0) {
+  if (key[0] == '.' && key[1] == '.') {
+    key += 2;
+  }
+  if (strcmp(key, "$") == 0 || strcmp(key, "@") == 0) {
     return NODE_TYPE_SUBST;
-  } else if (strcmp(key, "^") == 0 || strcmp(key, "..^") == 0) {
+  } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;
   } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
     return NODE_TYPE_SET;
@@ -690,17 +692,18 @@ const char* node_env_get(struct node *n, const char *key) {
 }
 
 void node_env_set(struct node *n, const char *key, const char *val) {
+  if (g_env.verbose) {
+    if (val) {
+      node_info(n, "%s=%s", key, val);
+    } else {
+      node_info(n, "UNSET %s=%s", key);
+    }
+  }
   for ( ; n; n = n->parent) {
     if (n->unit) {
       if (val) {
-        if (g_env.verbose) {
-          node_info(n, "SET %s=%s", key, val);
-        }
         unit_env_set(n->unit, key, val);
       } else {
-        if (g_env.verbose) {
-          node_info(n, "UNSET %s=%s", key);
-        }
         unit_env_remove(n->unit, key);
       }
       return;

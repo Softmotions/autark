@@ -7,5 +7,23 @@ set {
   ..${CFLAGS}
   ^{-DBUILD_TYPE= ${BUILD_TYPE}}
   ..@{pkgconf --cflags --static libcurl}
+  if { eq { ${BUILD_TYPE} Release }
+    -O2
+  } else {
+    -DDEBUG=1
+    -O0
+    -g
+  }
 }
 
+set {
+  LDFLAGS
+  ..${LDFLAGS}
+  ..@{pkgconf --libs --static libcurl}
+}
+
+set {
+  SOURCES
+  main.c
+  hello.c
+}

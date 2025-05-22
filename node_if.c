@@ -31,26 +31,26 @@ static bool _cond_eval(struct node *n, struct node *mn) {
   if (!op) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Matching condition is not set");
   }
-  bool matched = false;
+  bool eq = false;
   bool neg = false;
   if (*op == '!') {
     neg = true;
     ++op;
   }
-  if (strcmp(op, "matched") == 0) {
-    matched = _matched_eval(mn);
+  if (strcmp(op, "eq") == 0) {
+    eq = _matched_eval(mn);
   } else if (strcmp(op, "defined") == 0) {
-    matched = _defined_eval(mn);
+    eq = _defined_eval(mn);
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
   }
   if (neg) {
-    matched = !matched;
+    eq = !eq;
   }
   if (g_env.verbose) {
-    node_info(n, "Evaluated to: %s", (matched ? "true" : "false"));
+    node_info(n, "Evaluated to: %s", (eq ? "true" : "false"));
   }
-  return matched;
+  return eq;
 }
 
 static inline bool _node_is_else(struct node *n) {

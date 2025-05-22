@@ -11,7 +11,7 @@ meta {
     "and double { quotes"
     Escaped\{bra\}cke\nts \n
     if {
-      matched { OS Linux } Linux
+      eq { OS Linux } Linux
       else { ${OS} }
     }
   }

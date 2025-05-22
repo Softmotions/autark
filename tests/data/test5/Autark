@@ -14,7 +14,7 @@ run {
   }
 }
 
-if { matched { ${KEY1} VAL1 }
+if { eq { ${KEY1} VAL1 }
   run {
     run1.sh { arg1 ${KEY2} }
     products {
