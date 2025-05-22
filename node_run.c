@@ -103,7 +103,7 @@ static void _on_consumed_resolved(const char *path_, void *d) {
   ulist_push(&ctx->consumes, &path);
 }
 
-static void _on_init(struct node_resolve *r) {
+static void _on_resolve_init(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
   struct node *n = ctx->n;
@@ -118,7 +118,7 @@ static void _build(struct node *n) {
   node_resolve(&(struct node_resolve) {
     .path = n->vfile,
     .user_data = &ctx,
-    .on_init = _on_init,
+    .on_init = _on_resolve_init,
     .on_resolve = _on_resolve,
   });
   ulist_destroy_keep(&ctx.consumes);

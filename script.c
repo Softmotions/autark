@@ -151,6 +151,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_RUN;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
+  } else if (strcmp(key, "cc") == 0) {
+    return NODE_TYPE_CC;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -491,6 +493,8 @@ static int _node_bind(struct node *n) {
         return node_run_setup(n);
       case NODE_TYPE_JOIN:
         return node_join_setup(n);
+      case NODE_TYPE_CC:
+        return node_cc_setup(n);
     }
   }
   return 0;

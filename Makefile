@@ -21,7 +21,8 @@ SRC = xstr.c \
 			node_if.c \
 			node_subst.c \
 			node_run.c \
-			node_join.c
+			node_join.c \
+			node_cc.c
 
 
 OBJ = $(SRC:.c=.o)
