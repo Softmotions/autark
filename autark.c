@@ -466,7 +466,7 @@ bool env_value_is_list(const char *val) {
   return (val && *val == '\1');
 }
 
-const char** env_value_to_list(const char *val, struct pool *pool) {
+char** env_value_to_clist(const char *val, struct pool *pool) {
   const char *sp = val;
   const char *ep = sp;
   int c = 0;
@@ -490,5 +490,16 @@ const char** env_value_to_list(const char *val, struct pool *pool) {
     }
   }
   ret[c] = 0;
-  return (const char**) ret;
+  return ret;
+}
+
+char* env_list_from_ulist(const struct ulist *list) {
+  akassert(list && list->usize == sizeof(char*));
+  struct xstr *xstr = xstr_create_empty();
+  for (int i = 0; i < list->num; ++i) {
+    const char *c = *(const char**) ulist_get(list, i);
+    xstr_cat(xstr, "\1");
+    xstr_cat(xstr, c);
+  }
+  return xstr_destroy_keep_ptr(xstr);
 }

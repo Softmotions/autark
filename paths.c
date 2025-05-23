@@ -74,7 +74,7 @@ const char* path_real_pool(const char *path, struct pool *pool) {
   }
 }
 
-const char* path_normalize(const char *path, char buf[PATH_MAX]) {
+char* path_normalize(const char *path, char buf[PATH_MAX]) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
     return 0;
@@ -82,7 +82,7 @@ const char* path_normalize(const char *path, char buf[PATH_MAX]) {
   return path_normalize_cwd(path, cwd, buf);
 }
 
-const char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) {
+char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) {
   akassert(cwd);
   if (path[0] == '/') {
     strncpy(buf, path, PATH_MAX);
@@ -147,7 +147,7 @@ const char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_
   return buf;
 }
 
-const char* path_normalize_pool(const char *path, struct pool *pool) {
+char* path_normalize_pool(const char *path, struct pool *pool) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
     return 0;
@@ -155,7 +155,7 @@ const char* path_normalize_pool(const char *path, struct pool *pool) {
   return path_normalize_cwd_pool(path, cwd, pool);
 }
 
-const char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *pool) {
+char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *pool) {
   char buf[PATH_MAX];
   if (path_normalize_cwd(path, cwd, buf)) {
     return pool_strdup(pool, buf);

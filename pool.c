@@ -68,7 +68,7 @@ void* pool_calloc(struct pool *pool, size_t siz) {
   return p;
 }
 
-const char* pool_strdup(struct pool *pool, const char *str) {
+char* pool_strdup(struct pool *pool, const char *str) {
   size_t len = strlen(str);
   char *ret = pool_alloc(pool, len + 1);
   memcpy(ret, str, len);

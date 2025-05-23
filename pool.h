@@ -28,7 +28,7 @@ void* pool_alloc(struct pool*, size_t siz);
 
 void* pool_calloc(struct pool*, size_t siz);
 
-const char* pool_strdup(struct pool*, const char*);
+char* pool_strdup(struct pool*, const char*);
 
 char* pool_printf_va(struct pool*, const char *format, va_list va);
 

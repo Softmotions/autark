@@ -1,6 +1,7 @@
 #ifndef ENV_H
 #define ENV_H
 
+#include "basedefs.h"
 #include "pool.h"
 #include "map.h"
 #include "ulist.h"
@@ -90,6 +91,8 @@ void unit_env_remove(struct unit*, const char *key);
 
 bool env_value_is_list(const char *val);
 
-const char** env_value_to_list(const char *val, struct pool*);
+char** env_value_to_clist(const char *val, struct pool*);
+
+AK_ALLOC char* env_list_from_ulist(const struct ulist *list);
 
 #endif

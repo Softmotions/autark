@@ -42,13 +42,13 @@ const char* path_real_pool(const char *path, struct pool*);
 
 /// Normalize a path buffer to an absolute path without resolving symlinks.
 /// It operates purely on the path string, and works for non-existing paths.
-const char* path_normalize(const char *path, char buf[PATH_MAX]);
+char* path_normalize(const char *path, char buf[PATH_MAX]);
 
-const char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]);
+char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]);
 
-const char* path_normalize_pool(const char *path, struct pool*);
+char* path_normalize_pool(const char *path, struct pool*);
 
-const char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool*);
+char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool*);
 
 int path_mkdirs(const char *path);
 

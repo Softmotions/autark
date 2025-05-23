@@ -20,27 +20,47 @@ struct _ctx {
 static void _build(struct node *n) {
 }
 
-static void _source_add(struct node *n, struct node *ns) {
+static void _source_add(struct node *n, char *path_) {
   char buf[PATH_MAX];
-  const char *val = node_value(ns);
-  if (val == 0 || *val == '\0' || strrchr(val, '.') == 0) {
-    return;
-  }
-  const char *path = val;
-  if (path_is_absolute(path)) {
-    char *p = path_relativize_cwd(path, buf, g_env.project.root_dir);
-    if (!p) {
-      node_fatal(errno, n, "Failed to relativize path: %s", path);
+  struct _ctx *ctx = n->impl;
+  struct unit *unit = unit_peek();
+  {
+    if (path_ == 0 || *path_ == '\0') {
+      return;
     }
-    path = p;
+    char *p = strrchr(path_, '.');
+    if (p == 0 || p[1] == '\0') {
+      return;
+    }
   }
+  char *npath = path_normalize_cwd(path_, unit->dir, buf);
+  if (!npath) {
+    node_fatal(errno, n, 0);
+  }
+  char *path = pool_strdup(ctx->pool, npath);
+  ulist_push(&ctx->sources, &path);
+
+  npath = path_normalize_cwd(path_, unit->cache_dir, buf);
+  path = pool_strdup(ctx->pool, npath);
+  char *p = strrchr(path, '.');
+  akassert(p && p[1] != '\0');
+  p[1] = 'o';
+  p[2] = '\0';
+  ulist_push(&ctx->objects, &path);
 }
 
 static void _setup(struct node *n) {
   struct _ctx *ctx = n->impl;
-  for (struct node *ns = ctx->n_sources; ns; ns = ns->next) {
-    _source_add(n, ns);
+  const char *val = node_value(ctx->n_sources);
+  struct pool *pool = pool_create_empty();
+  if (env_value_is_list(val)) {
+    for (char **pp = env_value_to_clist(val, ctx->pool); *pp; ++pp) {
+      _source_add(n, *pp);
+    }
+  } else {
+    _source_add(n, pool_strdup(ctx->pool, val));
   }
+  pool_destroy(pool);
 }
 
 static void _init(struct node *n) {
