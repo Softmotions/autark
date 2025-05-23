@@ -624,8 +624,7 @@ int script_open(const char *file, struct sctx **out) {
   autark_build_prepare(file);
 
   char buf[PATH_MAX];
-  strncpy(buf, file, PATH_MAX - 1);
-  buf[PATH_MAX - 1] = '\0';
+  strncpy(buf, file, PATH_MAX);
   const char *path = path_basename(buf);
 
   RCC(rc, finish, _script_from_file(0, path, &n));

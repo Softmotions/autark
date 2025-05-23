@@ -44,7 +44,11 @@ const char* path_real_pool(const char *path, struct pool*);
 /// It operates purely on the path string, and works for non-existing paths.
 const char* path_normalize(const char *path, char buf[PATH_MAX]);
 
+const char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]);
+
 const char* path_normalize_pool(const char *path, struct pool*);
+
+const char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool*);
 
 int path_mkdirs(const char *path);
 
@@ -73,6 +77,8 @@ bool path_is_file(const char *path);
 bool path_is_exist(const char *path);
 
 AK_ALLOC char* path_relativize(const char *from, const char *to);
+
+AK_ALLOC char* path_relativize_cwd(const char *from, const char *to, const char *cwd);
 
 // Modifies its argument
 char* path_dirname(char *path);

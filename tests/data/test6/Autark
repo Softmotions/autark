@@ -30,6 +30,6 @@ set {
 
 cc {
   ${SOURCES}
-  ${CC gcc}
   ${CFLAGS}
+  ${CC gcc}
 }

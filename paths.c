@@ -75,13 +75,19 @@ const char* path_real_pool(const char *path, struct pool *pool) {
 }
 
 const char* path_normalize(const char *path, char buf[PATH_MAX]) {
+  char cwd[PATH_MAX];
+  if (!getcwd(cwd, PATH_MAX)) {
+    return 0;
+  }
+  return path_normalize_cwd(path, cwd, buf);
+}
+
+const char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) {
+  akassert(cwd);
   if (path[0] == '/') {
-    strncpy(buf, path, PATH_MAX - 1);
-    buf[PATH_MAX - 1] = '\0';
+    strncpy(buf, path, PATH_MAX);
   } else {
-    if (!getcwd(buf, PATH_MAX)) {
-      return 0;
-    }
+    strncpy(buf, cwd, PATH_MAX);
     size_t len = strlen(buf);
     if (len < PATH_MAX - 1) {
       buf[len] = '/';
@@ -142,8 +148,16 @@ const char* path_normalize(const char *path, char buf[PATH_MAX]) {
 }
 
 const char* path_normalize_pool(const char *path, struct pool *pool) {
+  char cwd[PATH_MAX];
+  if (!getcwd(cwd, PATH_MAX)) {
+    return 0;
+  }
+  return path_normalize_cwd_pool(path, cwd, pool);
+}
+
+const char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *pool) {
   char buf[PATH_MAX];
-  if (path_normalize(path, buf)) {
+  if (path_normalize_cwd(path, cwd, buf)) {
     return pool_strdup(pool, buf);
   } else {
     return 0;
@@ -286,9 +300,17 @@ static inline int _path_num_segments(const char *path) {
   return c;
 }
 
-char* path_relativize(const char *from_, const char *to_) {
+char* path_relativize(const char *from, const char *to) {
+  char cwd[PATH_MAX];
+  if (!getcwd(cwd, PATH_MAX)) {
+    return 0;
+  }
+  return path_relativize_cwd(from, to, cwd);
+}
+
+char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   char from[PATH_MAX], to[PATH_MAX];
-  if (!realpath(from_, from) || !realpath(to_, to) || *from != '/' || *to != '/') {
+  if (!path_normalize_cwd(from_, cwd, from) || !path_normalize_cwd(to_, cwd, to) || *from != '/' || *to != '/') {
     return 0;
   }
 

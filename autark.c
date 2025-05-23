@@ -75,7 +75,6 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   unit->source_path = path_normalize_pool(path, pool);
 
   strncpy(path, unit->source_path, sizeof(path));
-  path[sizeof(path) - 1] = '\0';
   path_dirname(path);
   unit->dir = pool_strdup(pool, path);
 
@@ -85,7 +84,6 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   unit->cache_path = path_normalize_pool(path, pool);
 
   strncpy(path, unit->cache_path, sizeof(path));
-  path[sizeof(path) - 1] = '\0';
   path_dirname(path);
   unit->cache_dir = pool_strdup(pool, path);
 
@@ -214,8 +212,7 @@ void autark_build_prepare(const char *script_path) {
 
   if (!g_env.project.root_dir) {
     if (script_path) {
-      strncpy(path_buf, script_path, PATH_MAX - 1);
-      path_buf[PATH_MAX - 1] = '\0';
+      strncpy(path_buf, script_path, PATH_MAX);
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
     } else {
       g_env.project.root_dir = g_env.cwd;
@@ -244,8 +241,7 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
-  strncpy(path_buf, script_path, PATH_MAX - 1);
-  path_buf[PATH_MAX - 1] = '\0';
+  strncpy(path_buf, script_path, PATH_MAX);
   const char *path = path_basename(path_buf);
 
   struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
