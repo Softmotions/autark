@@ -258,7 +258,7 @@ int spawn_do(struct spawn *s) {
   if (!strchr(file, '/')) {
     const char *rfile = _file_resolve_in_path(s, file, pathbuf);
     if (!rfile) {
-      akerror(ENOENT, "Failed to find: '%s' in PATH", rfile);
+      akerror(ENOENT, "Failed to find: '%s' in PATH", file);
       errno = ENOENT;
       return errno;
     }
