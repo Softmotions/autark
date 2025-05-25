@@ -181,7 +181,7 @@ static void _setup(struct node *n) {
     const char *key = strcmp(n->value, "cc") ? "CC" : "CXX";
     if (key) {
       ctx->cc = pool_strdup(ctx->pool, getenv(key));
-      if (!ctx->cc) {
+      if (ctx->cc) {
         node_warn(n, "Found %s compiler in environment: %s", ctx->cc, key);
       }
     }
