@@ -2,6 +2,10 @@
 #define UTILS_H
 
 #include "basedefs.h"
+#include "xstr.h"
+#include "pool.h"
+#include "ulist.h"
+
 #include <limits.h>
 
 static inline int utils_char_is_space(char c) {
@@ -9,7 +13,7 @@ static inline int utils_char_is_space(char c) {
 }
 
 static inline void utils_chars_replace(char *buf, char c, char r) {
-  for (; *buf; ++buf) {
+  for ( ; *buf; ++buf) {
     if (*buf == c) {
       *buf = r;
     }
@@ -28,6 +32,14 @@ int utils_copy_file(const char *src, const char *dst);
 
 int utils_rename_file(const char *src, const char *dst);
 
+static inline bool utils_is_list_value(const char *val) {
+  return (val && *val == '\1');
+}
 
+void utils_split_values_add(const char *v, struct xstr *xstr);
+
+char** utils_list_value_to_clist(const char *val, struct pool*);
+
+AK_ALLOC char* utils_list_value_from_ulist(const struct ulist *list);
 
 #endif

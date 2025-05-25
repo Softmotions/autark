@@ -69,11 +69,15 @@ void* pool_calloc(struct pool *pool, size_t siz) {
 }
 
 char* pool_strdup(struct pool *pool, const char *str) {
-  size_t len = strlen(str);
-  char *ret = pool_alloc(pool, len + 1);
-  memcpy(ret, str, len);
-  ret[len] = '\0';
-  return ret;
+  if (str) {
+    size_t len = strlen(str);
+    char *ret = pool_alloc(pool, len + 1);
+    memcpy(ret, str, len);
+    ret[len] = '\0';
+    return ret;
+  } else {
+    return 0;
+  }
 }
 
 static inline int _printf_estimate_size(const char *format, va_list ap) {

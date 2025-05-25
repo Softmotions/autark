@@ -151,7 +151,7 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_RUN;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
-  } else if (strcmp(key, "cc") == 0) {
+  } else if (strcmp(key, "cc") == 0 || strcmp(key, "cxx") == 0) {
     return NODE_TYPE_CC;
   } else {
     return NODE_TYPE_BAG;
@@ -168,6 +168,9 @@ static const char* _node_file(struct node *n) {
 }
 
 void node_info(struct node *n, const char *fmt, ...) {
+  if (g_env.quiet) {
+    return;
+  }
   struct xstr *xstr = xstr_create_empty();
   if (fmt) {
     va_list ap;
@@ -587,9 +590,7 @@ void node_build(struct node *n) {
   if (!node_is_built(n)) {
     _build_subnodes(n);
     if (n->build) {
-      if (!g_env.quiet) {
-        node_info(n, "Build");
-      }
+      node_info(n, "Build");
       struct xnode *x = (void*) n;
       x->bld_calls++;
       if (x->bld_calls > 1) {
@@ -751,7 +752,7 @@ struct node* node_by_product(struct node *n, const char *prod, char pathbuf[PATH
 
 struct node* node_by_product_raw(struct node *n, const char *prod) {
   struct sctx *s = n->ctx;
-   return map_get(s->products, prod);
+  return map_get(s->products, prod);
 }
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val) {

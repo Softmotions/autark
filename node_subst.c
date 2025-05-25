@@ -60,17 +60,16 @@ struct _sctx {
 };
 
 static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct _sctx *ctx = spawn_user_data(s);
-  if (g_env.verbose) {
-    fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  if (!g_env.quiet) {
+    fprintf(stderr, "%s", buf);
   }
 }
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   struct _sctx *ctx = spawn_user_data(s);
   xstr_cat2(ctx->xstr, buf, buflen);
-  if (g_env.verbose) {
-    fprintf(stdout, "%s: %s", ctx->cmd, buf);
+  if (!g_env.quiet) {
+    fprintf(stdout, "%s", buf);
   }
 }
 

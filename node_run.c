@@ -12,13 +12,11 @@ struct _spawn_data {
 };
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct _spawn_data *d = spawn_user_data(s);
-  fprintf(stderr, "%s: %s", d->cmd, buf);
+  fprintf(stdout, "%s", buf);
 }
 
 static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct _spawn_data *d = spawn_user_data(s);
-  fprintf(stdout, "%s: %s", d->cmd, buf);
+  fprintf(stderr, "%s", buf);
 }
 
 struct _on_resolve_ctx {
@@ -35,9 +33,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
-  if (!g_env.quiet) {
-    node_info(n, "%s", cmd);
-  }
+  node_info(n, "%s", cmd);
 
   struct unit *unit = unit_peek();
   struct spawn *s = spawn_create(cmd, &(struct _spawn_data) {

@@ -239,6 +239,18 @@ int spawn_do(struct spawn *s) {
   char **args = _args_create(s);
   const char *file = args[0];
 
+  if (!g_env.quiet) {
+    struct xstr *xstr = xstr_create_empty();
+    for (char **a = args; *a; ++a) {
+      if (a != args) {
+        xstr_cat(xstr, " ");
+      }
+      xstr_cat(xstr, *a);
+    }
+    puts(xstr_ptr(xstr));
+    xstr_destroy(xstr);
+  }
+
   char buf[1024];
   char pathbuf[PATH_MAX];
   ssize_t len;

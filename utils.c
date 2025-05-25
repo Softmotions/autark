@@ -1,7 +1,9 @@
 #include "utils.h"
 #include "xstr.h"
 #include "log.h"
+#include "env.h"
 
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -141,4 +143,84 @@ long long utils_strtoll(const char *v, int base, int *rcp) {
     return 0;
   }
   return ret;
+}
+
+void utils_split_values_add(const char *v, struct xstr *xstr) {
+  if (utils_is_list_value(v)) {
+    xstr_cat(xstr, v);
+    return;
+  }
+  char buf[strlen(v) + 1];
+  const char *p = v;
+
+  while (*p) {
+    while (utils_char_is_space(*p)) ++p;
+    if (*p == '\0') {
+      break;
+    }
+    char *w = buf;
+    char q = 0;
+
+    while (*p && (q || !utils_char_is_space(*p))) {
+      if (*p == '\\') {
+        ++p;
+        if (*p) {
+          *w++ = *p++;
+        }
+      } else if (q) {
+        if (*p == q) {
+          q = 0;
+          ++p;
+        } else {
+          *w++ = *p++;
+        }
+      } else if (*p == '\'' || *p == '"') {
+        q = *p++;
+      } else {
+        *w++ = *p++;
+      }
+    }
+    *w = '\0';
+    xstr_cat(xstr, "\1");
+    xstr_cat(xstr, buf);
+  }
+}
+
+char** utils_list_value_to_clist(const char *val, struct pool *pool) {
+  const char *sp = val;
+  const char *ep = sp;
+  int c = 0;
+  for ( ; *ep; ++ep) {
+    if (*ep == '\1') {
+      ++c;
+    }
+  }
+  char **ret = pool_alloc(pool, (c + 1) * sizeof(char*));
+  for (c = 0, ep = sp; 1; ++ep) {
+    if (*ep == '\1' || *ep == '\0') {
+      if (ep > sp) {
+        ret[c] = pool_alloc(pool, ep - sp + 1);
+        memcpy(ret[c], sp, ep - sp);
+        ret[c][ep - sp] = '\0';
+        ++c;
+      }
+      if (*ep == '\0') {
+        break;
+      }
+      sp = ep + 1;
+    }
+  }
+  ret[c] = 0;
+  return ret;
+}
+
+char* utils_list_value_from_ulist(const struct ulist *list) {
+  akassert(list && list->usize == sizeof(char*));
+  struct xstr *xstr = xstr_create_empty();
+  for (int i = 0; i < list->num; ++i) {
+    const char *c = *(const char**) ulist_get(list, i);
+    xstr_cat(xstr, "\1");
+    xstr_cat(xstr, c);
+  }
+  return xstr_destroy_keep_ptr(xstr);
 }

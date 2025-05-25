@@ -10,21 +10,21 @@
 #include <stdio.h>
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct unit *u = spawn_user_data(s);
-  fprintf(stderr, "%s: %s", u->rel_path, buf);
+  if (!g_env.quiet) {
+    fprintf(stdout, "%s", buf);
+  }
 }
 
 static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  struct unit *u = spawn_user_data(s);
-  fprintf(stdout, "%s: %s", u->rel_path, buf);
+  if (!g_env.quiet) {
+    fprintf(stderr, "%s", buf);
+  }
 }
 
 static void _check_on_env_value(struct node_resolve *nr, const char *key, const char *val) {
   struct unit *unit = nr->user_data;
   akassert(unit->n);
-  if (!g_env.quiet) {
-    akinfo("%s %s=%s", unit->rel_path, key, val);
-  }
+  akinfo("%s %s=%s", unit->rel_path, key, val);
   node_env_set(unit->n, key, val);
 }
 
@@ -63,9 +63,8 @@ static void _check_on_resolve(struct node_resolve *r) {
 
 static void _node_check_script(struct node *n) {
   const char *script = n->value;
-  if (!g_env.quiet) {
-    node_info(n->parent, "%s", script);
-  }
+  node_info(n->parent, "%s", script);
+
   struct pool *pool = pool_create(on_unit_pool_destroy);
   const char *path = pool_printf(pool, ".autark/%s", script);
   struct unit *unit = unit_create(path, 0, pool);
