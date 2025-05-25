@@ -77,7 +77,7 @@ const char* path_real_pool(const char *path, struct pool *pool) {
 char* path_normalize(const char *path, char buf[PATH_MAX]) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
-    return 0;
+    akfatal(errno, "Cannot get CWD", 0);
   }
   return path_normalize_cwd(path, cwd, buf);
 }
@@ -95,7 +95,7 @@ char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) 
       strncat(buf, path, PATH_MAX - len - 2);
     } else {
       errno = ENAMETOOLONG;
-      return 0;
+      akfatal(errno, "Failed to normalize path: %s", path);
     }
   }
 
@@ -150,18 +150,15 @@ char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) 
 char* path_normalize_pool(const char *path, struct pool *pool) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
-    return 0;
+    akfatal(errno, "Cannot get CWD", 0);
   }
   return path_normalize_cwd_pool(path, cwd, pool);
 }
 
 char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *pool) {
   char buf[PATH_MAX];
-  if (path_normalize_cwd(path, cwd, buf)) {
-    return pool_strdup(pool, buf);
-  } else {
-    return 0;
-  }
+  path_normalize_cwd(path, cwd, buf);
+  return pool_strdup(pool, buf);
 }
 
 int path_mkdirs(const char *path) {
@@ -303,22 +300,22 @@ static inline int _path_num_segments(const char *path) {
 char* path_relativize(const char *from, const char *to) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
-    return 0;
+    akfatal(errno, "Cannot get CWD", 0);
   }
   return path_relativize_cwd(from, to, cwd);
 }
 
 char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   char from[PATH_MAX], to[PATH_MAX];
-  if (!path_normalize_cwd(from_, cwd, from) || !path_normalize_cwd(to_, cwd, to) || *from != '/' || *to != '/') {
-    return 0;
-  }
+  path_normalize_cwd(from_, cwd, from);
+  path_normalize_cwd(to_, cwd, to);
+  akassert(*from == '/' && *to == '/');
 
   int sf, sc;
   struct xstr *xstr = xstr_create_empty();
   const char *frp = from, *trp = to, *srp = to;
 
-  for (++frp, ++trp, sc = 0, sf = _path_num_segments(frp);
+  for (++frp, ++trp, sc = 0, sf = _path_num_segments(frp - 1);
        *frp == *trp;
        ++frp, ++trp) {
     if (*frp == '/' || *frp == '\0') {

@@ -32,11 +32,11 @@
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE)
 
-#define node_is_init(n__)     (((n__)->flags & NODE_FLG_INIT) != 0)
-#define node_is_setup(n__)    (((n__)->flags & NODE_FLG_SETUP) != 0)
-#define node_is_built(n__)    (((n__)->flags & NODE_FLG_BUILT) != 0)
-#define node_is_value(n__)    ((n__)->type & NODE_TYPE_VALUE)
-#define node_is_rule(n__)     !node_is_value(n__)
+#define node_is_init(n__)  (((n__)->flags & NODE_FLG_INIT) != 0)
+#define node_is_setup(n__) (((n__)->flags & NODE_FLG_SETUP) != 0)
+#define node_is_built(n__) (((n__)->flags & NODE_FLG_BUILT) != 0)
+#define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
+#define node_is_rule(n__)  !node_is_value(n__)
 
 #define NODE_PRINT_INDENT 2
 
@@ -87,7 +87,11 @@ void node_env_set(struct node*, const char *key, const char *val);
 
 struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
+struct node* node_by_product_raw(struct node*, const char *prod);
+
 void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
+
+void node_product_add_raw(struct node*, const char *prod);
 
 void node_reset(struct node *n);
 
@@ -115,9 +119,9 @@ struct node_resolve {
   void (*on_resolve)(struct node_resolve*);
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
+  struct ulist deps_outdated; // char*
   struct pool *pool;
   unsigned     mode;
-  int num_outdated; // Number of outdated dependencies
   int num_deps;     // Number of dependencies
 };
 

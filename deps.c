@@ -70,7 +70,7 @@ int deps_add(struct deps *d, int type, const char *file) {
   char buf[PATH_MAX];
 
   if (type == DEPS_TYPE_FILE) {
-    akassert(path_normalize(file, buf));
+    path_normalize(file, buf);
     file = buf;
     struct akpath_stat st;
     if (!path_stat(file, &st) && st.ftype != AKPATH_NOT_EXISTS) {

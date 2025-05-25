@@ -715,15 +715,16 @@ void node_env_set(struct node *n, const char *key, const char *val) {
 }
 
 void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) {
-  struct sctx *s = n->ctx;
   char buf[PATH_MAX];
   if (!pathbuf) {
     pathbuf = buf;
   }
   prod = path_normalize(prod, pathbuf);
-  if (!prod) {
-    node_fatal(errno, n, 0);
-  }
+  node_product_add_raw(n, prod);
+}
+
+void node_product_add_raw(struct node *n, const char *prod) {
+  struct sctx *s = n->ctx;
   struct node *nn = map_get(s->products, prod);
   if (nn) {
     if (nn == n) {
@@ -746,6 +747,11 @@ struct node* node_by_product(struct node *n, const char *prod, char pathbuf[PATH
   }
   struct node *nn = map_get(s->products, prod);
   return nn;
+}
+
+struct node* node_by_product_raw(struct node *n, const char *prod) {
+  struct sctx *s = n->ctx;
+   return map_get(s->products, prod);
 }
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val) {
@@ -864,9 +870,9 @@ void node_resolve(struct node_resolve *r) {
 
   r->pool = pool;
   r->num_deps = 0;
-  r->num_outdated = 0;
   r->deps_path_tmp = deps_path_tmp;
   r->env_path_tmp = env_path_tmp;
+  ulist_init(&r->deps_outdated, 0, sizeof(char*));
 
   if (r->on_init) {
     r->on_init(r);
@@ -876,7 +882,8 @@ void node_resolve(struct node_resolve *r) {
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
       if (deps_cur_is_outdated(&deps)) {
-        ++r->num_outdated;
+        char *path = pool_strdup(pool, deps.resource);
+        ulist_push(&r->deps_outdated, &path);
       }
     }
   }
@@ -885,8 +892,7 @@ void node_resolve(struct node_resolve *r) {
   }
 
   bool env_created = false;
-
-  if (r->on_resolve && (r->num_deps == 0 || r->num_outdated)) {
+  if (r->on_resolve && (r->num_deps == 0 || r->deps_outdated.num)) {
     r->on_resolve(r);
     if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
@@ -924,6 +930,7 @@ void node_resolve(struct node_resolve *r) {
     }
   }
 
+  ulist_destroy_keep(&r->deps_outdated);
   pool_destroy(pool);
 }
 

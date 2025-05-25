@@ -6,18 +6,68 @@
 #include "env.h"
 
 #include <string.h>
-#include <errno.h>
 
 struct _ctx {
   struct pool *pool;
-  struct ulist sources; // char*
-  struct ulist objects; // char*
+  struct ulist sources;     // char*
+  struct ulist sources_rel; // char*
+  struct ulist objects;     // char*
+  struct node *n;
   struct node *n_cflags;
   struct node *n_sources;
   struct node *n_cc;
 };
 
+static void _on_build_source(struct node *n, const char *src) {
+  // TODO:
+}
+
+static void _on_resolve(struct node_resolve *r) {
+  struct _ctx *ctx = r->user_data;
+  struct unit *unit = unit_peek();
+  struct ulist *slist = &ctx->sources_rel;
+  if (r->deps_outdated.num) {
+    slist = &r->deps_outdated;
+    for (int i = 0; i < slist->num; ++i) {
+      char *path = *(char**) ulist_get(slist, i);
+      char *rpath = path_relativize_cwd(unit->cache_dir, path, unit->cache_path);
+      ulist_set(slist, i, pool_strdup(r->pool, rpath));
+      free(rpath);
+    }
+  }
+  for (int i = 0; i < slist->num; ++i) {
+    char *path = *(char**) ulist_get(slist, i);
+    _on_build_source(ctx->n, path);
+  }
+}
+
 static void _build(struct node *n) {
+  char buf[PATH_MAX];
+  struct _ctx *ctx = n->impl;
+  struct unit *unit = unit_peek();
+
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    const char *src = *(char**) ulist_get(&ctx->sources, i);
+    char *npath = path_normalize_cwd(src, unit->dir, buf);
+    if (!path_is_exist(npath)) {
+      npath = path_normalize_cwd(src, unit->cache_dir, buf);
+      struct node *pn = node_by_product_raw(n, npath);
+      if (pn) {
+        node_build(pn);
+      } else {
+        node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", npath);
+      }
+    }
+    ulist_set(&ctx->sources, i, npath);
+    char *rpath = path_relativize_cwd(unit->cache_dir, npath, unit->cache_dir);
+    ulist_push(&ctx->sources_rel, &rpath);
+  }
+
+  node_resolve(&(struct node_resolve) {
+    .path = n->vfile,
+    .user_data = ctx,
+    .on_resolve = _on_resolve,
+  });
 }
 
 static void _source_add(struct node *n, char *path_) {
@@ -33,20 +83,20 @@ static void _source_add(struct node *n, char *path_) {
       return;
     }
   }
-  char *npath = path_normalize_cwd(path_, unit->dir, buf);
-  if (!npath) {
-    node_fatal(errno, n, 0);
-  }
-  char *path = pool_strdup(ctx->pool, npath);
-  ulist_push(&ctx->sources, &path);
 
-  npath = path_normalize_cwd(path_, unit->cache_dir, buf);
-  path = pool_strdup(ctx->pool, npath);
+  // Save raw source
+  ulist_push(&ctx->sources, &path_);
+
+  // Save object files as products
+  char *npath = path_normalize_cwd(path_, unit->cache_dir, buf);
+  char *path = pool_strdup(ctx->pool, npath);
   char *p = strrchr(path, '.');
   akassert(p && p[1] != '\0');
   p[1] = 'o';
   p[2] = '\0';
+
   ulist_push(&ctx->objects, &path);
+  node_product_add_raw(n, path);
 }
 
 static void _setup(struct node *n) {
@@ -80,7 +130,12 @@ static void _init(struct node *n) {
 static void _dispose(struct node *n) {
   struct _ctx *ctx = n->impl;
   if (ctx) {
+    for (int i = 0; i < ctx->sources_rel.num; ++i) {
+      char *v = *(char**) ulist_get(&ctx->sources_rel, i);
+      free(v);
+    }
     ulist_destroy_keep(&ctx->sources);
+    ulist_destroy_keep(&ctx->sources_rel);
     ulist_destroy_keep(&ctx->objects);
     pool_destroy(ctx->pool);
   }
@@ -96,7 +151,9 @@ int node_cc_setup(struct node *n) {
   struct _ctx *ctx = pool_alloc(pool, sizeof(*ctx));
   *ctx = (struct _ctx) {
     .pool = pool,
+    .n = n,
     .sources = { .usize = sizeof(char*) },
+    .sources_rel = { .usize = sizeof(char*) },
     .objects = { .usize = sizeof(char*) },
   };
   n->impl = ctx;
