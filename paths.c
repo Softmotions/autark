@@ -315,17 +315,20 @@ char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   struct xstr *xstr = xstr_create_empty();
   const char *frp = from, *trp = to, *srp = to;
 
-  for (++frp, ++trp, sc = 0, sf = _path_num_segments(frp - 1);
-       *frp == *trp || (*frp == '\0' && *trp == '/') || (*frp == '/' && *trp == '\0');
-       ++frp, ++trp) {
+  for (++frp, ++trp, sc = 0, sf = _path_num_segments(frp - 1); *frp == *trp; ++frp, ++trp) {
     if (*frp == '/' || *frp == '\0') {
       ++sc;
       srp = trp;
-      if (*frp == '\0' || *trp == '\0') {
+      if (*frp == '\0') {
         break;
       }
     }
   }
+  if ((*frp == '\0' && *trp == '/') || (*frp == '/' && *trp == '\0')) {
+    ++sc;
+    srp = trp;
+  }
+
   for (int i = 0, l = sf - sc; i < l; ++i) {
     xstr_cat2(xstr, "../", AK_LLEN("../"));
   }
