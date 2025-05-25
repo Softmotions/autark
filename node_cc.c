@@ -178,11 +178,11 @@ static void _setup(struct node *n) {
     ctx->cc = pool_strdup(ctx->pool, node_value(ctx->n_cc));
   }
   if (!ctx->cc) {
-    const char *ename = strcmp(n->value, "cc") ? "CC" : "CXX";
-    if (ename) {
-      ctx->cc = pool_strdup(ctx->pool, getenv(ename));
+    const char *key = strcmp(n->value, "cc") ? "CC" : "CXX";
+    if (key) {
+      ctx->cc = pool_strdup(ctx->pool, getenv(key));
       if (!ctx->cc) {
-        node_warn(n, "Found %s compiler in environment: %s", ename, ctx->cc);
+        node_warn(n, "Found %s compiler in environment: %s", ctx->cc, key);
       }
     }
   }
