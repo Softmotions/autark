@@ -40,9 +40,9 @@ cc {
 }
 
 #run {
-#  ${CC} { -o autark ..${OBJS} ..${LDFLAGS}}
+#  ${CC} { -o autark ..${CC_OBJS} ..${LDFLAGS}}
 #  consumes {
-#    ..${OBJS}
+#    ..${CC_OBJS}
 #  }
 #  products {
 #    autark

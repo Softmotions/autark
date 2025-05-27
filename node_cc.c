@@ -7,12 +7,14 @@
 #include "utils.h"
 #include "xstr.h"
 #include "spawn.h"
+#include "alloc.h"
 
 #include <string.h>
 
 struct _ctx {
   struct pool *pool;
   struct ulist sources;     // char*
+  struct ulist objects;     // char*
   struct node *n;
   struct node *n_cflags;
   struct node *n_sources;
@@ -36,12 +38,12 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
   if (ctx->n_cflags) {
     struct xstr *xstr = 0;
     const char *cflags = node_value(ctx->n_cflags);
-    if (!utils_is_list_value(cflags)) {
+    if (!utils_is_vlist(cflags)) {
       xstr = xstr_create_empty();
       utils_split_values_add(cflags, xstr);
       cflags = xstr_ptr(xstr);
     }
-    for (char **p = utils_list_value_to_clist(cflags, ctx->pool); *p; ++p) {
+    for (char **p = utils_vlist_to_clist(cflags, ctx->pool); *p; ++p) {
       spawn_arg_add(s, *p);
     }
     xstr_destroy(xstr);
@@ -88,18 +90,24 @@ static void _on_resolve(struct node_resolve *r) {
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
     bool incache = strstr(src, unit->cache_dir) == src;
+
     if (!incache) {
       obj = path_relativize_cwd(unit->dir, src, unit->dir);
+      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
     } else {
       obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+      src = xstrdup(obj);
     }
+
     char *p = strrchr(obj, '.');
     akassert(p && p[1] != '\0');
     p[1] = 'o';
     p[2] = '\0';
 
     _on_build_source(ctx->n, 0, src, obj);
+
     free(obj);
+    free(src);
   }
 
   struct deps deps;
@@ -139,43 +147,53 @@ static void _build(struct node *n) {
   });
 }
 
-static void _source_add(struct node *n, const char *src) {
+static void _source_add(struct node *n, const char *src_) {
   char buf[PATH_MAX], *p;
+  if (src_ == 0 || *src_ == '\0') {
+    return;
+  }
+  p = strrchr(src_, '.');
+  if (p == 0 || p[1] == '\0') {
+    return;
+  }
+
   struct _ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
-  {
-    if (src == 0 || *src == '\0') {
-      return;
-    }
-    p = strrchr(src, '.');
-    if (p == 0 || p[1] == '\0') {
-      return;
+  const char *src = src_;
+  const char *npath = src;
+
+  if (!path_is_absolute(src)) {
+    npath = path_normalize_cwd(src, unit->dir, buf);
+  } else {
+    bool incache = strstr(src, unit->cache_dir) == src;
+    if (!incache) {
+      src = path_relativize_cwd(unit->dir, src, unit->dir);
     }
   }
 
-  char *npath = path_normalize_cwd(src, unit->dir, buf);
-  if (!path_is_exist(npath)) {
-    npath = path_normalize_cwd(src, unit->cache_dir, buf);
-  }
-
-  char *nsrc = pool_strdup(ctx->pool, npath);
-  ulist_push(&ctx->sources, &nsrc);
+  p = pool_strdup(ctx->pool, npath);
+  ulist_push(&ctx->sources, &p);
 
   npath = path_normalize_cwd(src, unit->cache_dir, buf);
-  p = strrchr(buf, '.');
+  p = strrchr(npath, '.');
   akassert(p && p[1] != '\0');
   p[1] = 'o';
   p[2] = '\0';
 
-  node_product_add_raw(n, buf);
+  p = pool_strdup(ctx->pool, npath);
+  ulist_push(&ctx->objects, &p);
+  node_product_add_raw(n, npath);
+
+  if (src != src_) {
+    free((char*) src);
+  }
 }
 
 static void _setup(struct node *n) {
   struct _ctx *ctx = n->impl;
   const char *val = node_value(ctx->n_sources);
-  struct pool *pool = pool_create_empty();
-  if (utils_is_list_value(val)) {
-    for (char **pp = utils_list_value_to_clist(val, ctx->pool); *pp; ++pp) {
+  if (utils_is_vlist(val)) {
+    for (char **pp = utils_vlist_to_clist(val, ctx->pool); *pp; ++pp) {
       _source_add(n, *pp);
     }
   } else {
@@ -185,7 +203,7 @@ static void _setup(struct node *n) {
     ctx->cc = pool_strdup(ctx->pool, node_value(ctx->n_cc));
   }
   if (!ctx->cc) {
-    const char *key = strcmp(n->value, "cc") ? "CC" : "CXX";
+    const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";
     if (key) {
       ctx->cc = pool_strdup(ctx->pool, getenv(key));
       if (ctx->cc) {
@@ -199,7 +217,16 @@ static void _setup(struct node *n) {
   } else {
     node_info(n, "Compiler: %s", ctx->cc);
   }
-  pool_destroy(pool);
+
+  const char *objskey;
+  if (strcmp(n->value, "cc") == 0) {
+    objskey = "CC_OBJS";
+  } else {
+    objskey = "CXX_OBJS";
+  }
+  char *objs = utils_ulist_to_vlist(&ctx->objects);
+  node_env_set(n, objskey, objs);
+  free(objs);
 }
 
 static void _init(struct node *n) {
@@ -220,6 +247,7 @@ static void _dispose(struct node *n) {
   struct _ctx *ctx = n->impl;
   if (ctx) {
     ulist_destroy_keep(&ctx->sources);
+    ulist_destroy_keep(&ctx->objects);
     pool_destroy(ctx->pool);
   }
 }
@@ -236,6 +264,7 @@ int node_cc_setup(struct node *n) {
     .pool = pool,
     .n = n,
     .sources = { .usize = sizeof(char*) },
+    .objects = { .usize = sizeof(char*) },
   };
   n->impl = ctx;
   return 0;
