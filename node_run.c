@@ -72,7 +72,7 @@ static void _on_resolve(struct node_resolve *r) {
 
   for (int i = 0; i < ctx->consumes.num; ++i) {
     const char *path = *(const char**) ulist_get(&ctx->consumes, i);
-    deps_add(&deps, DEPS_TYPE_FILE, path);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path);
   }
   node_add_unit_deps(&deps);
   deps_close(&deps);

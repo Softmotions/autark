@@ -232,7 +232,7 @@ void autark_build_prepare(const char *script_path) {
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = AUTARK_CACHE;
   }
-  if (g_env.project.clean) {
+  if (g_env.project.cleanup) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rmdir(g_env.project.cache_dir);
       if (rc) {
@@ -337,7 +337,7 @@ static void _on_command_dep_impl(const char *file) {
   if (rc) {
     akfatal(rc, "Failed to open deps file: %s", deps_path);
   }
-  rc = deps_add(&deps, type, file);
+  rc = deps_add(&deps, type, 0, file);
   if (rc) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }
@@ -429,7 +429,7 @@ void autark_run(int argc, const char **argv) {
         g_env.quiet = 1;
         break;
       case 'c':
-        g_env.project.clean = true;
+        g_env.project.cleanup = true;
         break;
       case 'h':
       default:

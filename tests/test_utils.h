@@ -40,9 +40,9 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
   return ret;
 }
 
-static inline void test_init(void) {
+static inline void test_init(bool cleanup) {
   g_env.verbose = true;
-  g_env.project.clean = true;
+  g_env.project.cleanup = cleanup;
   autark_init();
   g_env.spawn.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
 }

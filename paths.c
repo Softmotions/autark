@@ -162,6 +162,9 @@ char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *po
 }
 
 int path_mkdirs(const char *path) {
+  if (path_is_exist(path)) {
+    return 0;
+  }
   int rc = 0;
   const size_t len = strlen(path);
   char buf[len + 1];

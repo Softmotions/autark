@@ -3,6 +3,11 @@ check {
 }
 
 set {
+  CC
+  ${CC gcc}
+}
+
+set {
   CFLAGS
   ..${CFLAGS}
   ^{-DBUILD_TYPE= ${BUILD_TYPE}}
@@ -31,5 +36,15 @@ set {
 cc {
   ${SOURCES}
   ${CFLAGS}
-  ${CC gcc}
+  ${CC}
 }
+
+#run {
+#  ${CC} { -o autark ..${OBJS} ..${LDFLAGS}}
+#  consumes {
+#    ..${OBJS}
+#  }
+#  products {
+#    autark
+#  }
+#}

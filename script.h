@@ -119,10 +119,16 @@ struct node_resolve {
   void (*on_resolve)(struct node_resolve*);
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
-  struct ulist deps_outdated; // char*
+  struct ulist resolve_outdated; // struct resolve_outdated
   struct pool *pool;
   unsigned     mode;
   int num_deps;     // Number of dependencies
+};
+
+struct resolve_outdated {
+  char type;
+  char flags;
+  char *path;
 };
 
 #define NODE_RESOLVE_ENV_ALWAYS 0x01U

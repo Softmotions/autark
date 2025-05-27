@@ -2,7 +2,7 @@
 #include "script.h"
 
 int main(void) {
-  test_init();
+  test_init(false);
 
   char cwd_prev[PATH_MAX];
   akassert(getcwd(cwd_prev, sizeof(cwd_prev)));

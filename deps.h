@@ -15,7 +15,8 @@
 #define DEPS_BUF_SZ 4096
 
 struct deps {
-  int     type;
+  char    type;
+  char    flags;
   int     num_registered;   /// Number of deps registerd in the current session
   int64_t serial;
   const char *resource;
@@ -29,7 +30,7 @@ bool deps_cur_next(struct deps*);
 
 bool deps_cur_is_outdated(struct deps*);
 
-int deps_add(struct deps*, int type, const char *file);
+int deps_add(struct deps*, char type, char flags, const char *file);
 
 void deps_close(struct deps*);
 

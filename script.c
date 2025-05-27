@@ -725,6 +725,7 @@ void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) 
 }
 
 void node_product_add_raw(struct node *n, const char *prod) {
+  char buf[PATH_MAX];
   struct sctx *s = n->ctx;
   struct node *nn = map_get(s->products, prod);
   if (nn) {
@@ -732,6 +733,11 @@ void node_product_add_raw(struct node *n, const char *prod) {
       return;
     }
     node_fatal(AK_ERROR_FAIL, n, "Product: '%s' was registered by other rule: %s", prod, nn->name);
+  }
+  strncpy(buf, prod, sizeof(buf));
+  char *dir = path_dirname(buf);
+  if (dir) {
+    path_mkdirs(dir);
   }
   map_put_str(s->products, prod, n);
 }
@@ -849,7 +855,7 @@ void node_add_unit_deps(struct deps *deps) {
     struct unit *u = *(struct unit**) ulist_get(&g_env.units, i);
     if (path_is_exist(u->source_path) && (prev_path == 0 || strcmp(prev_path, u->source_path) != 0)) {
       prev_path = u->source_path;
-      deps_add(deps, DEPS_TYPE_FILE, u->source_path);
+      deps_add(deps, DEPS_TYPE_FILE, 0, u->source_path);
     }
   }
 }
@@ -873,7 +879,7 @@ void node_resolve(struct node_resolve *r) {
   r->num_deps = 0;
   r->deps_path_tmp = deps_path_tmp;
   r->env_path_tmp = env_path_tmp;
-  ulist_init(&r->deps_outdated, 0, sizeof(char*));
+  ulist_init(&r->resolve_outdated, 0, sizeof(struct resolve_outdated));
 
   if (r->on_init) {
     r->on_init(r);
@@ -883,8 +889,11 @@ void node_resolve(struct node_resolve *r) {
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
       if (deps_cur_is_outdated(&deps)) {
-        char *path = pool_strdup(pool, deps.resource);
-        ulist_push(&r->deps_outdated, &path);
+        ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {
+          .type = deps.type,
+          .flags = deps.flags,
+          .path = pool_strdup(pool, deps.resource),
+        });
       }
     }
   }
@@ -893,7 +902,7 @@ void node_resolve(struct node_resolve *r) {
   }
 
   bool env_created = false;
-  if (r->on_resolve && (r->num_deps == 0 || r->deps_outdated.num)) {
+  if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num)) {
     r->on_resolve(r);
     if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
@@ -931,7 +940,7 @@ void node_resolve(struct node_resolve *r) {
     }
   }
 
-  ulist_destroy_keep(&r->deps_outdated);
+  ulist_destroy_keep(&r->resolve_outdated);
   pool_destroy(pool);
 }
 

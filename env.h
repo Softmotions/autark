@@ -51,7 +51,7 @@ struct env {
   struct {
     const char *root_dir;  // Project root source dir.
     const char *cache_dir; // Project artifacts cache dir.
-    bool clean;            // Clean project cache before build
+    bool cleanup;            // Clean project cache before build
   } project;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn

@@ -13,9 +13,6 @@
 struct _ctx {
   struct pool *pool;
   struct ulist sources;     // char*
-  struct ulist sources_rel; // char*
-  struct ulist objects;     // char*
-  struct ulist objects_rel; // char*
   struct node *n;
   struct node *n_cflags;
   struct node *n_sources;
@@ -71,15 +68,38 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
 static void _on_resolve(struct node_resolve *r) {
   struct _ctx *ctx = r->user_data;
   struct unit *unit = unit_peek();
-  struct ulist *slist = &ctx->sources_rel;
-  if (r->deps_outdated.num) {
-    slist = &r->deps_outdated;
-    for (int i = 0; i < slist->num; ++i) {
-      char *path = *(char**) ulist_get(slist, i);
-      char *rpath = path_relativize_cwd(unit->cache_dir, path, unit->cache_path);
-      ulist_set(slist, i, pool_strdup(r->pool, rpath));
-      free(rpath);
+  struct ulist *slist = &ctx->sources;
+  struct ulist rlist = { .usize = sizeof(char*) };
+
+  if (r->resolve_outdated.num) {
+    for (int i = 0; i < r->resolve_outdated.num; ++i) {
+      struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+      if (u->flags != 's') { // Rebuild all on any outdated non source dependency
+        slist = &ctx->sources;
+        break;
+      } else {
+        char *path = pool_strdup(r->pool, u->path);
+        ulist_push(&rlist, &path);
+        slist = &rlist;
+      }
     }
+  }
+
+  for (int i = 0; i < slist->num; ++i) {
+    char *obj, *src = *(char**) ulist_get(slist, i);
+    bool incache = strstr(src, unit->cache_dir) == src;
+    if (!incache) {
+      obj = path_relativize_cwd(unit->dir, src, unit->dir);
+    } else {
+      obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+    }
+    char *p = strrchr(obj, '.');
+    akassert(p && p[1] != '\0');
+    p[1] = 'o';
+    p[2] = '\0';
+
+    _on_build_source(ctx->n, 0, src, obj);
+    free(obj);
   }
 
   struct deps deps;
@@ -88,40 +108,28 @@ static void _on_resolve(struct node_resolve *r) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
-  for (int i = 0; i < slist->num; ++i) {
-    char *path = *(char**) ulist_get(slist, i);
-    char *obj = *(char**) ulist_get(&ctx->objects_rel, i);
-    _on_build_source(ctx->n, 0, path, obj);
-    path = *(char**) ulist_get(&ctx->sources, i);
-    deps_add(&deps, DEPS_TYPE_FILE, path);
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    char *src = *(char**) ulist_get(&ctx->sources, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 's', src);
   }
-
   node_add_unit_deps(&deps);
   deps_close(&deps);
+  ulist_destroy_keep(&rlist);
 }
 
 static void _build(struct node *n) {
-  char buf[PATH_MAX];
   struct _ctx *ctx = n->impl;
-  struct unit *unit = unit_peek();
 
   for (int i = 0; i < ctx->sources.num; ++i) {
     const char *src = *(char**) ulist_get(&ctx->sources, i);
-    char *npath = path_normalize_cwd(src, unit->dir, buf);
-    if (!path_is_exist(npath)) {
-      npath = path_normalize_cwd(src, unit->cache_dir, buf);
-      struct node *pn = node_by_product_raw(n, npath);
+    if (!path_is_exist(src)) {
+      struct node *pn = node_by_product_raw(n, src);
       if (pn) {
         node_build(pn);
       } else {
-        node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", npath);
+        node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", src);
       }
     }
-    src = pool_strdup(ctx->pool, npath);
-    ulist_set(&ctx->sources, i, &src);
-
-    char *rpath = path_relativize_cwd(unit->cache_dir, npath, unit->cache_dir);
-    ulist_push(&ctx->sources_rel, &rpath);
   }
 
   node_resolve(&(struct node_resolve) {
@@ -131,36 +139,35 @@ static void _build(struct node *n) {
   });
 }
 
-static void _source_add(struct node *n, char *path_) {
-  char buf[PATH_MAX];
+static void _source_add(struct node *n, const char *src) {
+  char buf[PATH_MAX], *p;
   struct _ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
   {
-    if (path_ == 0 || *path_ == '\0') {
+    if (src == 0 || *src == '\0') {
       return;
     }
-    char *p = strrchr(path_, '.');
+    p = strrchr(src, '.');
     if (p == 0 || p[1] == '\0') {
       return;
     }
   }
 
-  // Save raw source
-  ulist_push(&ctx->sources, &path_);
+  char *npath = path_normalize_cwd(src, unit->dir, buf);
+  if (!path_is_exist(npath)) {
+    npath = path_normalize_cwd(src, unit->cache_dir, buf);
+  }
 
-  // Save object files as products
-  char *npath = path_normalize_cwd(path_, unit->cache_dir, buf);
-  char *path = pool_strdup(ctx->pool, npath);
-  char *p = strrchr(path, '.');
+  char *nsrc = pool_strdup(ctx->pool, npath);
+  ulist_push(&ctx->sources, &nsrc);
+
+  npath = path_normalize_cwd(src, unit->cache_dir, buf);
+  p = strrchr(buf, '.');
   akassert(p && p[1] != '\0');
   p[1] = 'o';
   p[2] = '\0';
 
-  ulist_push(&ctx->objects, &path);
-  node_product_add_raw(n, path);
-
-  char *rpath = path_relativize_cwd(unit->cache_dir, path, unit->cache_dir);
-  ulist_push(&ctx->objects_rel, &rpath);
+  node_product_add_raw(n, buf);
 }
 
 static void _setup(struct node *n) {
@@ -172,7 +179,7 @@ static void _setup(struct node *n) {
       _source_add(n, *pp);
     }
   } else {
-    _source_add(n, pool_strdup(ctx->pool, val));
+    _source_add(n, val);
   }
   if (ctx->n_cc) {
     ctx->cc = pool_strdup(ctx->pool, node_value(ctx->n_cc));
@@ -212,18 +219,7 @@ static void _init(struct node *n) {
 static void _dispose(struct node *n) {
   struct _ctx *ctx = n->impl;
   if (ctx) {
-    for (int i = 0; i < ctx->sources_rel.num; ++i) {
-      char *v = *(char**) ulist_get(&ctx->sources_rel, i);
-      free(v);
-    }
-    for (int i = 0; i < ctx->objects_rel.num; ++i) {
-      char *v = *(char**) ulist_get(&ctx->objects_rel, i);
-      free(v);
-    }
     ulist_destroy_keep(&ctx->sources);
-    ulist_destroy_keep(&ctx->sources_rel);
-    ulist_destroy_keep(&ctx->objects);
-    ulist_destroy_keep(&ctx->objects_rel);
     pool_destroy(ctx->pool);
   }
 }
@@ -240,9 +236,6 @@ int node_cc_setup(struct node *n) {
     .pool = pool,
     .n = n,
     .sources = { .usize = sizeof(char*) },
-    .sources_rel = { .usize = sizeof(char*) },
-    .objects = { .usize = sizeof(char*) },
-    .objects_rel = { .usize = sizeof(char*) },
   };
   n->impl = ctx;
   return 0;
