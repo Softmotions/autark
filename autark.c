@@ -74,7 +74,7 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   path[sizeof(path) - 1] = '\0';
   unit->source_path = path_normalize_pool(path, pool);
 
-  strncpy(path, unit->source_path, sizeof(path));
+  utils_strncpy(path, unit->source_path, sizeof(path));
   path_dirname(path);
   unit->dir = pool_strdup(pool, path);
 
@@ -83,7 +83,7 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   path[sizeof(path) - 1] = '\0';
   unit->cache_path = path_normalize_pool(path, pool);
 
-  strncpy(path, unit->cache_path, sizeof(path));
+  utils_strncpy(path, unit->cache_path, sizeof(path));
   path_dirname(path);
   unit->cache_dir = pool_strdup(pool, path);
 
@@ -95,6 +95,22 @@ struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool 
   map_put_str_no_copy(g_env.map_path_to_unit, unit->source_path, unit);
   map_put_str_no_copy(g_env.map_path_to_unit, unit->cache_path, unit);
   ulist_push(&g_env.units, &unit);
+
+  if (g_env.verbose) {
+    if (unit->flags & UNIT_FLG_ROOT) {
+      akinfo("%s: AUTARK_ROOT_DIR=%s", unit->rel_path, unit->dir);
+      akinfo("%s: AUTARK_CACHE_DIR=%s", unit->rel_path, unit->cache_dir);
+    } else {
+      akinfo("%s: UNIT_DIR=%s", unit->rel_path, unit->dir);
+      akinfo("%s: UNIT_CACHE_DIR=%s", unit->rel_path, unit->cache_dir);
+    }
+  }
+  if (unit->flags & UNIT_FLG_ROOT) {
+    unit_env_set(unit, "AUTARK_ROOT_DIR", unit->dir);
+    unit_env_set(unit, "AUTARK_CACHE_DIR", unit->cache_dir);
+  }
+  unit_env_set(unit, "UNIT_DIR", unit->dir);
+  unit_env_set(unit, "UNIT_CACHE_DIR", unit->cache_dir);
 
   return unit;
 }
@@ -212,7 +228,7 @@ void autark_build_prepare(const char *script_path) {
 
   if (!g_env.project.root_dir) {
     if (script_path) {
-      strncpy(path_buf, script_path, PATH_MAX);
+      utils_strncpy(path_buf, script_path, PATH_MAX);
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
     } else {
       g_env.project.root_dir = g_env.cwd;
@@ -241,10 +257,10 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
-  strncpy(path_buf, script_path, PATH_MAX);
+  utils_strncpy(path_buf, script_path, PATH_MAX);
   const char *path = path_basename(path_buf);
 
-  struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD, g_env.pool);
+  struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD | UNIT_FLG_ROOT, g_env.pool);
   unit_push(unit, 0);
 
   if (!path_is_dir(g_env.project.cache_dir) || !path_is_accesible_read(g_env.project.cache_dir)) {
@@ -261,13 +277,6 @@ void autark_build_prepare(const char *script_path) {
 
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE, "1", 1);
-    akinfo(
-      "\n\tAUTARK_ROOT_DIR:  %s\n"
-      "\tAUTARK_CACHE_DIR: %s\n"
-      "\tAUTARK_UNIT: %s\n",
-      g_env.project.root_dir,
-      g_env.project.cache_dir,
-      unit->rel_path);
   }
 }
 
@@ -461,4 +470,3 @@ void autark_run(int argc, const char **argv) {
   autark_build_prepare(AUTARK_SCRIPT);
   _build();
 }
-

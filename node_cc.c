@@ -38,12 +38,12 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
   if (ctx->n_cflags) {
     struct xstr *xstr = 0;
     const char *cflags = node_value(ctx->n_cflags);
-    if (!utils_is_vlist(cflags)) {
+    if (!is_vlist(cflags)) {
       xstr = xstr_create_empty();
       utils_split_values_add(cflags, xstr);
       cflags = xstr_ptr(xstr);
     }
-    for (char **p = utils_vlist_to_clist(cflags, ctx->pool); *p; ++p) {
+    for (char **p = vlist_to_clist(cflags, ctx->pool); *p; ++p) {
       spawn_arg_add(s, *p);
     }
     xstr_destroy(xstr);
@@ -89,7 +89,7 @@ static void _on_resolve(struct node_resolve *r) {
 
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
-    bool incache = strstr(src, unit->cache_dir) == src;
+    bool incache = strstr(src, g_env.project.cache_dir) == src;
 
     if (!incache) {
       obj = path_relativize_cwd(unit->dir, src, unit->dir);
@@ -147,53 +147,44 @@ static void _build(struct node *n) {
   });
 }
 
-static void _source_add(struct node *n, const char *src_) {
+static void _source_add(struct node *n, const char *src) {
   char buf[PATH_MAX], *p;
-  if (src_ == 0 || *src_ == '\0') {
+  if (src == 0 || *src == '\0') {
     return;
   }
-  p = strrchr(src_, '.');
+  p = strrchr(src, '.');
   if (p == 0 || p[1] == '\0') {
     return;
   }
 
   struct _ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
-  const char *src = src_;
   const char *npath = src;
 
   if (!path_is_absolute(src)) {
     npath = path_normalize_cwd(src, unit->dir, buf);
-  } else {
-    bool incache = strstr(src, unit->cache_dir) == src;
-    if (!incache) {
-      src = path_relativize_cwd(unit->dir, src, unit->dir);
-    }
   }
 
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
 
-  npath = path_normalize_cwd(src, unit->cache_dir, buf);
-  p = strrchr(npath, '.');
+  bool incache = strstr(p, g_env.project.cache_dir) == p;
+  const char *dir = incache ? unit->cache_dir : unit->dir;
+  char *obj = path_relativize_cwd(dir, p, dir);
+
+  p = strrchr(obj, '.');
   akassert(p && p[1] != '\0');
   p[1] = 'o';
   p[2] = '\0';
-
-  p = pool_strdup(ctx->pool, npath);
-  ulist_push(&ctx->objects, &p);
-  node_product_add_raw(n, npath);
-
-  if (src != src_) {
-    free((char*) src);
-  }
+  ulist_push(&ctx->objects, &obj);
+  node_product_add(n, obj, 0);
 }
 
 static void _setup(struct node *n) {
   struct _ctx *ctx = n->impl;
   const char *val = node_value(ctx->n_sources);
-  if (utils_is_vlist(val)) {
-    for (char **pp = utils_vlist_to_clist(val, ctx->pool); *pp; ++pp) {
+  if (is_vlist(val)) {
+    for (char **pp = vlist_to_clist(val, ctx->pool); *pp; ++pp) {
       _source_add(n, *pp);
     }
   } else {
@@ -224,7 +215,7 @@ static void _setup(struct node *n) {
   } else {
     objskey = "CXX_OBJS";
   }
-  char *objs = utils_ulist_to_vlist(&ctx->objects);
+  char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, objskey, objs);
   free(objs);
 }
@@ -246,6 +237,10 @@ static void _init(struct node *n) {
 static void _dispose(struct node *n) {
   struct _ctx *ctx = n->impl;
   if (ctx) {
+    for (int i = 0; i < ctx->objects.num; ++i) {
+      char *p = *(char**) ulist_get(&ctx->objects, i);
+      free(p);
+    }
     ulist_destroy_keep(&ctx->sources);
     ulist_destroy_keep(&ctx->objects);
     pool_destroy(ctx->pool);

@@ -80,6 +80,18 @@ char* pool_strdup(struct pool *pool, const char *str) {
   }
 }
 
+char* pool_strndup(struct pool *pool, const char *str, size_t len) {
+  if (str) {
+    len = strnlen(str, len);
+    char *ret = pool_alloc(pool, len + 1);
+    memcpy(ret, str, len);
+    ret[len] = '\0';
+    return ret;
+  } else {
+    return 0;
+  }
+}
+
 static inline int _printf_estimate_size(const char *format, va_list ap) {
   char buf[1];
   return vsnprintf(buf, sizeof(buf), format, ap) + 1;

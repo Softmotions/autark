@@ -17,8 +17,9 @@
                                             // currently.
 #define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
 
-#define UNIT_FLG_SRC_CWD 0x01U // Set project source dir as unit CWD
-#define UNIT_FLG_NO_CWD  0x02U // Do not change CWD for unit
+#define UNIT_FLG_ROOT    0x01U // Project root unit
+#define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
+#define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
 
 /// Current execution unit.
 struct unit {
@@ -51,7 +52,7 @@ struct env {
   struct {
     const char *root_dir;  // Project root source dir.
     const char *cache_dir; // Project artifacts cache dir.
-    bool cleanup;            // Clean project cache before build
+    bool cleanup;          // Clean project cache before build
   } project;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn

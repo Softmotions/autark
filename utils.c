@@ -146,7 +146,7 @@ long long utils_strtoll(const char *v, int base, int *rcp) {
 }
 
 void utils_split_values_add(const char *v, struct xstr *xstr) {
-  if (utils_is_vlist(v)) {
+  if (is_vlist(v)) {
     xstr_cat(xstr, v);
     return;
   }
@@ -186,7 +186,7 @@ void utils_split_values_add(const char *v, struct xstr *xstr) {
   }
 }
 
-char** utils_vlist_to_clist(const char *val, struct pool *pool) {
+char** vlist_to_clist(const char *val, struct pool *pool) {
   const char *sp = val;
   const char *ep = sp;
   int c = 0;
@@ -214,13 +214,3 @@ char** utils_vlist_to_clist(const char *val, struct pool *pool) {
   return ret;
 }
 
-char* utils_ulist_to_vlist(const struct ulist *list) {
-  akassert(list && list->usize == sizeof(char*));
-  struct xstr *xstr = xstr_create_empty();
-  for (int i = 0; i < list->num; ++i) {
-    const char *c = *(const char**) ulist_get(list, i);
-    xstr_cat(xstr, "\1");
-    xstr_cat(xstr, c);
-  }
-  return xstr_destroy_keep_ptr(xstr);
-}

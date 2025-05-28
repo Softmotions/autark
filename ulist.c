@@ -1,5 +1,6 @@
 #include "ulist.h"
 #include "alloc.h"
+#include "xstr.h"
 
 #include <string.h>
 
@@ -209,4 +210,15 @@ int ulist_remove_by(struct ulist *list, const void *data) {
     }
   }
   return -1;
+}
+
+char* ulist_to_vlist(const struct ulist *list) {
+  akassert(list && list->usize == sizeof(char*));
+  struct xstr *xstr = xstr_create_empty();
+  for (int i = 0; i < list->num; ++i) {
+    const char *c = *(const char**) ulist_get(list, i);
+    xstr_cat(xstr, "\1");
+    xstr_cat(xstr, c);
+  }
+  return xstr_destroy_keep_ptr(xstr);
 }

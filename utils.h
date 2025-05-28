@@ -4,9 +4,9 @@
 #include "basedefs.h"
 #include "xstr.h"
 #include "pool.h"
-#include "ulist.h"
 
 #include <limits.h>
+#include <string.h>
 
 static inline int utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);
@@ -34,12 +34,50 @@ int utils_rename_file(const char *src, const char *dst);
 
 void utils_split_values_add(const char *v, struct xstr *xstr);
 
-static inline bool utils_is_vlist(const char *val) {
+
+static inline char* utils_strncpy(char *dst, const char *src, size_t sz) {
+  if (sz > 1) {
+    size_t len = strnlen(src, sz - 1);
+    memcpy(dst, src, len);
+    dst[len] = '\0';
+  } else if (sz) {
+    dst[0] = '\0';
+  }
+  return dst;
+}
+
+//----------------------- Vlist
+
+struct vlist_iter {
+  const char *item;
+  size_t      len;
+};
+
+char** vlist_to_clist(const char *val, struct pool*);
+
+static inline bool is_vlist(const char *val) {
   return (val && *val == '\1');
 }
 
-char** utils_vlist_to_clist(const char *val, struct pool*);
+static inline void vlist_iter_init(const char *vlist, struct vlist_iter *iter) {
+  iter->item = vlist;
+  iter->len = 0;
+}
 
-AK_ALLOC char* utils_ulist_to_vlist(const struct ulist *list);
+static inline bool vlist_iter_next(struct vlist_iter *iter) {
+  iter->item += iter->len;
+  while (*iter->item == '\1') {
+    iter->item++;
+  }
+  if (*iter->item == '\0') {
+    return false;
+  }
+  const char *p = iter->item;
+  while (*p != '\0' && *p != '\1') {
+    ++p;
+  }
+  iter->len = p - iter->item;
+  return true;
+}
 
 #endif

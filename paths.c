@@ -1,7 +1,7 @@
 #include "paths.h"
 #include "xstr.h"
 #include "alloc.h"
-#include "basedefs.h"
+#include "utils.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -85,9 +85,9 @@ char* path_normalize(const char *path, char buf[PATH_MAX]) {
 char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) {
   akassert(cwd);
   if (path[0] == '/') {
-    strncpy(buf, path, PATH_MAX);
+    utils_strncpy(buf, path, PATH_MAX);
   } else {
-    strncpy(buf, cwd, PATH_MAX);
+    utils_strncpy(buf, cwd, PATH_MAX);
     size_t len = strlen(buf);
     if (len < PATH_MAX - 1) {
       buf[len] = '/';

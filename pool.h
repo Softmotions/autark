@@ -30,6 +30,8 @@ void* pool_calloc(struct pool*, size_t siz);
 
 char* pool_strdup(struct pool*, const char*);
 
+char* pool_strndup(struct pool*, const char*, size_t len);
+
 char* pool_printf_va(struct pool*, const char *format, va_list va);
 
 char* pool_printf(struct pool*, const char*, ...) __attribute__((format(__printf__, 2, 3)));

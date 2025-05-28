@@ -5,6 +5,7 @@
 #include "spawn.h"
 
 #include <unistd.h>
+#include <string.h>
 
 struct _spawn_data {
   struct node *n;
@@ -28,12 +29,16 @@ struct _on_resolve_ctx {
 static void _on_resolve(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
   struct node *n = ctx->n;
+
   struct node *ncmd = n->child;
+  if (strcmp(ncmd->value, "exec") == 0) {
+    ncmd = ncmd->child;
+  }
+
   const char *cmd = node_value(ncmd);
   if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
   }
-  node_info(n, "%s", cmd);
 
   struct unit *unit = unit_peek();
   struct spawn *s = spawn_create(cmd, &(struct _spawn_data) {
@@ -45,11 +50,9 @@ static void _on_resolve(struct node_resolve *r) {
   spawn_set_stdout_handler(s, _stdout_handler);
   spawn_set_stderr_handler(s, _stderr_handler);
 
-  if (ncmd->child) {
-    for (struct node *nn = ncmd->child; nn; nn = nn->next) {
-      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
-        spawn_arg_add(s, node_value(nn));
-      }
+  for (struct node *nn = (ncmd == n->child) ? ncmd->child : ncmd->next; nn; nn = nn->next) {
+    if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+      spawn_arg_add(s, node_value(nn));
     }
   }
 

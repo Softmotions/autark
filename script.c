@@ -625,7 +625,7 @@ int script_open(const char *file, struct sctx **out) {
   autark_build_prepare(file);
 
   char buf[PATH_MAX];
-  strncpy(buf, file, PATH_MAX);
+  utils_strncpy(buf, file, PATH_MAX);
   const char *path = path_basename(buf);
 
   RCC(rc, finish, _script_from_file(0, path, &n));
@@ -734,7 +734,7 @@ void node_product_add_raw(struct node *n, const char *prod) {
     }
     node_fatal(AK_ERROR_FAIL, n, "Product: '%s' was registered by other rule: %s", prod, nn->name);
   }
-  strncpy(buf, prod, sizeof(buf));
+  utils_strncpy(buf, prod, sizeof(buf));
   char *dir = path_dirname(buf);
   if (dir) {
     path_mkdirs(dir);
@@ -791,61 +791,61 @@ struct node* node_find_prev_sibling(struct node *n) {
 struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const char *path, void*), void *opq) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];
-
   struct unit *unit = unit_peek();
-  akassert(unit);
+  struct ulist rlist = { .usize = sizeof(char*) };
 
+  struct pool *pool = pool_create_empty();
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "consumes");
   if (nn && nn->child) {
-    unsigned nc = 0;
     for (struct node *cn = nn->child; cn; cn = cn->next) {
-      if (cn->type == NODE_TYPE_VALUE) {
-        cn->flags &= ~NODE_FLG_IN_ANY;
-        ++nc;
+      const char *cv = node_value(cn);
+      if (is_vlist(cv)) {
+        struct vlist_iter iter;
+        vlist_iter_init(cv, &iter);
+        while (vlist_iter_next(&iter)) {
+          cv = pool_strndup(pool, iter.item, iter.len);
+          ulist_push(&rlist, &cv);
+        }
+      } else {
+        ulist_push(&rlist, &cv);
       }
     }
     unit_ch_cache_dir(unit, prevcwd);
-    for (struct node *cn = nn->child; cn; cn = cn->next) {
-      if (cn->type == NODE_TYPE_VALUE) {
-        const char *cv = node_value(cn);
-        struct node *pn = node_by_product(n, cv, pathbuf);
-        if (pn) {
-          node_build(pn);
-          if (path_is_exist(pathbuf)) {
-            --nc;
-            cn->flags |= NODE_FLG_IN_CACHE;
-            if (on_resolved) {
-              on_resolved(pathbuf, opq);
-            }
-          } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", cv, pn->name);
+    for (int i = 0; i < rlist.num; ++i) {
+      const char *cv = *(char**) ulist_get(&rlist, i);
+      struct node *pn = node_by_product(n, cv, pathbuf);
+      if (pn) {
+        node_build(pn);
+        if (path_is_exist(pathbuf)) {
+          if (on_resolved) {
+            on_resolved(pathbuf, opq);
           }
-        } else if (path_is_exist(cv)) {
-          --nc;
-          cn->flags |= NODE_FLG_IN_CACHE;
+          ulist_remove(&rlist, i--);
+        } else {
+          node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", cv, pn->name);
         }
       }
     }
     akcheck(chdir(prevcwd));
-    if (nc > 0) {
+    if (rlist.num) {
       unit_ch_src_dir(unit, prevcwd);
-      for (struct node *cn = nn->child; cn; cn = cn->next) {
-        if (cn->type == NODE_TYPE_VALUE && !(cn->flags & NODE_FLG_IN_CACHE)) {
-          const char *cv = node_value(cn);
-          akassert(path_normalize(cv, pathbuf));
-          if (path_is_exist(pathbuf)) {
-            cn->flags |= NODE_FLG_IN_SRC;
-            if (on_resolved) {
-              on_resolved(pathbuf, opq);
-            }
-          } else {
-            node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", cv);
+      for (int i = 0; i < rlist.num; ++i) {
+        const char *cv = *(char**) ulist_get(&rlist, i);
+        akassert(path_normalize(cv, pathbuf));
+        if (path_is_exist(pathbuf)) {
+          if (on_resolved) {
+            on_resolved(pathbuf, opq);
           }
+        } else {
+          node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s'", cv);
         }
       }
       akcheck(chdir(prevcwd));
     }
   }
+
+  ulist_destroy_keep(&rlist);
+  pool_destroy(pool);
   return nn;
 }
 

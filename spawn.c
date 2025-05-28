@@ -4,6 +4,7 @@
 #include "pool.h"
 #include "xstr.h"
 #include "env.h"
+#include "utils.h"
 
 #include <errno.h>
 #include <linux/limits.h>
@@ -59,13 +60,26 @@ struct spawn* spawn_create(const char *exec, void *user_data) {
   return s;
 }
 
-const char* spawn_arg_add(struct spawn *s, const char *arg) {
+static const char* _spawn_arg_add(struct spawn *s, const char *arg, int len) {
   if (!arg) {
     arg = "";
   }
-  const char *v = pool_strdup(s->pool, arg);
-  ulist_push(&s->args, &v);
-  return v;
+  if (is_vlist(arg)) {
+    struct vlist_iter iter;
+    vlist_iter_init(arg, &iter);
+    while (vlist_iter_next(&iter)) {
+      _spawn_arg_add(s, iter.item, iter.len);
+    }
+    return arg;
+  } else {
+    const char *v = (len < 0) ? pool_strdup(s->pool, arg) : pool_strndup(s->pool, arg, len);
+    ulist_push(&s->args, &v);
+    return v;
+  }
+}
+
+const char* spawn_arg_add(struct spawn *s, const char *arg) {
+  return _spawn_arg_add(s, arg, -1);
 }
 
 void spawn_env_set(struct spawn *s, const char *key, const char *val) {

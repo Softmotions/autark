@@ -1,6 +1,8 @@
 #ifndef ULIST_H
 #define ULIST_H
 
+#include "basedefs.h"
+
 struct ulist {
   char    *array;
   unsigned usize;
@@ -44,5 +46,7 @@ struct ulist* ulist_clone(const struct ulist*);
 int ulist_find(const struct ulist*, const void *data);
 
 int ulist_remove_by(struct ulist*, const void *data);
+
+AK_ALLOC char* ulist_to_vlist(const struct ulist *list);
 
 #endif
