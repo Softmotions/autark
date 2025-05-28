@@ -6,8 +6,9 @@
 #include <limits.h>
 #include <stdint.h>
 
-#define DEPS_TYPE_FILE     102
-#define DEPS_TYPE_OUTDATED 111
+#define DEPS_TYPE_FILE       102
+#define DEPS_TYPE_NODE_VALUE 118
+#define DEPS_TYPE_OUTDATED   111
 
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U

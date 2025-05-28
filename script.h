@@ -120,14 +120,15 @@ struct node_resolve {
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
   struct ulist resolve_outdated; // struct resolve_outdated
+  struct ulist node_val_deps;    // struct node*
   struct pool *pool;
   unsigned     mode;
   int num_deps;     // Number of dependencies
 };
 
 struct resolve_outdated {
-  char type;
-  char flags;
+  char  type;
+  char  flags;
   char *path;
 };
 

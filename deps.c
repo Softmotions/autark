@@ -36,7 +36,7 @@ bool deps_cur_next(struct deps *d) {
     for ( ; *rp && *rp != '\1'; ++rp) ;
     if (*rp == '\1') {
       *rp = 0;
-      if (d->type == DEPS_TYPE_FILE) {
+      if (d->type == DEPS_TYPE_FILE || d->type == DEPS_TYPE_NODE_VALUE) {
         ++rp;
         d->serial = utils_strtoll(rp, 10, &rc);
         if (rc) {

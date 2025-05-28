@@ -138,11 +138,22 @@ static void _build(struct node *n) {
     }
   }
 
-  node_resolve(&(struct node_resolve) {
+  struct node_resolve nr = {
     .path = n->vfile,
     .user_data = ctx,
     .on_resolve = _on_resolve,
-  });
+    .node_val_deps = { .usize = sizeof(struct node*) }
+  };
+
+  if (ctx->n_cc) {
+    ulist_push(&nr.node_val_deps, &ctx->n_cc);
+  }
+
+  if (ctx->n_cflags) {
+    ulist_push(&nr.node_val_deps, &ctx->n_cflags);
+  }
+
+  node_resolve(&nr);
 }
 
 static void _source_add(struct node *n, const char *src) {

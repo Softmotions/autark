@@ -879,6 +879,7 @@ void node_resolve(struct node_resolve *r) {
   r->num_deps = 0;
   r->deps_path_tmp = deps_path_tmp;
   r->env_path_tmp = env_path_tmp;
+
   ulist_init(&r->resolve_outdated, 0, sizeof(struct resolve_outdated));
 
   if (r->on_init) {
@@ -888,7 +889,11 @@ void node_resolve(struct node_resolve *r) {
   if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
-      if (deps_cur_is_outdated(&deps)) {
+      bool outdated = deps_cur_is_outdated(&deps);
+      if (deps.type == DEPS_TYPE_NODE_VALUE) {
+        // TODO:
+      }
+      if (outdated) {
         ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {
           .type = deps.type,
           .flags = deps.flags,
@@ -941,6 +946,7 @@ void node_resolve(struct node_resolve *r) {
   }
 
   ulist_destroy_keep(&r->resolve_outdated);
+  ulist_destroy_keep(&r->node_val_deps);
   pool_destroy(pool);
 }
 
