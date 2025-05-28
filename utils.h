@@ -34,17 +34,28 @@ int utils_rename_file(const char *src, const char *dst);
 
 void utils_split_values_add(const char *v, struct xstr *xstr);
 
-
-static inline char* utils_strncpy(char *dst, const char *src, size_t sz) {
-  if (sz > 1) {
-    size_t len = strnlen(src, sz - 1);
+static inline char* utils_strncpy(char *dst, const char *src, size_t dst_sz) {
+  if (dst_sz > 1) {
+    size_t len = strnlen(src, dst_sz - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
-  } else if (sz) {
+  } else if (dst_sz) {
     dst[0] = '\0';
   }
   return dst;
 }
+
+static inline char* utils_strnncpy(char *dst, const char *src, size_t src_len, size_t dst_sz) {
+  if (dst_sz > 1 && src_len) {
+    size_t len = MIN(src_len, dst_sz - 1);
+    memcpy(dst, src, len);
+    dst[len] = '\0';
+  } else if (dst_sz) {
+    dst[0] = '\0';
+  }
+  return dst;
+}
+
 
 //----------------------- Vlist
 

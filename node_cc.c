@@ -43,9 +43,7 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
       utils_split_values_add(cflags, xstr);
       cflags = xstr_ptr(xstr);
     }
-    for (char **p = vlist_to_clist(cflags, ctx->pool); *p; ++p) {
-      spawn_arg_add(s, *p);
-    }
+    spawn_arg_add(s, cflags);
     xstr_destroy(xstr);
   }
 
@@ -184,8 +182,12 @@ static void _setup(struct node *n) {
   struct _ctx *ctx = n->impl;
   const char *val = node_value(ctx->n_sources);
   if (is_vlist(val)) {
-    for (char **pp = vlist_to_clist(val, ctx->pool); *pp; ++pp) {
-      _source_add(n, *pp);
+    struct vlist_iter iter;
+    vlist_iter_init(val, &iter);
+    while (vlist_iter_next(&iter)) {
+      char buf[PATH_MAX];
+      utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
+      _source_add(n, buf);
     }
   } else {
     _source_add(n, val);

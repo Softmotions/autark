@@ -46,6 +46,14 @@
         }
 
 
+#ifndef MIN
+#define MIN(a_, b_) ((a_) < (b_) ? (a_) : (b_))
+#endif
+
+#ifndef MAX
+#define MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
+#endif
+
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
