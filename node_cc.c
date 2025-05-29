@@ -30,7 +30,7 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stderr, "%s", buf);
 }
 
-static void _on_process_MMD_item(const char *item, struct node *n, struct deps *deps, const char *src) {
+static void _deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   char buf[127];
   char *p = strrchr(item, '.');
   if (!p || p[1] == '\0') {
@@ -45,7 +45,7 @@ static void _on_process_MMD_item(const char *item, struct node *n, struct deps *
   deps_add_alias(deps, 's', src, item);
 }
 
-static void _on_process_MMD(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static void _deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj) {
   char buf[MAX(2 * PATH_MAX, 8192)];
   size_t len = strlen(obj);
   utils_strncpy(buf, obj, sizeof(buf));
@@ -84,7 +84,7 @@ static void _on_process_MMD(struct node *n, struct deps *deps, const char *src, 
           *p = '\0';
           ++p;
         }
-        _on_process_MMD_item(sp, n, deps, src);
+        _deps_MMD_item_add(sp, n, deps, src);
       }
     }
   }
@@ -128,8 +128,6 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
     }
   }
   spawn_destroy(s);
-
-  _on_process_MMD(n, deps, src, obj);
 }
 
 static void _on_resolve(struct node_resolve *r) {
@@ -158,6 +156,14 @@ static void _on_resolve(struct node_resolve *r) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
     bool incache = strstr(src, g_env.project.cache_dir) == src;
@@ -177,25 +183,42 @@ static void _on_resolve(struct node_resolve *r) {
 
     _on_build_source(ctx->n, &deps, src, obj);
 
+    if (slist == &ctx->sources) {
+      deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
+      _deps_MMD_add(ctx->n, &deps, src, obj);
+    }
+
     free(obj);
     free(src);
   }
 
-  for (int i = 0; i < r->node_val_deps.num; ++i) {
-    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
-    const char *val = node_value(nv);
-    if (val) {
-      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
-    }
-  }
+  if (slist != &ctx->sources) {
+    for (int i = 0; i < ctx->sources.num; ++i) {
+      char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
+      bool incache = strstr(src, g_env.project.cache_dir) == src;
+      if (!incache) {
+        obj = path_relativize_cwd(unit->dir, src, unit->dir);
+        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+      } else {
+        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+        src = xstrdup(obj);
+      }
+      char *p = strrchr(obj, '.');
+      akassert(p && p[1] != '\0');
+      p[1] = 'o';
+      p[2] = '\0';
 
-  for (int i = 0; i < ctx->sources.num; ++i) {
-    char *src = *(char**) ulist_get(&ctx->sources, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
+      deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
+      _deps_MMD_add(ctx->n, &deps, src, obj);
+
+      free(obj);
+      free(src);
+    }
   }
 
   node_add_unit_deps(&deps);
   deps_close(&deps);
+
   ulist_destroy_keep(&rlist);
 }
 

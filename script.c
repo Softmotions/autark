@@ -887,27 +887,36 @@ void node_resolve(struct node_resolve *r) {
   }
 
   if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
+    char *prev_outdated = 0;
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
-      bool outdated = deps_cur_is_outdated(&deps);
-      if (deps.type == DEPS_TYPE_NODE_VALUE) {
-       if (deps.serial >= 0 && deps.serial < r->node_val_deps.num) {
-         struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, (unsigned int) deps.serial);
-         const char *val = node_value(nv);
-         outdated = val == 0 || strcmp(val, deps.resource) != 0;
-       } else {
-         outdated = true;
-       }
+
+      bool outdated = false;
+      if (prev_outdated && strcmp(prev_outdated, deps.resource) == 0) {
+        outdated = false;
+      } else if (deps.type == DEPS_TYPE_NODE_VALUE) {
+        if (deps.serial >= 0 && deps.serial < r->node_val_deps.num) {
+          struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, (unsigned int) deps.serial);
+          const char *val = node_value(nv);
+          outdated = val == 0 || strcmp(val, deps.resource) != 0;
+        } else {
+          outdated = true;
+        }
+      } else {
+        outdated = deps_cur_is_outdated(&deps);
       }
+
       if (outdated) {
+        prev_outdated = pool_strdup(pool, deps.resource);
         ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {
           .type = deps.type,
           .flags = deps.flags,
-          .path = pool_strdup(pool, deps.resource),
+          .path = prev_outdated
         });
       }
     }
   }
+
   if (deps.file) {
     deps_close(&deps);
   }
