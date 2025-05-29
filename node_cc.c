@@ -30,6 +30,67 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stderr, "%s", buf);
 }
 
+static void _on_process_MMD_item(const char *item, struct node *n, struct deps *deps, const char *src) {
+  char buf[127];
+  char *p = strrchr(item, '.');
+  if (!p || p[1] == '\0') {
+    return;
+  }
+  ++p;
+  char *ext = utils_strncpy(buf, p, sizeof(buf));
+  if (*ext == 'c' || *ext == 'C' || *ext == 'm') {
+    // Skip source files
+    return;
+  }
+  deps_add_alias(deps, 's', src, item);
+}
+
+static void _on_process_MMD(struct node *n, struct deps *deps, const char *src, const char *obj) {
+  char buf[MAX(2 * PATH_MAX, 8192)];
+  size_t len = strlen(obj);
+  utils_strncpy(buf, obj, sizeof(buf));
+
+  char *p = strrchr(buf, '.');
+  akassert(p && p[1] != '\0');
+  p[1] = 'd';
+  p[2] = '\0';
+
+  FILE *f = fopen(buf, "r");
+  if (!f) {
+    node_warn(n, "Failed to open compiler generated (-MMD) dependency file: %s", buf);
+    return;
+  }
+
+  while ((p = fgets(buf, sizeof(buf), f))) {
+    if (strstr(p, obj) != p) {
+      continue;
+    }
+    p += len;
+    if (*p++ != ':') {
+      continue;
+    }
+    while (*p != '\0') {
+      while (*p != '\0' && utils_char_is_space(*p)) {
+        ++p;
+      }
+      char *sp = p;
+      char *ep = sp;
+      while (*p != '\0' && !utils_char_is_space(*p)) {
+        ep = p;
+        ++p;
+      }
+      if (ep > sp) {
+        if (*p != '\0') {
+          *p = '\0';
+          ++p;
+        }
+        _on_process_MMD_item(sp, n, deps, src);
+      }
+    }
+  }
+  fclose(f);
+}
+
 static void _on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
   struct _ctx *ctx = n->impl;
   struct spawn *s = spawn_create(ctx->cc, ctx);
@@ -45,6 +106,10 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
     }
     spawn_arg_add(s, cflags);
     xstr_destroy(xstr);
+  }
+
+  if (!spawn_arg_starts_with(s, "-M")) {
+    spawn_arg_add(s, "-MMD");
   }
 
   spawn_arg_add(s, "-c");
@@ -63,9 +128,12 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
     }
   }
   spawn_destroy(s);
+
+  _on_process_MMD(n, deps, src, obj);
 }
 
 static void _on_resolve(struct node_resolve *r) {
+  struct deps deps;
   struct _ctx *ctx = r->user_data;
   struct unit *unit = unit_peek();
   struct ulist *slist = &ctx->sources;
@@ -85,6 +153,11 @@ static void _on_resolve(struct node_resolve *r) {
     }
   }
 
+  int rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
+  }
+
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
     bool incache = strstr(src, g_env.project.cache_dir) == src;
@@ -102,16 +175,10 @@ static void _on_resolve(struct node_resolve *r) {
     p[1] = 'o';
     p[2] = '\0';
 
-    _on_build_source(ctx->n, 0, src, obj);
+    _on_build_source(ctx->n, &deps, src, obj);
 
     free(obj);
     free(src);
-  }
-
-  struct deps deps;
-  int rc = deps_open(r->deps_path_tmp, 0, &deps);
-  if (rc) {
-    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
   for (int i = 0; i < r->node_val_deps.num; ++i) {

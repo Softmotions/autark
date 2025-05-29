@@ -34,18 +34,29 @@ bool deps_cur_next(struct deps *d) {
     char *rp = d->buf;
     d->type = *rp++;
     d->flags = *rp++;
-    d->resource = rp;
+
+    if (d->type == DEPS_TYPE_ALIAS) {
+      d->alias = rp;
+      d->resource = 0;
+    } else {
+      d->resource = rp;
+      d->alias = 0;
+    }
 
     while (*rp) {
       if (*rp == '\1') {
+        if (!d->resource) {
+          *rp = '\0';
+          d->resource = rp + 1;
+        }
         ls = rp;
       }
       ++rp;
     }
 
     if (ls) {
-      *ls = 0;
-      if (d->type == DEPS_TYPE_FILE || d->type == DEPS_TYPE_NODE_VALUE) {
+      *ls = '\0';
+      if (d->type == DEPS_TYPE_FILE || d->type == DEPS_TYPE_NODE_VALUE || d->type == DEPS_TYPE_ALIAS) {
         ++ls;
         d->serial = utils_strtoll(ls, 10, &rc);
         if (rc) {
@@ -54,8 +65,10 @@ bool deps_cur_next(struct deps *d) {
         }
       }
     }
+
     return true;
   }
+
   return false;
 }
 
@@ -66,6 +79,11 @@ bool deps_cur_is_outdated(struct deps *d) {
       if (path_stat(d->resource, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime > d->serial) {
         return true;
       }
+    } else if (d->type == DEPS_TYPE_ALIAS) {
+      struct akpath_stat st;
+      if (path_stat(d->alias, &st) || st.ftype == AKPATH_NOT_EXISTS || st.mtime > d->serial) {
+        return true;
+      }
     } else if (d->type == DEPS_TYPE_OUTDATED) {
       return true;
     }
@@ -73,14 +91,14 @@ bool deps_cur_is_outdated(struct deps *d) {
   return false;
 }
 
-int deps_add(struct deps *d, char type, char flags, const char *resource, int64_t serial) {
+static int _deps_add(struct deps *d, char type, char flags, const char *resource, const char *alias, int64_t serial) {
   int rc = 0;
   char buf[PATH_MAX];
+  char buf2[PATH_MAX];
 
   if (flags == 0) {
     flags = ' ';
   }
-
   if (type == DEPS_TYPE_FILE) {
     path_normalize(resource, buf);
     resource = buf;
@@ -88,20 +106,46 @@ int deps_add(struct deps *d, char type, char flags, const char *resource, int64_
     if (!path_stat(resource, &st) && st.ftype != AKPATH_NOT_EXISTS) {
       serial = st.mtime;
     }
+  } else if (type == DEPS_TYPE_ALIAS) {
+    path_normalize(resource, buf);
+    path_normalize(alias, buf2);
+    resource = buf;
+    alias = buf2;
+    struct akpath_stat st;
+    if (!path_stat(alias, &st) && st.ftype != AKPATH_NOT_EXISTS) {
+      serial = st.mtime;
+    }
   }
+
   long int off = ftell(d->file);
   if (off < 0) {
     return errno;
   }
   fseek(d->file, 0, SEEK_END);
-  if (fprintf(d->file, "%c%c%s\1%" PRId64 "\n", type, flags, resource, serial) < 0) {
-    rc = errno;
+
+  if (type != DEPS_TYPE_ALIAS) {
+    if (fprintf(d->file, "%c%c%s\1%" PRId64 "\n", type, flags, resource, serial) < 0) {
+      rc = errno;
+    }
+  } else {
+    if (fprintf(d->file, "%c%c%s\1%s\1%" PRId64 "\n", type, flags, alias, resource, serial) < 0) {
+      rc = errno;
+    }
   }
+
   fseek(d->file, off, SEEK_SET);
   if (!rc) {
     ++d->num_registered;
   }
   return rc;
+}
+
+int deps_add(struct deps *d, char type, char flags, const char *resource, int64_t serial) {
+  return _deps_add(d, type, flags, resource, 0, serial);
+}
+
+int deps_add_alias(struct deps *d, char flags, const char *resource, const char *alias) {
+  return _deps_add(d, DEPS_TYPE_ALIAS, flags, resource, alias, 0);
 }
 
 void deps_close(struct deps *d) {

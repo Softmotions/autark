@@ -9,6 +9,7 @@
 #define DEPS_TYPE_FILE       102
 #define DEPS_TYPE_NODE_VALUE 118
 #define DEPS_TYPE_OUTDATED   111
+#define DEPS_TYPE_ALIAS      97
 
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U
@@ -21,6 +22,7 @@ struct deps {
   int     num_registered;   /// Number of deps registerd in the current session
   int64_t serial;
   const char *resource;
+  const char *alias;
   FILE       *file;
   char buf[DEPS_BUF_SZ];
 };
@@ -32,6 +34,8 @@ bool deps_cur_next(struct deps*);
 bool deps_cur_is_outdated(struct deps*);
 
 int deps_add(struct deps*, char type, char flags, const char *resource, int64_t serial);
+
+int deps_add_alias(struct deps*, char flags, const char *resource, const char *alias);
 
 void deps_close(struct deps*);
 

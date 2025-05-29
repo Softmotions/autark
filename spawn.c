@@ -82,6 +82,26 @@ const char* spawn_arg_add(struct spawn *s, const char *arg) {
   return _spawn_arg_add(s, arg, -1);
 }
 
+bool spawn_arg_exists(struct spawn *s, const char *arg) {
+  for (int i = 0; i < s->args.num; ++i) {
+    const char *v = *(char**) ulist_get(&s->args, i);
+    if (strcmp(v, arg) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool spawn_arg_starts_with(struct spawn *s, const char *arg) {
+  for (int i = 0; i < s->args.num; ++i) {
+    const char *v = *(char**) ulist_get(&s->args, i);
+    if (strstr(v, arg) == v) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void spawn_env_set(struct spawn *s, const char *key, const char *val) {
   akassert(key);
   if (!val) {

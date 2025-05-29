@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 struct spawn;
 
@@ -15,6 +16,10 @@ pid_t spawn_pid(struct spawn*);
 int spawn_exit_code(struct spawn*);
 
 const char* spawn_arg_add(struct spawn*, const char *arg);
+
+bool spawn_arg_exists(struct spawn*, const char *arg);
+
+bool spawn_arg_starts_with(struct spawn*, const char *arg);
 
 void spawn_env_set(struct spawn*, const char *key, const char *val);
 

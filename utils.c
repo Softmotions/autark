@@ -185,32 +185,3 @@ void utils_split_values_add(const char *v, struct xstr *xstr) {
     xstr_cat(xstr, buf);
   }
 }
-
-char** vlist_to_clist(const char *val, struct pool *pool) {
-  const char *sp = val;
-  const char *ep = sp;
-  int c = 0;
-  for ( ; *ep; ++ep) {
-    if (*ep == '\1') {
-      ++c;
-    }
-  }
-  char **ret = pool_alloc(pool, (c + 1) * sizeof(char*));
-  for (c = 0, ep = sp; 1; ++ep) {
-    if (*ep == '\1' || *ep == '\0') {
-      if (ep > sp) {
-        ret[c] = pool_alloc(pool, ep - sp + 1);
-        memcpy(ret[c], sp, ep - sp);
-        ret[c][ep - sp] = '\0';
-        ++c;
-      }
-      if (*ep == '\0') {
-        break;
-      }
-      sp = ep + 1;
-    }
-  }
-  ret[c] = 0;
-  return ret;
-}
-

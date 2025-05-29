@@ -64,8 +64,6 @@ struct vlist_iter {
   size_t      len;
 };
 
-char** vlist_to_clist(const char *val, struct pool*);
-
 static inline bool is_vlist(const char *val) {
   return (val && *val == '\1');
 }
