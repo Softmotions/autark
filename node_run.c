@@ -73,9 +73,17 @@ static void _on_resolve(struct node_resolve *r) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+
   for (int i = 0; i < ctx->consumes.num; ++i) {
     const char *path = *(const char**) ulist_get(&ctx->consumes, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 0, path);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   }
   node_add_unit_deps(&deps);
   deps_close(&deps);
@@ -114,12 +122,29 @@ static void _build(struct node *n) {
     .n = n,
     .consumes = { .usize = sizeof(char*) }
   };
-  node_resolve(&(struct node_resolve) {
+
+  struct node_resolve r = {
     .path = n->vfile,
     .user_data = &ctx,
     .on_init = _on_resolve_init,
     .on_resolve = _on_resolve,
-  });
+    .node_val_deps = { .usize = sizeof(struct node*) }
+  };
+
+  struct node *nn = n->child;
+  if (strcmp(nn->value, "exec") == 0) {
+    nn = nn->child;
+  }
+  if (!nn) {
+    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No command specified. Check 'exec' section.");
+  }
+  for ( ; nn; nn = nn->next) {
+    if (nn->type != NODE_TYPE_VALUE) {
+      ulist_push(&r.node_val_deps, &nn);
+    }
+  }
+
+  node_resolve(&r);
   ulist_destroy_keep(&ctx.consumes);
 }
 

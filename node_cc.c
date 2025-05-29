@@ -114,10 +114,19 @@ static void _on_resolve(struct node_resolve *r) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+
   for (int i = 0; i < ctx->sources.num; ++i) {
     char *src = *(char**) ulist_get(&ctx->sources, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 's', src);
+    deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
   }
+
   node_add_unit_deps(&deps);
   deps_close(&deps);
   ulist_destroy_keep(&rlist);
@@ -138,22 +147,22 @@ static void _build(struct node *n) {
     }
   }
 
-  struct node_resolve nr = {
+  struct node_resolve r = {
     .path = n->vfile,
     .user_data = ctx,
     .on_resolve = _on_resolve,
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
-  if (ctx->n_cc) {
-    ulist_push(&nr.node_val_deps, &ctx->n_cc);
+  if (ctx->n_cc && ctx->n_cc->type != NODE_TYPE_VALUE) {
+    ulist_push(&r.node_val_deps, &ctx->n_cc);
   }
 
-  if (ctx->n_cflags) {
-    ulist_push(&nr.node_val_deps, &ctx->n_cflags);
+  if (ctx->n_cflags && ctx->n_cflags->type != NODE_TYPE_VALUE) {
+    ulist_push(&r.node_val_deps, &ctx->n_cflags);
   }
 
-  node_resolve(&nr);
+  node_resolve(&r);
 }
 
 static void _source_add(struct node *n, const char *src) {

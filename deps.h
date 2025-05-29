@@ -13,7 +13,7 @@
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U
 
-#define DEPS_BUF_SZ 4096
+#define DEPS_BUF_SZ 8192
 
 struct deps {
   char    type;
@@ -31,7 +31,7 @@ bool deps_cur_next(struct deps*);
 
 bool deps_cur_is_outdated(struct deps*);
 
-int deps_add(struct deps*, char type, char flags, const char *file);
+int deps_add(struct deps*, char type, char flags, const char *resource, int64_t serial);
 
 void deps_close(struct deps*);
 

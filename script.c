@@ -855,7 +855,7 @@ void node_add_unit_deps(struct deps *deps) {
     struct unit *u = *(struct unit**) ulist_get(&g_env.units, i);
     if (path_is_exist(u->source_path) && (prev_path == 0 || strcmp(prev_path, u->source_path) != 0)) {
       prev_path = u->source_path;
-      deps_add(deps, DEPS_TYPE_FILE, 0, u->source_path);
+      deps_add(deps, DEPS_TYPE_FILE, 0, u->source_path, 0);
     }
   }
 }
@@ -891,7 +891,13 @@ void node_resolve(struct node_resolve *r) {
       ++r->num_deps;
       bool outdated = deps_cur_is_outdated(&deps);
       if (deps.type == DEPS_TYPE_NODE_VALUE) {
-        // TODO:
+       if (deps.serial >= 0 && deps.serial < r->node_val_deps.num) {
+         struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, (unsigned int) deps.serial);
+         const char *val = node_value(nv);
+         outdated = val == 0 || strcmp(val, deps.resource) != 0;
+       } else {
+         outdated = true;
+       }
       }
       if (outdated) {
         ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {

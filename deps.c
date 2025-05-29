@@ -29,18 +29,27 @@ bool deps_cur_next(struct deps *d) {
     if (!fgets(d->buf, sizeof(d->buf), d->file)) {
       return false;
     }
+
+    char *ls = 0;
     char *rp = d->buf;
     d->type = *rp++;
     d->flags = *rp++;
     d->resource = rp;
-    for ( ; *rp && *rp != '\1'; ++rp) ;
-    if (*rp == '\1') {
-      *rp = 0;
+
+    while (*rp) {
+      if (*rp == '\1') {
+        ls = rp;
+      }
+      ++rp;
+    }
+
+    if (ls) {
+      *ls = 0;
       if (d->type == DEPS_TYPE_FILE || d->type == DEPS_TYPE_NODE_VALUE) {
-        ++rp;
-        d->serial = utils_strtoll(rp, 10, &rc);
+        ++ls;
+        d->serial = utils_strtoll(ls, 10, &rc);
         if (rc) {
-          akerror(rc, "Failed to read '%s' as number", rp);
+          akerror(rc, "Failed to read '%s' as number", ls);
           return false;
         }
       }
@@ -64,9 +73,8 @@ bool deps_cur_is_outdated(struct deps *d) {
   return false;
 }
 
-int deps_add(struct deps *d, char type, char flags, const char *file) {
+int deps_add(struct deps *d, char type, char flags, const char *resource, int64_t serial) {
   int rc = 0;
-  int64_t serial = 0;
   char buf[PATH_MAX];
 
   if (flags == 0) {
@@ -74,10 +82,10 @@ int deps_add(struct deps *d, char type, char flags, const char *file) {
   }
 
   if (type == DEPS_TYPE_FILE) {
-    path_normalize(file, buf);
-    file = buf;
+    path_normalize(resource, buf);
+    resource = buf;
     struct akpath_stat st;
-    if (!path_stat(file, &st) && st.ftype != AKPATH_NOT_EXISTS) {
+    if (!path_stat(resource, &st) && st.ftype != AKPATH_NOT_EXISTS) {
       serial = st.mtime;
     }
   }
@@ -86,7 +94,7 @@ int deps_add(struct deps *d, char type, char flags, const char *file) {
     return errno;
   }
   fseek(d->file, 0, SEEK_END);
-  if (fprintf(d->file, "%c%c%s\1%" PRId64 "\n", type, flags, file, serial) < 0) {
+  if (fprintf(d->file, "%c%c%s\1%" PRId64 "\n", type, flags, resource, serial) < 0) {
     rc = errno;
   }
   fseek(d->file, off, SEEK_SET);
