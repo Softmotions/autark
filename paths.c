@@ -86,6 +86,9 @@ char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) 
   akassert(cwd);
   if (path[0] == '/') {
     utils_strncpy(buf, path, PATH_MAX);
+    if (strchr(buf, '.') == 0) {
+      return buf;
+    }
   } else {
     utils_strncpy(buf, cwd, PATH_MAX);
     size_t len = strlen(buf);
