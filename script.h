@@ -112,11 +112,12 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
 void node_add_unit_deps(struct deps*);
 
 struct node_resolve {
-  const char *path;
-  void       *user_data;
-  void (*on_init)(struct node_resolve*);
-  void (*on_env_value)(struct node_resolve*, const char *key, const char *val);
-  void (*on_resolve)(struct node_resolve*);
+  struct node *n;
+  const char  *path;
+  void *user_data;
+  void  (*on_init)(struct node_resolve*);
+  void  (*on_env_value)(struct node_resolve*, const char *key, const char *val);
+  void  (*on_resolve)(struct node_resolve*);
   const char  *deps_path_tmp;
   const char  *env_path_tmp;
   struct ulist resolve_outdated; // struct resolve_outdated

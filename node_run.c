@@ -56,6 +56,10 @@ static void _on_resolve(struct node_resolve *r) {
     }
   }
 
+  if (g_env.check.log) {
+    xstr_printf(g_env.check.log, "%s: %s\n", n->name, cmd);
+  }
+
   int rc = spawn_do(s);
   if (rc) {
     node_fatal(rc, n, "%s", cmd);
@@ -124,6 +128,7 @@ static void _build(struct node *n) {
   };
 
   struct node_resolve r = {
+    .n = n,
     .path = n->vfile,
     .user_data = &ctx,
     .on_init = _on_resolve_init,

@@ -72,6 +72,7 @@ static void _node_check_script(struct node *n) {
   unit_push(unit, n);
 
   struct node_resolve nr = {
+    .n = n,
     .mode = NODE_RESOLVE_ENV_ALWAYS,
     .path = unit->cache_path,
     .user_data = unit,

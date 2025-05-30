@@ -46,3 +46,8 @@ static inline void test_init(bool cleanup) {
   autark_init();
   g_env.spawn.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
 }
+
+static inline void test_reinit(bool cleanup) {
+  autark_dispose();
+  test_init(cleanup);
+}

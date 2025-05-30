@@ -53,6 +53,7 @@ struct env {
     const char *root_dir;  // Project root source dir.
     const char *cache_dir; // Project artifacts cache dir.
     bool cleanup;          // Clean project cache before build
+    bool prepared;         // Autark build prepared
   } project;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
@@ -60,6 +61,9 @@ struct env {
   struct map  *map_path_to_unit; // Path to unit mapping
   struct ulist stack_units;      // Stack of nested unit contexts (struct unit_ctx)
   struct ulist units;            // All created units.
+  struct {
+    struct xstr *log;
+  } check;
 };
 
 extern struct env g_env;

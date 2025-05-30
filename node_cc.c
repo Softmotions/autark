@@ -92,6 +92,9 @@ static void _deps_MMD_add(struct node *n, struct deps *deps, const char *src, co
 }
 
 static void _on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
+  if (g_env.check.log) {
+    xstr_printf(g_env.check.log, "%s build src=%s obj=%s\n", n->name, src, obj);
+  }
   struct _ctx *ctx = n->impl;
   struct spawn *s = spawn_create(ctx->cc, ctx);
   spawn_set_stdout_handler(s, _stdout_handler);
@@ -238,6 +241,7 @@ static void _build(struct node *n) {
   }
 
   struct node_resolve r = {
+    .n = n,
     .path = n->vfile,
     .user_data = ctx,
     .on_resolve = _on_resolve,

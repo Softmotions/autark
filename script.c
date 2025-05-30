@@ -908,6 +908,9 @@ void node_resolve(struct node_resolve *r) {
 
       if (outdated) {
         prev_outdated = pool_strdup(pool, deps.resource);
+        if (g_env.check.log && r->n) {
+          xstr_printf(g_env.check.log, "%s outdated %s t=%c f=%c\n", r->n->name, prev_outdated, deps.type, deps.flags);
+        }
         ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {
           .type = deps.type,
           .flags = deps.flags,
@@ -923,6 +926,9 @@ void node_resolve(struct node_resolve *r) {
 
   bool env_created = false;
   if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num)) {
+    if (g_env.check.log && r->n) {
+      xstr_printf(g_env.check.log, "%s: resolved outdated outdated=%d\n", r->n->name, r->resolve_outdated.num);
+    }
     r->on_resolve(r);
     if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);

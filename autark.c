@@ -17,10 +17,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct env g_env = {
-  .stack_units = { .usize = sizeof(struct unit_ctx) },
-  .units = { .usize = sizeof(struct unit*) }
-};
+struct env g_env;
 
 static void _unit_destroy(struct unit *unit) {
   map_destroy(unit->env);
@@ -217,13 +214,12 @@ __attribute__((noreturn)) static void _usage(const char *err, ...) {
 }
 
 void autark_build_prepare(const char *script_path) {
-  static bool _prepared = false;
-  if (_prepared) {
+  if (g_env.project.prepared) {
     return;
   }
+  g_env.project.prepared = true;
 
   char path_buf[PATH_MAX];
-  _prepared = true;
   autark_init();
 
   if (!g_env.project.root_dir) {
@@ -386,6 +382,8 @@ void _build(void) {
 
 void autark_init(void) {
   if (!g_env.pool) {
+    g_env.stack_units.usize = sizeof(struct unit_ctx);
+    g_env.units.usize = sizeof(struct unit*);
     g_env.pool = pool_create_empty();
     char buf[PATH_MAX];
     if (!getcwd(buf, PATH_MAX)) {
@@ -410,6 +408,7 @@ AK_DESTRUCTOR void autark_dispose(void) {
     ulist_destroy_keep(&g_env.stack_units);
     map_destroy(g_env.map_path_to_unit);
     pool_destroy(pool);
+    memset(&g_env, 0, sizeof(g_env));
   }
 }
 

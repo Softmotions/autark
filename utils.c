@@ -47,6 +47,7 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
   int fd = open(path, O_RDONLY | O_CLOEXEC);
   if (fd == -1) {
     ret.error = errno;
+    xstr_destroy(xstr);
     return ret;
   }
   while (buflen_max != 0 && ret.error == 0) {
