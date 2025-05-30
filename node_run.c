@@ -141,7 +141,7 @@ static void _build(struct node *n) {
     nn = nn->child;
   }
   if (!nn) {
-    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No command specified. Check 'exec' section.");
+    node_fatal(AK_ERROR_SCRIPT, n, "No command specified. Check 'exec' section.");
   }
   for ( ; nn; nn = nn->next) {
     if (nn->type != NODE_TYPE_VALUE) {

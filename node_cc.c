@@ -340,7 +340,7 @@ static void _init(struct node *n) {
   struct _ctx *ctx = n->impl;
   ctx->n_sources = n->child;
   if (!ctx->n_sources) {
-    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No sources specified");
+    node_fatal(AK_ERROR_SCRIPT, n, "No sources specified");
   }
   if (ctx->n_sources->next) {
     ctx->n_cflags = ctx->n_sources->next;

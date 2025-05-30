@@ -95,5 +95,8 @@ int main(void) {
       xstr_ptr(xlog)) == 0
     );
 
+  // TODO: Check rebuild when context $ variable changed in flags
+
+
   xstr_destroy(g_env.check.log);
 }

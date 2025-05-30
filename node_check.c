@@ -62,7 +62,7 @@ static void _check_on_resolve(struct node_resolve *r) {
 }
 
 static void _node_check_script(struct node *n) {
-  const char *script = n->value;
+  const char *script = node_value(n);
   node_info(n->parent, "%s", script);
 
   struct pool *pool = pool_create(on_unit_pool_destroy);
@@ -85,17 +85,9 @@ static void _node_check_script(struct node *n) {
   pool_destroy(pool);
 }
 
-static void _node_check_special(struct node *n) {
-  // TODO:
-}
-
 static void _init(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE) {
-      _node_check_script(nn);
-    } else if (n->type == NODE_TYPE_BAG) {
-      _node_check_special(nn);
-    }
+    _node_check_script(nn);
   }
 }
 

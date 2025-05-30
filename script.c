@@ -565,11 +565,18 @@ static void _build_subnodes(struct node *n) {
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
-    _init_subnodes(n);
-    if (n->init) {
+    if (n->type != NODE_TYPE_IF && n->type != NODE_TYPE_INCLUDE) {
+      _init_subnodes(n);
+      if (n->init) {
+        _node_context_push(n);
+        n->init(n);
+        _node_context_pop(n);
+      }
+    } else {
       _node_context_push(n);
       n->init(n);
       _node_context_pop(n);
+      _init_subnodes(n);
     }
   }
 }
@@ -617,8 +624,7 @@ finish:
   return rc;
 }
 
-int script_open(const char *file, struct sctx **out) {
-  *out = 0;
+static int _script_open(struct node *parent, const char *file, struct node **out) {
   int rc = 0;
   struct node *n;
   akassert(file);
@@ -628,11 +634,30 @@ int script_open(const char *file, struct sctx **out) {
   utils_strncpy(buf, file, PATH_MAX);
   const char *path = path_basename(buf);
 
-  RCC(rc, finish, _script_from_file(0, path, &n));
+  RCC(rc, finish, _script_from_file(parent, path, &n));
   RCC(rc, finish, _script_bind(n->ctx));
-  *out = n->ctx;
+
+  if (out) {
+    *out = n;
+  }
 finish:
   return rc;
+}
+
+int script_open(const char *file, struct sctx **out) {
+  if (out) {
+    *out = 0;
+  }
+  struct node *n = 0;
+  int rc = _script_open(0, file, &n);
+  if (out && n) {
+    *out = n->ctx;
+  }
+  return rc;
+}
+
+int script_include(struct node *parent, const char *file, struct node **out) {
+  return _script_open(parent, file, out);
 }
 
 void script_build(struct sctx *s) {

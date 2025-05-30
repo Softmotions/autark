@@ -68,12 +68,14 @@ struct node {
 };
 
 struct sctx {
-  struct node *root;
+  struct node *root;     /// Project root script node (Autark)
   struct ulist nodes;    /// ulist<struct node*>
   struct map  *products; /// Products of nodes  (product name -> node)
 };
 
 int script_open(const char *file, struct sctx **out);
+
+int script_include(struct node *parent, const char *file, struct node **out);
 
 void script_build(struct sctx*);
 

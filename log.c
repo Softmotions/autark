@@ -32,6 +32,8 @@ static const char* _error_get(int code) {
       return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
+    case  AK_ERROR_SCRIPT:
+      return "Autark script error (AK_ERROR_SCRIPT)";
     case AK_ERROR_CYCLIC_BUILD_DEPS:
       return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
     case AK_ERROR_SCRIPT_ERROR:

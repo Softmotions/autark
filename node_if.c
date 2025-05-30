@@ -69,7 +69,8 @@ static void _pull_else(struct node *n) {
   }
   if (elz && nn->child) {
     nn = nn->child;
-    n->next = nn;
+    n->next = nn; // Keep upper iterations (if any) be consistent.
+    n->child = 0;
     if (prev) {
       prev->next = nn;
     } else {
@@ -99,7 +100,8 @@ static void _pull_if(struct node *n) {
     next = next->next; // Skip else block
   }
   if (nn) {
-    n->next = nn;
+    n->next = nn; // Keep upper iterations (if any) be consistent.
+    n->child = 0;
     if (prev) {
       prev->next = nn;
     } else {
@@ -120,11 +122,13 @@ static void _pull_if(struct node *n) {
 }
 
 static void _init(struct node *n) {
-  struct node *mn = n->child; // Match node
-  if (!mn) {
+  struct node *cn = n->child; // Conditional node
+  if (!cn) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "'if {...}' must have a condition clause");
   }
-  bool matched = _cond_eval(n, mn);
+  node_init(cn); // Explicitly init conditional node since in script init worflow 'if' initiated first.
+
+  bool matched = _cond_eval(n, cn);
   if (matched) {
     _pull_if(n);
   } else {
