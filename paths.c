@@ -100,7 +100,7 @@ char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) 
       strncat(buf, path, PATH_MAX - len - 2);
     } else {
       errno = ENAMETOOLONG;
-      akfatal(errno, "Failed to normalize path: %s", path);
+      akfatal(errno, "Failed to normalize path, name is too long: %s", path);
     }
   }
 
