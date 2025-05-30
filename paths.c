@@ -87,7 +87,7 @@ char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) 
   if (path[0] == '/') {
     utils_strncpy(buf, path, PATH_MAX);
     char *p = strchr(buf, '.');
-    if (p == 0 || (*(p - 1) != '/' && p[1] != '.' && p[1] != '/') ) {
+    if (p == 0 || (*(p - 1) != '/' && p[1] != '.' && p[1] != '/')) {
       return buf;
     }
   } else {
