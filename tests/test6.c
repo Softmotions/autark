@@ -2,6 +2,8 @@
 #include "script.h"
 
 int main(void) {
+  unsetenv("CC");
+
   test_init(true);
   struct xstr *xlog = g_env.check.log = xstr_create_empty();
   char cwd_prev[PATH_MAX];
@@ -20,7 +22,7 @@ int main(void) {
       "Autark:36     cc build src=../main.c obj=main.o\n"
       "Autark:36     cc build src=../hello.c obj=hello.o\n"
       "Autark:42    run: resolved outdated outdated=0\n"
-      "Autark:42    run: gcc\n",
+      "Autark:42    run: cc\n",
       xstr_ptr(xlog)) == 0
     );
   xstr_clear(xlog);
