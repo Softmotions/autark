@@ -147,9 +147,10 @@ int xstr_printf(struct xstr *xstr, const char *format, ...) {
   return rc;
 }
 
-void xstr_clear(struct xstr *xstr) {
+struct xstr* xstr_clear(struct xstr *xstr) {
   xstr->size = 0;
   xstr->ptr[0] = '\0';
+  return xstr;
 }
 
 char* xstr_ptr(struct xstr *xstr) {

@@ -30,7 +30,7 @@ int xstr_printf_va(struct xstr*, const char *format, va_list va);
 
 int xstr_printf(struct xstr*, const char *format, ...) __attribute__((format(__printf__, 2, 3)));
 
-void xstr_clear(struct xstr*);
+struct xstr* xstr_clear(struct xstr*);
 
 char* xstr_ptr(struct xstr*);
 

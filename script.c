@@ -909,7 +909,10 @@ void node_resolve(struct node_resolve *r) {
       if (outdated) {
         prev_outdated = pool_strdup(pool, deps.resource);
         if (g_env.check.log && r->n) {
-          xstr_printf(g_env.check.log, "%s outdated %s t=%c f=%c\n", r->n->name, prev_outdated, deps.type, deps.flags);
+          char buf[PATH_MAX];
+          utils_strncpy(buf, prev_outdated, sizeof(buf));
+          xstr_printf(g_env.check.log, "%s: outdated %s t=%c f=%c\n",
+                      r->n->name, path_basename(buf), deps.type, deps.flags);
         }
         ulist_push(&r->resolve_outdated, &(struct resolve_outdated) {
           .type = deps.type,
