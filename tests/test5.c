@@ -23,6 +23,7 @@ int main(void) {
   akassert(path_stat("autark-cache/run2-product1.txt", &st[4]) == 0);
 
   // Now do the second run
+  chdir(cwd_prev);
   akassert(script_open("./data/test5/Autark", &sctx) == 0);
   script_build(sctx);
   script_close(&sctx);
