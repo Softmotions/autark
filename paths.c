@@ -315,6 +315,9 @@ char* path_relativize(const char *from, const char *to) {
 
 char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   char from[PATH_MAX], to[PATH_MAX];
+  if (from_ == 0) {
+    from_ = cwd;
+  }
   path_normalize_cwd(from_, cwd, from);
   path_normalize_cwd(to_, cwd, to);
   akassert(*from == '/' && *to == '/');
@@ -359,4 +362,24 @@ char* path_basename(char *path) {
   for ( ; i && path[i] == '/'; i--) path[i] = 0;
   for ( ; i && path[i - 1] != '/'; i--) ;
   return path + i;
+}
+
+const char* path_is_prefix_for(const char *path, const char *haystack) {
+  int len = strlen(path);
+  if (len < 1) {
+    return  0;
+  }
+  const char *p = strstr(haystack, path);
+  if (p != haystack) {
+    return 0;
+  }
+  p += len;
+  if (*p == '/') {
+    while (*p == '/') ++p;
+    return p;
+  } else if (path[len - 1] == '/') {
+    return p;
+  } else {
+    return 0;
+  }
 }

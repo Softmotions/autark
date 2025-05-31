@@ -95,6 +95,9 @@ static void _on_resolve(struct node_resolve *r) {
 
 static void _setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
+  if (!nn) {
+    nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
+  }
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
       if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {

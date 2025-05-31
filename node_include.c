@@ -18,7 +18,7 @@ static void _include(struct node *n, struct node *cn) {
 
   if (pn) {
     pn->next = nn;
-  } else {
+  } else if (n->parent) {
     n->parent->child = nn;
   }
   nn->next = n->next;

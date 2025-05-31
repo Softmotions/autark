@@ -1,0 +1,24 @@
+check {
+  libhello.sh
+}
+
+set {
+  SOURCES
+  hello.c
+}
+
+cc {
+  ${SOURCES}
+  ${CFLAGS}
+  ${CC}
+}
+
+run {
+  exec { ${AR} rcs libhello.a ${CC_OBJS} }
+  consumes {
+    ${CC_OBJS}
+  }
+  produces {
+    libhello.a
+  }
+}

@@ -375,6 +375,9 @@ static int _script_from_value(
   struct xnode *x = 0;
   struct pool *pool = g_env.pool;
 
+  char prevcwd_[PATH_MAX];
+  char *prevcwd = 0;
+
   _preprocess_script(val);
 
   if (!parent) {
@@ -393,7 +396,7 @@ static int _script_from_value(
 
   if (file) {
     struct unit *unit;
-    if (g_env.units.num == 1) {
+    if (parent == 0 && g_env.units.num == 1) {
       unit = unit_peek();
       akassert(unit->n == 0); // We are the root script
     } else {
@@ -401,7 +404,8 @@ static int _script_from_value(
     }
     unit->n = &x->base;
     x->base.unit = unit;
-    unit_ch_dir(&(struct unit_ctx) { unit, 0 }, 0);
+    unit_ch_dir(&(struct unit_ctx) { unit, 0 }, prevcwd_);
+    prevcwd = prevcwd_;
   }
 
   x->base.value = pool_strdup(pool, file ? file : "<script>");
@@ -439,6 +443,9 @@ finish:
     _xnode_destroy(x);
   } else {
     *out = &x->base;
+  }
+  if (prevcwd) {
+    akcheck(chdir(prevcwd));
   }
   return rc;
 }
@@ -627,13 +634,11 @@ finish:
 static int _script_open(struct node *parent, const char *file, struct node **out) {
   int rc = 0;
   struct node *n;
-  akassert(file);
-  autark_build_prepare(file);
-
   char buf[PATH_MAX];
-  utils_strncpy(buf, file, PATH_MAX);
-  const char *path = path_basename(buf);
 
+  autark_build_prepare(path_normalize(file, buf));
+
+  char *path = path_relativize(0, buf);
   RCC(rc, finish, _script_from_file(parent, path, &n));
   RCC(rc, finish, _script_bind(n->ctx));
 
@@ -641,6 +646,7 @@ static int _script_open(struct node *parent, const char *file, struct node **out
     *out = n;
   }
 finish:
+  free(path);
   return rc;
 }
 
@@ -727,6 +733,10 @@ void node_env_set(struct node *n, const char *key, const char *val) {
     } else {
       node_info(n, "UNSET %s=%s", key);
     }
+  }
+  if (key[0] == '_' && key[1] == '\0') {
+    // Skip on special '_' key
+    return;
   }
   for ( ; n; n = n->parent) {
     if (n->unit) {

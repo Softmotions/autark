@@ -56,30 +56,37 @@ struct unit* unit_for_path(const char *path) {
   return unit;
 }
 
-struct unit* unit_create(const char *unit_rel_path, unsigned flags, struct pool *pool) {
-  akassert(unit_rel_path && !path_is_absolute(unit_rel_path));
+struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *pool) {
   char path[PATH_MAX];
+  const char *unit_path = unit_path_;
+
+  if (path_is_absolute(unit_path)) {
+    const char *p = path_is_prefix_for(g_env.project.cache_dir, unit_path);
+    if (p) {
+      unit_path = p;
+    } else {
+      p = path_is_prefix_for(g_env.project.root_dir, unit_path);
+      if (!p) {
+        akfatal(AK_ERROR_FAIL, "Unit path: %s must be either in project root or cache directory", unit_path_);
+      }
+      unit_path = p;
+    }
+  }
+
   struct unit *unit = pool_calloc(g_env.pool, sizeof(*unit));
 
   unit->flags = flags;
   unit->pool = pool;
   unit->env = map_create_str(map_kv_free);
-  unit->rel_path = pool_strdup(pool, unit_rel_path);
+  unit->rel_path = pool_strdup(pool, unit_path);
   unit->basename = path_basename((char*) unit->rel_path);
 
-  snprintf(path, sizeof(path), "%s/%s", g_env.project.root_dir, unit_rel_path);
-  path[sizeof(path) - 1] = '\0';
-  unit->source_path = path_normalize_pool(path, pool);
-
+  unit->source_path = pool_printf(pool, "%s/%s", g_env.project.root_dir, unit_path);
   utils_strncpy(path, unit->source_path, sizeof(path));
   path_dirname(path);
   unit->dir = pool_strdup(pool, path);
 
-
-  snprintf(path, sizeof(path), "%s/%s", g_env.project.cache_dir, unit_rel_path);
-  path[sizeof(path) - 1] = '\0';
-  unit->cache_path = path_normalize_pool(path, pool);
-
+  unit->cache_path = pool_printf(pool, "%s/%s", g_env.project.cache_dir, unit_path);
   utils_strncpy(path, unit->cache_path, sizeof(path));
   path_dirname(path);
   unit->cache_dir = pool_strdup(pool, path);
@@ -232,7 +239,7 @@ void autark_build_prepare(const char *script_path) {
     akassert(g_env.project.root_dir);
   }
 
-  const char *root_dir = path_real_pool(g_env.project.root_dir, g_env.pool);
+  const char *root_dir = path_normalize_pool(g_env.project.root_dir, g_env.pool);
   if (!root_dir) {
     akfatal(AK_ERROR_FAIL, "%s is not a directory", root_dir);
   }
@@ -244,6 +251,16 @@ void autark_build_prepare(const char *script_path) {
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = AUTARK_CACHE;
   }
+
+  g_env.project.cache_dir = path_normalize_pool(g_env.project.cache_dir, g_env.pool);
+  if (!g_env.project.cache_dir) {
+    akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
+  }
+
+  if (path_is_prefix_for(g_env.project.cache_dir, g_env.project.root_dir)) {
+    akfatal(AK_ERROR_FAIL, "Project cache dir cannot be parent of project root dir", 0);
+  }
+
   if (g_env.project.cleanup) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rmdir(g_env.project.cache_dir);
@@ -261,11 +278,6 @@ void autark_build_prepare(const char *script_path) {
 
   if (!path_is_dir(g_env.project.cache_dir) || !path_is_accesible_read(g_env.project.cache_dir)) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
-  }
-
-  g_env.project.cache_dir = path_normalize_pool(g_env.project.cache_dir, g_env.pool);
-  if (!g_env.project.cache_dir) {
-    akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
 
   setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);

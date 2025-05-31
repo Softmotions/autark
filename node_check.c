@@ -62,11 +62,12 @@ static void _check_on_resolve(struct node_resolve *r) {
 }
 
 static void _node_check_script(struct node *n) {
+  struct unit *parent = unit_peek();
   const char *script = node_value(n);
   node_info(n->parent, "%s", script);
 
   struct pool *pool = pool_create(on_unit_pool_destroy);
-  const char *path = pool_printf(pool, ".autark/%s", script);
+  const char *path = pool_printf(pool, "%s/.autark/%s", parent->dir, script);
   struct unit *unit = unit_create(path, 0, pool);
   unit->n = n;
   unit_push(unit, n);

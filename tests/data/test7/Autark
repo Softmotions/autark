@@ -10,7 +10,6 @@ set {
 set {
   CFLAGS
   ^{-DBUILD_TYPE= ${BUILD_TYPE}}
-  ..@{pkgconf --cflags --static libcurl}
   if { eq { ${BUILD_TYPE} Release }
     -O2
   } else {
@@ -23,28 +22,30 @@ set {
 
 set {
   LDFLAGS
-  ..@{pkgconf --libs --static libcurl}
   ..${LDFLAGS}
 }
 
 set {
   SOURCES
   main.c
-  hello.c
+  aux.c
 }
 
 cc {
   ${SOURCES}
-  ${CFLAGS}
+  set { _ ${CFLAGS}  -I../libhello }
   ${CC}
 }
 
+include { ./libhello/Autark }
+
 run {
-  exec { ${CC} -o hello ${CC_OBJS} ${LDFLAGS}}
+  exec { ${CC} -static ${LDFLAGS} -o hello ${CC_OBJS} libhello/libhello.a }
   consumes {
     ${CC_OBJS}
+    libhello/libhello.a
   }
-  products {
+  produces {
     hello
   }
 }

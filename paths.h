@@ -76,6 +76,8 @@ bool path_is_file(const char *path);
 
 bool path_is_exist(const char *path);
 
+const char* path_is_prefix_for(const char *path, const char *haystack);
+
 AK_ALLOC char* path_relativize(const char *from, const char *to);
 
 AK_ALLOC char* path_relativize_cwd(const char *from, const char *to, const char *cwd);

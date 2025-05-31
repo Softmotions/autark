@@ -169,8 +169,7 @@ static void _on_resolve(struct node_resolve *r) {
 
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
-    bool incache = strstr(src, g_env.project.cache_dir) == src;
-
+    bool incache = path_is_prefix_for(g_env.project.cache_dir, src) != 0;
     if (!incache) {
       obj = path_relativize_cwd(unit->dir, src, unit->dir);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -198,7 +197,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (slist != &ctx->sources) {
     for (int i = 0; i < ctx->sources.num; ++i) {
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
-      bool incache = strstr(src, g_env.project.cache_dir) == src;
+      bool incache = path_is_prefix_for(g_env.project.cache_dir, src) != 0;
       if (!incache) {
         obj = path_relativize_cwd(unit->dir, src, unit->dir);
         src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -280,7 +279,7 @@ static void _source_add(struct node *n, const char *src) {
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
 
-  bool incache = strstr(p, g_env.project.cache_dir) == p;
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, p) != 0;
   const char *dir = incache ? unit->cache_dir : unit->dir;
   char *obj = path_relativize_cwd(dir, p, dir);
 

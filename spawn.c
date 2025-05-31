@@ -61,8 +61,8 @@ struct spawn* spawn_create(const char *exec, void *user_data) {
 }
 
 static const char* _spawn_arg_add(struct spawn *s, const char *arg, int len) {
-  if (!arg) {
-    arg = "";
+  if (!arg || *arg == '\0') {
+    return "";
   }
   if (is_vlist(arg)) {
     struct vlist_iter iter;
