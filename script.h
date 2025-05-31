@@ -9,18 +9,19 @@
 
 #include <stdbool.h>
 
-#define NODE_TYPE_VALUE   0x01U
-#define NODE_TYPE_SCRIPT  0x02U
-#define NODE_TYPE_BAG     0x04U
-#define NODE_TYPE_META    0x08U
-#define NODE_TYPE_CHECK   0x20U
-#define NODE_TYPE_SET     0x40U
-#define NODE_TYPE_INCLUDE 0x80U
-#define NODE_TYPE_IF      0x100U
-#define NODE_TYPE_SUBST   0x200U
-#define NODE_TYPE_RUN     0x400U
-#define NODE_TYPE_JOIN    0x800U
-#define NODE_TYPE_CC      0x1000U
+#define NODE_TYPE_VALUE     0x01U
+#define NODE_TYPE_SCRIPT    0x02U
+#define NODE_TYPE_BAG       0x04U
+#define NODE_TYPE_META      0x08U
+#define NODE_TYPE_CHECK     0x20U
+#define NODE_TYPE_SET       0x40U
+#define NODE_TYPE_INCLUDE   0x80U
+#define NODE_TYPE_IF        0x100U
+#define NODE_TYPE_SUBST     0x200U
+#define NODE_TYPE_RUN       0x400U
+#define NODE_TYPE_JOIN      0x800U
+#define NODE_TYPE_CC        0x1000U
+#define NODE_TYPE_CONFIGURE 0x2000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U

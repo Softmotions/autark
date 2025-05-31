@@ -33,7 +33,7 @@ set {
 
 cc {
   ${SOURCES}
-  set { _ ${CFLAGS}  -I../libhello }
+  set { _ ${CFLAGS}  -I../libhello -I./ }
   ${CC}
 }
 

@@ -14,5 +14,6 @@ int node_run_setup(struct node*);
 int node_echo_setup(struct node*);
 int node_join_setup(struct node *n);
 int node_cc_setup(struct node *n);
+int node_configure_setup(struct node *n);
 
 #endif

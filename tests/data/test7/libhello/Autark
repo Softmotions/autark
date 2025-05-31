@@ -22,3 +22,7 @@ run {
     libhello.a
   }
 }
+
+configure {
+  hello.h.in
+}
