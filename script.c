@@ -889,12 +889,10 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
 }
 
 void node_add_unit_deps(struct deps *deps) {
-  const char *prev_path = 0;
-  for (int i = g_env.units.num - 1; i >= 0; --i) {
-    struct unit *u = *(struct unit**) ulist_get(&g_env.units, i);
-    if (path_is_exist(u->source_path) && (prev_path == 0 || strcmp(prev_path, u->source_path) != 0)) {
-      prev_path = u->source_path;
-      deps_add(deps, DEPS_TYPE_FILE, 0, u->source_path, 0);
+  for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
+    struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
+    if (path_is_exist(c->unit->source_path)) {
+      deps_add(deps, DEPS_TYPE_FILE, 0, c->unit->source_path, 0);
     }
   }
 }
