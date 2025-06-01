@@ -1,3 +1,14 @@
+meta {
+  name { Autark }
+  description { Autark Test #7 }
+  author { Adamansky Anton }
+  website { https://autark.dev }
+  sources { https://git.sr.ht/~adamansky/autark }
+  license { MIT }
+  let { FOO BAR }
+  let { BAR 'BAZ ZZ' }
+}
+
 check {
   env.sh
 }
