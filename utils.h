@@ -56,6 +56,29 @@ static inline char* utils_strnncpy(char *dst, const char *src, size_t src_len, s
   return dst;
 }
 
+static inline bool utils_startswith(const char *str, const char *prefix) {
+  if (!str || !prefix) {
+    return false;
+  }
+  size_t str_len = strlen(str);
+  size_t prefix_len = strlen(prefix);
+  if (prefix_len > str_len) {
+    return false;
+  }
+  return strncmp(str, prefix, prefix_len) == 0;
+}
+
+static inline bool utils_endswith(const char *str, const char *suffix) {
+  if (!str || !suffix) {
+    return false;
+  }
+  size_t str_len = strlen(str);
+  size_t suffix_len = strlen(suffix);
+  if (suffix_len > str_len) {
+    return false;
+  }
+  return strcmp(str + str_len - suffix_len, suffix) == 0;
+}
 
 //----------------------- Vlist
 

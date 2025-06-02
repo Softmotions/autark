@@ -827,14 +827,17 @@ struct node* node_find_prev_sibling(struct node *n) {
   return 0;
 }
 
-struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const char *path, void*), void *opq) {
+struct node* node_consumes_resolve(
+  struct node *n,
+  struct node *nn,
+  void (*on_resolved)(const char *path, void*),
+  void *opq) {
   char prevcwd[PATH_MAX];
   char pathbuf[PATH_MAX];
   struct unit *unit = unit_peek();
   struct ulist rlist = { .usize = sizeof(char*) };
 
   struct pool *pool = pool_create_empty();
-  struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "consumes");
   if (nn && nn->child) {
     for (struct node *cn = nn->child; cn; cn = cn->next) {
       const char *cv = node_value(cn);
@@ -882,7 +885,6 @@ struct node* node_consumes_resolve(struct node *n, void (*on_resolved)(const cha
       akcheck(chdir(prevcwd));
     }
   }
-
   ulist_destroy_keep(&rlist);
   pool_destroy(pool);
   return nn;

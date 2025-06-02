@@ -1,6 +1,13 @@
 #ifndef HELLO_H
 #define HELLO_H
 
+//autarkdef BAR "
+//autarkdef GAZ 1
+//autarkdef FOO
+//autarkdef FOOZ
+
+#define FOOZEXP "@FOOZ@"
+
 void hello(void);
 
 #endif

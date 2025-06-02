@@ -95,7 +95,7 @@ bool spawn_arg_exists(struct spawn *s, const char *arg) {
 bool spawn_arg_starts_with(struct spawn *s, const char *arg) {
   for (int i = 0; i < s->args.num; ++i) {
     const char *v = *(char**) ulist_get(&s->args, i);
-    if (strstr(v, arg) == v) {
+    if (utils_startswith(v, arg)) {
       return true;
     }
   }

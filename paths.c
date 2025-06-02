@@ -366,14 +366,10 @@ char* path_basename(char *path) {
 
 const char* path_is_prefix_for(const char *path, const char *haystack) {
   int len = strlen(path);
-  if (len < 1) {
-    return  0;
-  }
-  const char *p = strstr(haystack, path);
-  if (p != haystack) {
+  if (len < 1 || !utils_startswith(haystack, path)) {
     return 0;
   }
-  p += len;
+  const char *p = haystack + len;
   if (*p == '/') {
     while (*p == '/') ++p;
     return p;

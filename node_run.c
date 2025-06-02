@@ -121,7 +121,8 @@ static void _on_resolve_init(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
   struct node *n = ctx->n;
-  node_consumes_resolve(n, _on_consumed_resolved, ctx);
+  node_consumes_resolve(
+    n, node_find_direct_child(n, NODE_TYPE_BAG, "consumes"), _on_consumed_resolved, ctx);
 }
 
 static void _build(struct node *n) {

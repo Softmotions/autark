@@ -6,10 +6,11 @@
 #include <limits.h>
 #include <stdint.h>
 
-#define DEPS_TYPE_FILE       102
-#define DEPS_TYPE_NODE_VALUE 118
-#define DEPS_TYPE_OUTDATED   111
-#define DEPS_TYPE_ALIAS      97
+#define DEPS_TYPE_FILE       102 // f
+#define DEPS_TYPE_NODE_VALUE 118 // v
+#define DEPS_TYPE_ENV        101 // e
+#define DEPS_TYPE_OUTDATED   111 // o
+#define DEPS_TYPE_ALIAS      97  // a
 
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U
@@ -36,6 +37,8 @@ bool deps_cur_is_outdated(struct deps*);
 int deps_add(struct deps*, char type, char flags, const char *resource, int64_t serial);
 
 int deps_add_alias(struct deps*, char flags, const char *resource, const char *alias);
+
+int deps_add_env(struct deps *d, char flags, const char *key, const char *value);
 
 void deps_close(struct deps*);
 

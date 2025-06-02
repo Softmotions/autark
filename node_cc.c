@@ -62,7 +62,7 @@ static void _deps_MMD_add(struct node *n, struct deps *deps, const char *src, co
   }
 
   while ((p = fgets(buf, sizeof(buf), f))) {
-    if (strstr(p, obj) != p) {
+    if (!utils_startswith(p, obj)) {
       continue;
     }
     p += len;
@@ -169,7 +169,7 @@ static void _on_resolve(struct node_resolve *r) {
 
   for (int i = 0; i < slist->num; ++i) {
     char *obj, *src = *(char**) ulist_get(slist, i);
-    bool incache = path_is_prefix_for(g_env.project.cache_dir, src) != 0;
+    bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
     if (!incache) {
       obj = path_relativize_cwd(unit->dir, src, unit->dir);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -197,7 +197,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (slist != &ctx->sources) {
     for (int i = 0; i < ctx->sources.num; ++i) {
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src) != 0;
+      bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
       if (!incache) {
         obj = path_relativize_cwd(unit->dir, src, unit->dir);
         src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -279,7 +279,7 @@ static void _source_add(struct node *n, const char *src) {
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
 
-  bool incache = path_is_prefix_for(g_env.project.cache_dir, p) != 0;
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, p);
   const char *dir = incache ? unit->cache_dir : unit->dir;
   char *obj = path_relativize_cwd(dir, p, dir);
 

@@ -5,7 +5,7 @@ meta {
   website { https://autark.dev }
   sources { https://git.sr.ht/~adamansky/autark }
   license { MIT }
-  let { FOO BAR }
+  let { GAZ ZAZ }
   let { BAR 'BAZ ZZ' }
 }
 
