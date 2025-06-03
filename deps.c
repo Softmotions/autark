@@ -36,7 +36,7 @@ bool deps_cur_next(struct deps *d) {
     d->type = *rp++;
     d->flags = *rp++;
 
-    if (d->type == DEPS_TYPE_ALIAS) {
+    if (d->type == DEPS_TYPE_ALIAS || d->type == DEPS_TYPE_ENV) {
       d->alias = rp;
       d->resource = 0;
     } else {
@@ -91,7 +91,7 @@ bool deps_cur_is_outdated(struct deps *d) {
       if (val == 0) {
         return true;
       }
-      return strcmp(val, d->resource) == 0;
+      return strcmp(val, d->resource) != 0;
     } else if (d->type == DEPS_TYPE_OUTDATED) {
       return true;
     }

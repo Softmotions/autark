@@ -721,7 +721,7 @@ const char* node_env_get(struct node *n, const char *key) {
   const char *ret = 0;
   for ( ; n; n = n->parent) {
     if (n->unit) {
-      ret = unit_env_get(n->unit, key);
+      ret = map_get(n->unit->env, key);
       if (ret) {
         return ret;
       }

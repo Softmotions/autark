@@ -22,8 +22,7 @@
 
 int test_script_parse(const char *script_path, struct sctx **out);
 
-static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
-  size_t sz = xstr_size(xstr);
+static inline int cmp_file_with_buf(const char *path, const char *buf, size_t sz) {
   struct value val = utils_file_as_buf(path, sz + 1);
   if (val.error) {
     return -1;
@@ -35,9 +34,13 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
     value_destroy(&val);
     return -1;
   }
-  int ret = memcmp(val.buf, xstr_ptr(xstr), sz);
+  int ret = memcmp(val.buf, buf, sz);
   value_destroy(&val);
   return ret;
+}
+
+static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
+  return cmp_file_with_buf(path, xstr_ptr(xstr), xstr_size(xstr));
 }
 
 static inline void test_init(bool cleanup) {

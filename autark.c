@@ -29,7 +29,18 @@ void unit_env_set(struct unit *u, const char *key, const char *val_) {
 }
 
 const char* unit_env_get(struct unit *u, const char *key) {
-  return map_get(u->env, key);
+  struct unit *prev = 0;
+  for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
+    struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
+    if (prev != c->unit) {
+      const char *ret = map_get(c->unit->env, key);
+      if (ret) {
+        return ret;
+      }
+    }
+    prev = c->unit;
+  }
+  return 0;
 }
 
 void unit_env_remove(struct unit *u, const char *key) {
