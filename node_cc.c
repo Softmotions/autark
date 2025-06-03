@@ -19,7 +19,9 @@ struct _ctx {
   struct node *n_cflags;
   struct node *n_sources;
   struct node *n_cc;
+  struct node *n_consumes;
   const char  *cc;
+  struct ulist consumes; // sizeof(char*)
 };
 
 static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
@@ -159,6 +161,11 @@ static void _on_resolve(struct node_resolve *r) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
 
+  for (int i = 0; i < ctx->consumes.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
+  }
+
   for (int i = 0; i < r->node_val_deps.num; ++i) {
     struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
     const char *val = node_value(nv);
@@ -224,9 +231,22 @@ static void _on_resolve(struct node_resolve *r) {
   ulist_destroy_keep(&rlist);
 }
 
+static void _on_consumed_resolved(const char *path_, void *d) {
+  struct node *n = d;
+  struct _ctx *ctx = n->impl;
+  const char *path = pool_strdup(ctx->pool, path_);
+  ulist_push(&ctx->consumes, &path);
+}
+
+static void _on_resolve_init(struct node_resolve *r) {
+  struct _ctx *ctx = r->n->impl;
+  if (ctx->n_consumes) {
+    node_consumes_resolve(r->n, ctx->n_consumes, _on_consumed_resolved, r->n);
+  }
+}
+
 static void _build(struct node *n) {
   struct _ctx *ctx = n->impl;
-
   for (int i = 0; i < ctx->sources.num; ++i) {
     const char *src = *(char**) ulist_get(&ctx->sources, i);
     if (!path_is_exist(src)) {
@@ -243,6 +263,7 @@ static void _build(struct node *n) {
     .n = n,
     .path = n->vfile,
     .user_data = ctx,
+    .on_init = _on_resolve_init,
     .on_resolve = _on_resolve,
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
@@ -337,15 +358,25 @@ static void _setup(struct node *n) {
 
 static void _init(struct node *n) {
   struct _ctx *ctx = n->impl;
-  ctx->n_sources = n->child;
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    if (strcmp(nn->value, "consumes") == 0) {
+      ctx->n_consumes = nn;
+      continue;
+    }
+    if (!ctx->n_sources) {
+      ctx->n_sources = nn;
+      continue;
+    }
+    if (!ctx->n_cflags) {
+      ctx->n_cflags = nn;
+      continue;
+    }
+    if (!ctx->n_cc) {
+      ctx->n_cc = nn;
+    }
+  }
   if (!ctx->n_sources) {
     node_fatal(AK_ERROR_SCRIPT, n, "No sources specified");
-  }
-  if (ctx->n_sources->next) {
-    ctx->n_cflags = ctx->n_sources->next;
-  }
-  if (ctx->n_cflags) {
-    ctx->n_cc = ctx->n_cflags->next;
   }
 }
 
@@ -358,6 +389,7 @@ static void _dispose(struct node *n) {
     }
     ulist_destroy_keep(&ctx->sources);
     ulist_destroy_keep(&ctx->objects);
+    ulist_destroy_keep(&ctx->consumes);
     pool_destroy(ctx->pool);
   }
 }
@@ -375,6 +407,7 @@ int node_cc_setup(struct node *n) {
     .n = n,
     .sources = { .usize = sizeof(char*) },
     .objects = { .usize = sizeof(char*) },
+    .consumes = { .usize = sizeof(char*) },
   };
   n->impl = ctx;
   return 0;

@@ -21,14 +21,13 @@ static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 }
 
 struct _on_resolve_ctx {
-  struct node *n;
   struct node_resolve *r;
   struct ulist consumes; // sizeof(char*)
 };
 
 static void _on_resolve(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
-  struct node *n = ctx->n;
+  struct node *n = r->n;
 
   struct node *ncmd = n->child;
   if (strcmp(ncmd->value, "exec") == 0) {
@@ -120,14 +119,12 @@ static void _on_consumed_resolved(const char *path_, void *d) {
 static void _on_resolve_init(struct node_resolve *r) {
   struct _on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
-  struct node *n = ctx->n;
   node_consumes_resolve(
-    n, node_find_direct_child(n, NODE_TYPE_BAG, "consumes"), _on_consumed_resolved, ctx);
+    r->n, node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes"), _on_consumed_resolved, ctx);
 }
 
 static void _build(struct node *n) {
   struct _on_resolve_ctx ctx = {
-    .n = n,
     .consumes = { .usize = sizeof(char*) }
   };
 

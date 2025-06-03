@@ -11,6 +11,9 @@ cc {
   ${SOURCES}
   ${CFLAGS}
   ${CC}
+  consumes {
+    hello.h
+  }
 }
 
 run {

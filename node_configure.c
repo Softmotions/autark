@@ -25,6 +25,7 @@ static char* _line_replace(struct node *n, struct deps *deps, char *line) {
   }
   struct xstr *xstr = xstr_create_empty();
   struct xstr *kstr = xstr_create_empty();
+
   do {
     xstr_clear(xstr);
     xstr_cat2(xstr, s, sp - s);
@@ -60,6 +61,7 @@ static char* _line_replace(struct node *n, struct deps *deps, char *line) {
       }
     }
   } while (sp);
+
   xstr_destroy(kstr);
   return xstr_destroy_keep_ptr(xstr);
 }
