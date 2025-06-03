@@ -44,8 +44,12 @@ set {
 
 cc {
   ${SOURCES}
-  set { _ ${CFLAGS}  -I../libhello -I./ }
+  set { _ ${CFLAGS}  -I./libhello }
   ${CC}
+  consumes {
+# The product of hello.h.in configure
+    libhello/hello.h
+  }
 }
 
 include { ./libhello/Autark }

@@ -6,6 +6,7 @@
 #include "xstr.h"
 #include "ulist.h"
 #include "alloc.h"
+#include "utils.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -27,7 +28,7 @@ static char* _line_replace(struct node *n, struct deps *deps, char *line) {
   struct xstr *kstr = xstr_create_empty();
 
   do {
-    xstr_clear(xstr);
+    xstr_clear(kstr);
     xstr_cat2(xstr, s, sp - s);
     char *p = ++sp;
     while (*p) {
@@ -53,16 +54,18 @@ static char* _line_replace(struct node *n, struct deps *deps, char *line) {
             xstr_cat(xstr, val);
           }
         }
-        ++p;
-        s = p;
+        s = ++p;
         sp = strchr(s, '@');
+        break;
       } else {
-        xstr_cat2(kstr, p, 1);
+        xstr_cat2(kstr, p++, 1);
       }
     }
   } while (sp);
 
+  xstr_cat(xstr, s);
   xstr_destroy(kstr);
+
   return xstr_destroy_keep_ptr(xstr);
 }
 
@@ -73,6 +76,8 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
     xstr_printf(xstr, "%s.tmp", src);
     tgt = xstr_ptr(xstr);
   }
+
+  path_mkdirs_for(tgt);
 
   FILE *f = fopen(src, "r");
   if (!f) {
@@ -89,6 +94,10 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
 
   while ((line = fgets(buf, sizeof(buf), f))) {
     char *rl = _line_replace(n, deps, line);
+    if (fputs(rl, t) == EOF) {
+      node_fatal(AK_ERROR_IO, n, "File write fail: %s", tgt);
+    }
+
     if (rl != line) {
       free(rl);
     }
@@ -134,8 +143,10 @@ static void _on_resolve(struct node_resolve *r) {
   }
 
   for (int i = 0; i < slist->num; ++i) {
+    char buf[PATH_MAX];
     char *tgt, *src = *(char**) ulist_get(slist, i);
-    bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
+    src = path_normalize_cwd(src, unit->cache_dir, buf);
+    bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
     if (!incache) {
       tgt = path_relativize_cwd(unit->dir, src, unit->dir);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -180,34 +191,48 @@ static void _init(struct node *n) {
   ulist_init(&ctx->sources, 32, sizeof(char*));
 }
 
-static void _setup(struct node *n) {
+static void _setup_item(struct node *n, const char *v) {
   char buf[PATH_MAX];
   struct _ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
 
+  char *tgt = 0, *src = path_normalize_cwd(v, unit->dir, buf);
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
+  if (!incache) {
+    tgt = path_relativize_cwd(unit->dir, src, unit->dir);
+    src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+  } else {
+    tgt = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+    src = xstrdup(tgt);
+  }
+  if (utils_endswith(tgt, ".in")) {
+    size_t len = strlen(tgt);
+    tgt[len - AK_LLEN(".in")] = '\0';
+  }
+
+  node_product_add(n, tgt, 0);
+
+  v = pool_strdup(ctx->pool, src);
+  ulist_push(&ctx->sources, &v);
+
+  free(tgt);
+  free(src);
+}
+
+static void _setup(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     const char *v = node_value(nn);
-    char *tgt = 0, *src = path_normalize_cwd(v, unit->dir, buf);
-    bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
-    if (!incache) {
-      tgt = path_relativize_cwd(unit->dir, src, unit->dir);
-      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+    if (is_vlist(v)) {
+      struct vlist_iter iter;
+      while (vlist_iter_next(&iter)) {
+        char buf[iter.len + 1];
+        memcpy(buf, iter.item, iter.len);
+        buf[iter.len] = '\0';
+        _setup_item(n, buf);
+      }
     } else {
-      tgt = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      src = xstrdup(tgt);
+      _setup_item(n, v);
     }
-    if (utils_endswith(tgt, ".in")) {
-      size_t len = strlen(tgt);
-      tgt[len - AK_LLEN(".in")] = '\0';
-    }
-
-    node_product_add(n, tgt, 0);
-
-    v = pool_strdup(ctx->pool, src);
-    ulist_push(&ctx->sources, &v);
-
-    free(tgt);
-    free(src);
   }
 }
 

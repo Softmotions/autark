@@ -6,7 +6,7 @@
 //autarkdef FOO
 //autarkdef FOOZ
 
-#define FOOZEXP "@FOOZ@"
+#define FOOZEXP "@FOOZ@..@FOO@ zz"
 
 void hello(void);
 

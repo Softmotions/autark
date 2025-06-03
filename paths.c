@@ -167,7 +167,7 @@ char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *po
 }
 
 int path_mkdirs(const char *path) {
-  if (path_is_exist(path)) {
+  if ((path[0] == '.' && path[1] == '\0') || path_is_exist(path)) {
     return 0;
   }
   int rc = 0;
@@ -196,6 +196,13 @@ int path_mkdirs(const char *path) {
   }
 finish:
   return rc;
+}
+
+int path_mkdirs_for(const char *path) {
+  char buf[PATH_MAX];
+  utils_strncpy(buf, path, sizeof(buf));
+  char *dir = path_dirname(buf);
+  return path_mkdirs(dir);
 }
 
 static int _rmfile(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
@@ -364,16 +371,26 @@ char* path_basename(char *path) {
   return path + i;
 }
 
-const char* path_is_prefix_for(const char *path, const char *haystack) {
-  int len = strlen(path);
-  if (len < 1 || !utils_startswith(haystack, path)) {
+const char* path_is_prefix_for(const char *prefix, const char *path, const char *cwd) {
+  akassert(path_is_absolute(prefix));
+  char buf[PATH_MAX];
+  if (!path_is_absolute(path)) {
+    char cwdbuf[PATH_MAX];
+    if (!cwd) {
+      cwd = getcwd(cwdbuf, sizeof(cwdbuf));
+    }
+    path = path_normalize_cwd(path, cwd, buf);
+  }
+
+  int len = strlen(prefix);
+  if (len < 1 || !utils_startswith(path, prefix)) {
     return 0;
   }
-  const char *p = haystack + len;
+  const char *p = path + len;
   if (*p == '/') {
     while (*p == '/') ++p;
     return p;
-  } else if (path[len - 1] == '/') {
+  } else if (prefix[len - 1] == '/') {
     return p;
   } else {
     return 0;

@@ -117,6 +117,7 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
     spawn_arg_add(s, "-MMD");
   }
 
+  spawn_arg_add(s, "-I./"); // Current cache dir
   spawn_arg_add(s, "-c");
   spawn_arg_add(s, src);
 
@@ -175,8 +176,10 @@ static void _on_resolve(struct node_resolve *r) {
   }
 
   for (int i = 0; i < slist->num; ++i) {
+    char buf[PATH_MAX];
     char *obj, *src = *(char**) ulist_get(slist, i);
-    bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
+    src = path_normalize_cwd(src, unit->cache_dir, buf);
+    bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
     if (!incache) {
       obj = path_relativize_cwd(unit->dir, src, unit->dir);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -203,8 +206,10 @@ static void _on_resolve(struct node_resolve *r) {
 
   if (slist != &ctx->sources) {
     for (int i = 0; i < ctx->sources.num; ++i) {
+      char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src);
+      src = path_normalize_cwd(src, unit->cache_dir, buf);
+      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
       if (!incache) {
         obj = path_relativize_cwd(unit->dir, src, unit->dir);
         src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
@@ -300,7 +305,7 @@ static void _source_add(struct node *n, const char *src) {
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
 
-  bool incache = path_is_prefix_for(g_env.project.cache_dir, p);
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, p, unit->dir);
   const char *dir = incache ? unit->cache_dir : unit->dir;
   char *obj = path_relativize_cwd(dir, p, dir);
 

@@ -61,11 +61,11 @@ struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *po
   const char *unit_path = unit_path_;
 
   if (path_is_absolute(unit_path)) {
-    const char *p = path_is_prefix_for(g_env.project.cache_dir, unit_path);
+    const char *p = path_is_prefix_for(g_env.project.cache_dir, unit_path, 0);
     if (p) {
       unit_path = p;
     } else {
-      p = path_is_prefix_for(g_env.project.root_dir, unit_path);
+      p = path_is_prefix_for(g_env.project.root_dir, unit_path, 0);
       if (!p) {
         akfatal(AK_ERROR_FAIL, "Unit path: %s must be either in project root or cache directory", unit_path_);
       }
@@ -257,7 +257,7 @@ void autark_build_prepare(const char *script_path) {
     akfatal(errno, "Failed to resolve project CACHE dir: %s", g_env.project.cache_dir);
   }
 
-  if (path_is_prefix_for(g_env.project.cache_dir, g_env.project.root_dir)) {
+  if (path_is_prefix_for(g_env.project.cache_dir, g_env.project.root_dir, 0)) {
     akfatal(AK_ERROR_FAIL, "Project cache dir cannot be parent of project root dir", 0);
   }
 

@@ -52,6 +52,8 @@ char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool*);
 
 int path_mkdirs(const char *path);
 
+int path_mkdirs_for(const char *path);
+
 int path_rmdir(const char *path);
 
 int path_stat(const char *path, struct akpath_stat *stat);
@@ -76,7 +78,7 @@ bool path_is_file(const char *path);
 
 bool path_is_exist(const char *path);
 
-const char* path_is_prefix_for(const char *path, const char *haystack);
+const char* path_is_prefix_for(const char *path, const char *haystack, const char *cwd);
 
 AK_ALLOC char* path_relativize(const char *from, const char *to);
 
