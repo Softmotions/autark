@@ -8,7 +8,7 @@
 #include <limits.h>
 #include <string.h>
 
-static inline int utils_char_is_space(char c) {
+static inline bool utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);
 }
 

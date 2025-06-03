@@ -5,6 +5,7 @@
 //autarkdef GAZ 1
 //autarkdef FOO
 //autarkdef FOOZ
+//autarkdef NOTEXISTS
 
 #define FOOZEXP "@FOOZ@..@FOO@ zz"
 #define VERSION "@META_VERSION@"

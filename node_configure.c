@@ -18,7 +18,51 @@ struct _ctx {
   struct ulist sources;  // char*
 };
 
-static char* _line_replace(struct node *n, struct deps *deps, char *line) {
+static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
+  char key[4096];
+  const char *ep = line + AK_LLEN("//autarkdef ");
+  while (utils_char_is_space(*ep)) ++ep;
+
+  const char *sp = ep;
+  while (*ep != '\0' && !utils_char_is_space(*ep)) ++ep;
+
+  const char *np = ep;
+  while (*np != '\0' && utils_char_is_space(*np)) ++np;
+
+  if (*np == '\"') {
+    utils_strnncpy(key, sp, ep - sp, sizeof(key));
+    const char *val = node_env_get(n, key);
+    if (val) {
+      struct xstr *xstr = xstr_create_empty();
+      xstr_printf(xstr, "#define %s \"%s\"\n", key, val);
+      return xstr_destroy_keep_ptr(xstr);
+    }
+  } else if (*np >= '0' && *np <= '9') {
+    utils_strnncpy(key, sp, ep - sp, sizeof(key));
+    const char *val = node_env_get(n, key);
+    if (val) {
+      struct xstr *xstr = xstr_create_empty();
+      xstr_printf(xstr, "#define %s %s", key, np);
+      return xstr_destroy_keep_ptr(xstr);
+    } else {
+      struct xstr *xstr = xstr_create_empty();
+      xstr_printf(xstr, "#define %s 0\n", key);
+      return xstr_destroy_keep_ptr(xstr);
+    }
+  } else {
+    utils_strnncpy(key, sp, ep - sp, sizeof(key));
+    const char *val = node_env_get(n, key);
+    if (val) {
+      struct xstr *xstr = xstr_create_empty();
+      xstr_printf(xstr, "#define %s\n", key);
+      return xstr_destroy_keep_ptr(xstr);
+    }
+  }
+
+  return line;
+}
+
+static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
   char *s = line;
   char *sp = strchr(line, '@');
   if (!sp) {
@@ -93,11 +137,15 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
   char buf[16384];
 
   while ((line = fgets(buf, sizeof(buf), f))) {
-    char *rl = _line_replace(n, deps, line);
-    if (fputs(rl, t) == EOF) {
+    char *rl;
+    if (utils_startswith(line, "//autarkdef ")) {
+      rl = _line_replace_def(n, deps, line);
+    } else {
+      rl = _line_replace_subs(n, deps, line);
+    }
+    if (rl && fputs(rl, t) == EOF) {
       node_fatal(AK_ERROR_IO, n, "File write fail: %s", tgt);
     }
-
     if (rl != line) {
       free(rl);
     }
