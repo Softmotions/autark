@@ -891,11 +891,13 @@ struct node* node_consumes_resolve(
 }
 
 void node_add_unit_deps(struct deps *deps) {
+  struct unit *prev = 0;
   for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
     struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
-    if (path_is_exist(c->unit->source_path)) {
+    if (prev != c->unit && path_is_exist(c->unit->source_path)) {
       deps_add(deps, DEPS_TYPE_FILE, 0, c->unit->source_path, 0);
     }
+    prev = c->unit;
   }
 }
 
