@@ -207,6 +207,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr, "\nCommon options:\n"
           "    -V, --verbose               Outputs verbose execution info.\n"
           "    -q, --quiet                 Do not output anything.\n"
+          "    -v, --version               Prints version info.\n"
           "    -h, --help                  Prints usage help.\n");
   fprintf(stderr,
           "\nautark [sources_dir] [options]\n"
@@ -450,10 +451,11 @@ void autark_run(int argc, const char **argv) {
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "quiet", 0, 0, 'q' },
+    {"version", 0, 0, 'v'},
     { 0 }
   };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVq", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvq", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'C':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -467,6 +469,9 @@ void autark_run(int argc, const char **argv) {
       case 'c':
         g_env.project.cleanup = true;
         break;
+      case 'v':
+        puts(VERSION);
+        exit(0);
       case 'h':
       default:
         _usage(0);

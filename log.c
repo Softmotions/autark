@@ -4,6 +4,7 @@
 #include "xstr.h"
 #include "alloc.h"
 #include "utils.h"
+#include "env.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -34,7 +35,7 @@ static const char* _error_get(int code) {
       return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
-    case  AK_ERROR_SCRIPT:
+    case AK_ERROR_SCRIPT:
       return "Autark script error (AK_ERROR_SCRIPT)";
     case AK_ERROR_CYCLIC_BUILD_DEPS:
       return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
@@ -152,10 +153,12 @@ void _akverbose(const char *file, int line, const char *fmt, ...) {
 }
 
 void akinfo(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
-  va_end(ap);
+  if (!g_env.quiet) {
+    va_list ap;
+    va_start(ap, fmt);
+    _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
+    va_end(ap);
+  }
 }
 
 void akwarn(const char *fmt, ...) {

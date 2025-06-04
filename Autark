@@ -1,0 +1,8 @@
+check {
+  checks.sh
+}
+
+set {
+  CC
+  ${CC cc}
+}

@@ -1,4 +1,4 @@
-#define VERSION "0.98 (2b36ddf)"
+#define VERSION "0.98 (b177071)"
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
 #define _DEFAULT_SOURCE
@@ -1638,6 +1638,7 @@ const char** pool_split_string(
 #include "xstr.h"
 #include "alloc.h"
 #include "utils.h"
+#include "env.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -1668,7 +1669,7 @@ static const char* _error_get(int code) {
       return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
-    case  AK_ERROR_SCRIPT:
+    case AK_ERROR_SCRIPT:
       return "Autark script error (AK_ERROR_SCRIPT)";
     case AK_ERROR_CYCLIC_BUILD_DEPS:
       return "Detected cyclic build dependency (AK_ERROR_CYCLIC_BUILD_DEPS)";
@@ -1786,10 +1787,12 @@ void _akverbose(const char *file, int line, const char *fmt, ...) {
 }
 
 void akinfo(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
-  va_end(ap);
+  if (!g_env.quiet) {
+    va_list ap;
+    va_start(ap, fmt);
+    _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
+    va_end(ap);
+  }
 }
 
 void akwarn(const char *fmt, ...) {
@@ -5092,6 +5095,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr, "\nCommon options:\n"
           "    -V, --verbose               Outputs verbose execution info.\n"
           "    -q, --quiet                 Do not output anything.\n"
+          "    -v, --version               Prints version info.\n"
           "    -h, --help                  Prints usage help.\n");
   fprintf(stderr,
           "\nautark [sources_dir] [options]\n"
@@ -5335,10 +5339,11 @@ void autark_run(int argc, const char **argv) {
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "quiet", 0, 0, 'q' },
+    {"version", 0, 0, 'v'},
     { 0 }
   };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVq", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvq", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'C':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -5352,6 +5357,9 @@ void autark_run(int argc, const char **argv) {
       case 'c':
         g_env.project.cleanup = true;
         break;
+      case 'v':
+        puts(VERSION);
+        exit(0);
       case 'h':
       default:
         _usage(0);
