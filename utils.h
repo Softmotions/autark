@@ -1,12 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include "xstr.h"
-#include "pool.h"
 
 #include <limits.h>
 #include <string.h>
+#endif
 
 static inline bool utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);
@@ -20,19 +21,26 @@ static inline void utils_chars_replace(char *buf, char c, char r) {
   }
 }
 
-long int utils_strtol(const char *v, int base, int *rcp);
+static inline long utils_lround(double x) {
+  if (x >= 0.0) {
+    x += 0.5;
+  } else {
+    x -= 0.5;
+  }
+  if (x > (double) LONG_MAX) {
+    return LONG_MAX;
+  } else if (x < (double) LONG_MIN) {
+    return LONG_MIN;
+  }
+  return (long) x;
+}
 
-long long utils_strtoll(const char *v, int base, int *rcp);
-
-struct value utils_file_as_buf(const char *path, ssize_t buflen_max);
-
-int utils_exec_path(char buf[PATH_MAX]);
-
-int utils_copy_file(const char *src, const char *dst);
-
-int utils_rename_file(const char *src, const char *dst);
-
-void utils_split_values_add(const char *v, struct xstr *xstr);
+static inline int utils_toupper_ascii(int c) {
+  if (c >= 'a' && c <= 'z') {
+    return c - ('a' - 'A');     // or: c - 32
+  }
+  return c;
+}
 
 static inline char* utils_strncpy(char *dst, const char *src, size_t dst_sz) {
   if (dst_sz > 1) {
@@ -79,6 +87,21 @@ static inline bool utils_endswith(const char *str, const char *suffix) {
   }
   return strcmp(str + str_len - suffix_len, suffix) == 0;
 }
+
+long int utils_strtol(const char *v, int base, int *rcp);
+
+long long utils_strtoll(const char *v, int base, int *rcp);
+
+struct value utils_file_as_buf(const char *path, ssize_t buflen_max);
+
+int utils_exec_path(char buf[PATH_MAX]);
+
+int utils_copy_file(const char *src, const char *dst);
+
+int utils_rename_file(const char *src, const char *dst);
+
+void utils_split_values_add(const char *v, struct xstr *xstr);
+
 
 //----------------------- Vlist
 

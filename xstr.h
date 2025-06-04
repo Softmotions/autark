@@ -1,8 +1,10 @@
 #ifndef XSTR_H
 #define XSTR_H
 
+#ifndef _AMALGAMATE_
 #include <stdarg.h>
 #include <stddef.h>
+#endif
 
 struct xstr {
   char  *ptr;

@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "env.h"
 #include "log.h"
@@ -8,14 +9,15 @@
 #include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
+#endif
 
-static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _check_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   if (!g_env.quiet) {
     fprintf(stdout, "%s", buf);
   }
 }
 
-static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _check_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   if (!g_env.quiet) {
     fprintf(stderr, "%s", buf);
   }
@@ -32,8 +34,8 @@ static void _check_on_resolve(struct node_resolve *r) {
   struct unit *unit = r->user_data;
   struct node *n = unit->n;
   struct spawn *s = spawn_create(unit->source_path, unit);
-  spawn_set_stdout_handler(s, _stdout_handler);
-  spawn_set_stderr_handler(s, _stderr_handler);
+  spawn_set_stdout_handler(s, _check_stdout_handler);
+  spawn_set_stderr_handler(s, _check_stderr_handler);
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE) {
       spawn_arg_add(s, nn->value);
@@ -61,7 +63,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   deps_close(&deps);
 }
 
-static void _node_check_script(struct node *n) {
+static void _check_script(struct node *n) {
   struct unit *parent = unit_peek();
   const char *script = node_value(n);
   node_info(n->parent, "%s", script);
@@ -86,13 +88,13 @@ static void _node_check_script(struct node *n) {
   pool_destroy(pool);
 }
 
-static void _init(struct node *n) {
+static void _check_init(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    _node_check_script(nn);
+    _check_script(nn);
   }
 }
 
 int node_check_setup(struct node *n) {
-  n->init = _init;
+  n->init = _check_init;
   return 0;
 }

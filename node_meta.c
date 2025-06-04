@@ -1,10 +1,12 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "xstr.h"
+#include "utils.h"
 
 #include <string.h>
-#include <ctype.h>
+#endif
 
-static void _on_let(struct node *n, struct node *e) {
+static void _meta_on_let(struct node *n, struct node *e) {
   const char *name = node_value(e->child);
   if (name == 0) {
     return;
@@ -21,7 +23,7 @@ static void _on_let(struct node *n, struct node *e) {
   xstr_destroy(xstr);
 }
 
-static void _on_entry(struct node *n, struct node *e) {
+static void _meta_on_entry(struct node *n, struct node *e) {
   if (e->type != NODE_TYPE_BAG) {
     return;
   }
@@ -31,7 +33,7 @@ static void _on_entry(struct node *n, struct node *e) {
   memcpy(wp, "META_", plen), wp += plen;
   memcpy(wp, e->value, sizeof(name) - plen);
   for (int i = plen; i < sizeof(name) - 1; ++i) {
-    name[i] = toupper(name[i]);
+    name[i] = utils_toupper_ascii(name[i]);
   }
   struct xstr *xstr = xstr_create_empty();
   for (struct node *nn = e->child; nn; nn = nn->next) {
@@ -45,17 +47,17 @@ static void _on_entry(struct node *n, struct node *e) {
   xstr_destroy(xstr);
 }
 
-static void _init(struct node *n) {
+static void _meta_init(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "let") == 0) {
-      _on_let(n, nn);
+      _meta_on_let(n, nn);
     } else {
-      _on_entry(n, nn);
+      _meta_on_entry(n, nn);
     }
   }
 }
 
 int node_meta_setup(struct node *n) {
-  n->init = _init;
+  n->init = _meta_init;
   return 0;
 }

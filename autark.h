@@ -1,7 +1,9 @@
 #ifndef AUTARK_H
 #define AUTARK_H
 
+#ifndef _AMALGAMATE_
 #include <stdbool.h>
+#endif
 
 void autark_init(void);
 

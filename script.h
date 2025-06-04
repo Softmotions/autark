@@ -1,13 +1,14 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
-//#include "basedefs.h"
+#ifndef _AMALGAMATE_
 #include "ulist.h"
 #include "xstr.h"
 #include "deps.h"
 #include "map.h"
 
 #include <stdbool.h>
+#endif
 
 #define NODE_TYPE_VALUE     0x01U
 #define NODE_TYPE_SCRIPT    0x02U

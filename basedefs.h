@@ -54,10 +54,12 @@
 #define MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
 #endif
 
+#ifndef _AMALGAMATE_
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#endif
 
 struct value {
   void  *buf;

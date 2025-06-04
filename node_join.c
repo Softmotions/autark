@@ -1,9 +1,11 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "xstr.h"
 
 #include <stdlib.h>
+#endif
 
-static const char* _value(struct node *n) {
+static const char* _join_value(struct node *n) {
   if (n->impl) {
     return n->impl;
   }
@@ -20,14 +22,14 @@ static const char* _value(struct node *n) {
 }
 
 
-static void _dispose(struct node *n) {
+static void _join_dispose(struct node *n) {
   if (n->impl) {
     free(n->impl);
   }
 }
 
 int node_join_setup(struct node *n) {
-  n->value_get = _value;
-  n->dispose = _dispose;
+  n->value_get = _join_value;
+  n->dispose = _join_dispose;
   return 0;
 }

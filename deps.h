@@ -1,10 +1,12 @@
 #ifndef DEPS_H
 #define DEPS_H
 
+#ifndef _AMALGAMATE_
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
 #include <stdint.h>
+#endif
 
 #define DEPS_TYPE_FILE       102 // f
 #define DEPS_TYPE_NODE_VALUE 118 // v

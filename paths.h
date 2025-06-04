@@ -1,11 +1,13 @@
 #ifndef PATHS_H
 #define PATHS_H
 
+#ifndef _AMALGAMATE_
 #include "pool.h"
 #include "basedefs.h"
 
 #include <limits.h>
 #include <stdio.h>
+#endif
 
 enum akpath_access {
   AKPATH_READ  = 0x01,

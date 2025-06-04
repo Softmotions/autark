@@ -1,10 +1,12 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "log.h"
 #include "env.h"
 
 #include <string.h>
+#endif
 
-static bool _defined_eval(struct node *mn) {
+static bool _if_defined_eval(struct node *mn) {
   struct node *n = mn->parent;
   const char *val = node_value(mn->child);
   if (val && node_env_get(n, val)) {
@@ -14,7 +16,7 @@ static bool _defined_eval(struct node *mn) {
   }
 }
 
-static bool _matched_eval(struct node *mn) {
+static bool _if_matched_eval(struct node *mn) {
   const char *val1 = node_value(mn->child);
   const char *val2 = mn->child ? node_value(mn->child->next) : 0;
   if (val1 && val2) {
@@ -26,7 +28,7 @@ static bool _matched_eval(struct node *mn) {
   }
 }
 
-static bool _cond_eval(struct node *n, struct node *mn) {
+static bool _if_cond_eval(struct node *n, struct node *mn) {
   const char *op = node_value(mn);
   if (!op) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Matching condition is not set");
@@ -38,9 +40,9 @@ static bool _cond_eval(struct node *n, struct node *mn) {
     ++op;
   }
   if (strcmp(op, "eq") == 0) {
-    eq = _matched_eval(mn);
+    eq = _if_matched_eval(mn);
   } else if (strcmp(op, "defined") == 0) {
-    eq = _defined_eval(mn);
+    eq = _if_defined_eval(mn);
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
   }
@@ -53,17 +55,17 @@ static bool _cond_eval(struct node *n, struct node *mn) {
   return eq;
 }
 
-static inline bool _node_is_else(struct node *n) {
+static inline bool _if_node_is_else(struct node *n) {
   return n && n->value && strcmp(n->value, "else") == 0;
 }
 
-static void _pull_else(struct node *n) {
+static void _if_pull_else(struct node *n) {
   struct node *prev = node_find_prev_sibling(n);
   struct node *next = n->next;
   struct node *nn = next;
   bool elz = false;
 
-  if (_node_is_else(nn)) {
+  if (_if_node_is_else(nn)) {
     elz = true;
     next = nn->next;
   }
@@ -90,13 +92,13 @@ static void _pull_else(struct node *n) {
   }
 }
 
-static void _pull_if(struct node *n) {
+static void _if_pull_if(struct node *n) {
   struct node *mn = n->child;
   struct node *prev = node_find_prev_sibling(n);
   struct node *next = n->next;
   struct node *nn = mn->next;
 
-  if (_node_is_else(next)) {
+  if (_if_node_is_else(next)) {
     next = next->next; // Skip else block
   }
   if (nn) {
@@ -121,23 +123,23 @@ static void _pull_if(struct node *n) {
   }
 }
 
-static void _init(struct node *n) {
+static void _if_init(struct node *n) {
   struct node *cn = n->child; // Conditional node
   if (!cn) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "'if {...}' must have a condition clause");
   }
   node_init(cn); // Explicitly init conditional node since in script init worflow 'if' initiated first.
 
-  bool matched = _cond_eval(n, cn);
+  bool matched = _if_cond_eval(n, cn);
   if (matched) {
-    _pull_if(n);
+    _if_pull_if(n);
   } else {
-    _pull_else(n);
+    _if_pull_else(n);
   }
   n->init = 0; // Protect me from second call in any way
 }
 
 int node_if_setup(struct node *n) {
-  n->init = _init;
+  n->init = _if_init;
   return 0;
 }

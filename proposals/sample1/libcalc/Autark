@@ -1,5 +1,0 @@
-static {
-  sources {
-    ./calc.c
-  }
-}

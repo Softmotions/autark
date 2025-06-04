@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "ulist.h"
 #include "pool.h"
@@ -10,8 +11,9 @@
 #include "alloc.h"
 
 #include <string.h>
+#endif
 
-struct _ctx {
+struct _cc_ctx {
   struct pool *pool;
   struct ulist sources;     // char*
   struct ulist objects;     // char*
@@ -24,15 +26,15 @@ struct _ctx {
   struct ulist consumes; // sizeof(char*)
 };
 
-static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _cc_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stdout, "%s", buf);
 }
 
-static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _cc_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stderr, "%s", buf);
 }
 
-static void _deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
+static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   char buf[127];
   char *p = strrchr(item, '.');
   if (!p || p[1] == '\0') {
@@ -47,7 +49,7 @@ static void _deps_MMD_item_add(const char *item, struct node *n, struct deps *de
   deps_add_alias(deps, 's', src, item);
 }
 
-static void _deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj) {
   char buf[MAX(2 * PATH_MAX, 8192)];
   size_t len = strlen(obj);
   utils_strncpy(buf, obj, sizeof(buf));
@@ -86,21 +88,21 @@ static void _deps_MMD_add(struct node *n, struct deps *deps, const char *src, co
           *p = '\0';
           ++p;
         }
-        _deps_MMD_item_add(sp, n, deps, src);
+        _cc_deps_MMD_item_add(sp, n, deps, src);
       }
     }
   }
   fclose(f);
 }
 
-static void _on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static void _cc_on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
   if (g_env.check.log) {
     xstr_printf(g_env.check.log, "%s: build src=%s obj=%s\n", n->name, src, obj);
   }
-  struct _ctx *ctx = n->impl;
+  struct _cc_ctx *ctx = n->impl;
   struct spawn *s = spawn_create(ctx->cc, ctx);
-  spawn_set_stdout_handler(s, _stdout_handler);
-  spawn_set_stderr_handler(s, _stderr_handler);
+  spawn_set_stdout_handler(s, _cc_stdout_handler);
+  spawn_set_stderr_handler(s, _cc_stderr_handler);
   if (ctx->n_cflags) {
     struct xstr *xstr = 0;
     const char *cflags = node_value(ctx->n_cflags);
@@ -136,9 +138,9 @@ static void _on_build_source(struct node *n, struct deps *deps, const char *src,
   spawn_destroy(s);
 }
 
-static void _on_resolve(struct node_resolve *r) {
+static void _cc_on_resolve(struct node_resolve *r) {
   struct deps deps;
-  struct _ctx *ctx = r->user_data;
+  struct _cc_ctx *ctx = r->user_data;
   struct unit *unit = unit_peek();
   struct ulist *slist = &ctx->sources;
   struct ulist rlist = { .usize = sizeof(char*) };
@@ -193,11 +195,11 @@ static void _on_resolve(struct node_resolve *r) {
     p[1] = 'o';
     p[2] = '\0';
 
-    _on_build_source(ctx->n, &deps, src, obj);
+    _cc_on_build_source(ctx->n, &deps, src, obj);
 
     if (slist == &ctx->sources) {
       deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
-      _deps_MMD_add(ctx->n, &deps, src, obj);
+      _cc_deps_MMD_add(ctx->n, &deps, src, obj);
     }
 
     free(obj);
@@ -223,7 +225,7 @@ static void _on_resolve(struct node_resolve *r) {
       p[2] = '\0';
 
       deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
-      _deps_MMD_add(ctx->n, &deps, src, obj);
+      _cc_deps_MMD_add(ctx->n, &deps, src, obj);
 
       free(obj);
       free(src);
@@ -236,22 +238,22 @@ static void _on_resolve(struct node_resolve *r) {
   ulist_destroy_keep(&rlist);
 }
 
-static void _on_consumed_resolved(const char *path_, void *d) {
+static void _cc_on_consumed_resolved(const char *path_, void *d) {
   struct node *n = d;
-  struct _ctx *ctx = n->impl;
+  struct _cc_ctx *ctx = n->impl;
   const char *path = pool_strdup(ctx->pool, path_);
   ulist_push(&ctx->consumes, &path);
 }
 
-static void _on_resolve_init(struct node_resolve *r) {
-  struct _ctx *ctx = r->n->impl;
+static void _cc_on_resolve_init(struct node_resolve *r) {
+  struct _cc_ctx *ctx = r->n->impl;
   if (ctx->n_consumes) {
-    node_consumes_resolve(r->n, ctx->n_consumes, _on_consumed_resolved, r->n);
+    node_consumes_resolve(r->n, ctx->n_consumes, _cc_on_consumed_resolved, r->n);
   }
 }
 
-static void _build(struct node *n) {
-  struct _ctx *ctx = n->impl;
+static void _cc_build(struct node *n) {
+  struct _cc_ctx *ctx = n->impl;
   for (int i = 0; i < ctx->sources.num; ++i) {
     const char *src = *(char**) ulist_get(&ctx->sources, i);
     if (!path_is_exist(src)) {
@@ -268,8 +270,8 @@ static void _build(struct node *n) {
     .n = n,
     .path = n->vfile,
     .user_data = ctx,
-    .on_init = _on_resolve_init,
-    .on_resolve = _on_resolve,
+    .on_init = _cc_on_resolve_init,
+    .on_resolve = _cc_on_resolve,
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
@@ -284,7 +286,7 @@ static void _build(struct node *n) {
   node_resolve(&r);
 }
 
-static void _source_add(struct node *n, const char *src) {
+static void _cc_source_add(struct node *n, const char *src) {
   char buf[PATH_MAX], *p;
   if (src == 0 || *src == '\0') {
     return;
@@ -294,7 +296,7 @@ static void _source_add(struct node *n, const char *src) {
     return;
   }
 
-  struct _ctx *ctx = n->impl;
+  struct _cc_ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
   const char *npath = src;
 
@@ -317,8 +319,8 @@ static void _source_add(struct node *n, const char *src) {
   node_product_add(n, obj, 0);
 }
 
-static void _setup(struct node *n) {
-  struct _ctx *ctx = n->impl;
+static void _cc_setup(struct node *n) {
+  struct _cc_ctx *ctx = n->impl;
   const char *val = node_value(ctx->n_sources);
   if (is_vlist(val)) {
     struct vlist_iter iter;
@@ -326,10 +328,10 @@ static void _setup(struct node *n) {
     while (vlist_iter_next(&iter)) {
       char buf[PATH_MAX];
       utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
-      _source_add(n, buf);
+      _cc_source_add(n, buf);
     }
   } else {
-    _source_add(n, val);
+    _cc_source_add(n, val);
   }
   if (ctx->n_cc) {
     ctx->cc = pool_strdup(ctx->pool, node_value(ctx->n_cc));
@@ -361,8 +363,8 @@ static void _setup(struct node *n) {
   free(objs);
 }
 
-static void _init(struct node *n) {
-  struct _ctx *ctx = n->impl;
+static void _cc_init(struct node *n) {
+  struct _cc_ctx *ctx = n->impl;
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "consumes") == 0) {
       ctx->n_consumes = nn;
@@ -385,8 +387,8 @@ static void _init(struct node *n) {
   }
 }
 
-static void _dispose(struct node *n) {
-  struct _ctx *ctx = n->impl;
+static void _cc_dispose(struct node *n) {
+  struct _cc_ctx *ctx = n->impl;
   if (ctx) {
     for (int i = 0; i < ctx->objects.num; ++i) {
       char *p = *(char**) ulist_get(&ctx->objects, i);
@@ -401,13 +403,13 @@ static void _dispose(struct node *n) {
 
 int node_cc_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
-  n->init = _init;
-  n->setup = _setup;
-  n->build = _build;
-  n->dispose = _dispose;
+  n->init = _cc_init;
+  n->setup = _cc_setup;
+  n->build = _cc_build;
+  n->dispose = _cc_dispose;
   struct pool *pool = pool_create_empty();
-  struct _ctx *ctx = pool_alloc(pool, sizeof(*ctx));
-  *ctx = (struct _ctx) {
+  struct _cc_ctx *ctx = pool_alloc(pool, sizeof(*ctx));
+  *ctx = (struct _cc_ctx) {
     .pool = pool,
     .n = n,
     .sources = { .usize = sizeof(char*) },

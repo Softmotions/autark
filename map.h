@@ -1,7 +1,9 @@
 #ifndef MAP_H
 #define MAP_H
 
+#ifndef _AMALGAMATE_
 #include <stdint.h>
+#endif
 
 struct map;
 struct map_iter;

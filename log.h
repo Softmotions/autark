@@ -1,8 +1,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include <stdarg.h>
+#endif
 
 enum akecode {
   AK_ERROR_OK                    = 0,

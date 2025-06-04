@@ -1,7 +1,9 @@
 #ifndef ULIST_H
 #define ULIST_H
 
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
+#endif
 
 struct ulist {
   char    *array;

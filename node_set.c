@@ -1,9 +1,11 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "xstr.h"
 #include "utils.h"
 #include "alloc.h"
+#endif
 
-static void _init(struct node *n) {
+static void _set_init(struct node *n) {
   const char *name = node_value(n->child);
   if (!name) {
     return;
@@ -39,17 +41,17 @@ static void _init(struct node *n) {
   n->impl = xstr_destroy_keep_ptr(xstr);
 }
 
-static const char* _value_get(struct node *n) {
+static const char* _set_value_get(struct node *n) {
   return n->impl;
 }
 
-static void _dispose(struct node *n) {
+static void _set_dispose(struct node *n) {
   free(n->impl);
 }
 
 int node_set_setup(struct node *n) {
-  n->init = _init;
-  n->dispose = _dispose;
-  n->value_get = _value_get;
+  n->init = _set_init;
+  n->dispose = _set_dispose;
+  n->value_get = _set_value_get;
   return 0;
 }

@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "paths.h"
 #include "xstr.h"
 #include "alloc.h"
@@ -8,11 +9,11 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <math.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <ftw.h>
 #include <stdio.h>
+#endif
 
 #ifdef __APPLE__
 #define st_atim st_atimespec
@@ -20,7 +21,7 @@
 #define st_mtim st_mtimespec
 #endif
 
-#define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + lround((ts__).tv_nsec / 1.0e6))
+#define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + utils_lround((ts__).tv_nsec / 1.0e6))
 
 bool path_is_absolute(const char *path) {
   if (!path) {

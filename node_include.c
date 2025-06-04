@@ -1,5 +1,7 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "log.h"
+#endif
 
 static void _include(struct node *n, struct node *cn) {
   const char *file = node_value(cn);
@@ -26,7 +28,7 @@ static void _include(struct node *n, struct node *cn) {
   n->child = 0;
 }
 
-static void _init(struct node *n) {
+static void _include_init(struct node *n) {
   struct node *cn = n->child;
   if (!cn) {
     node_fatal(AK_ERROR_SCRIPT, n, "Missing path in 'include {...}' directive");
@@ -37,6 +39,6 @@ static void _init(struct node *n) {
 }
 
 int node_include_setup(struct node *n) {
-  n->init = _init;
+  n->init = _include_init;
   return 0;
 }

@@ -3,6 +3,9 @@ autark
 Scratch
 compile_commands.json
 
+/autark.c
+autark-cache
+
 # Prerequisites
 *.d
 

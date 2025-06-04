@@ -1,8 +1,6 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
-
-#include <limits.h>
-#include <unistd.h>
-#include <libgen.h>
+#endif
 
 int node_script_setup(struct node *n) {
   return 0;

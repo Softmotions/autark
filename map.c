@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "map.h"
 #include "log.h"
 #include "alloc.h"
@@ -6,18 +7,19 @@
 #include <stdint.h>
 #include <string.h>
 #include <stddef.h>
+#endif
 
 #define MIN_BUCKETS 64
 #define STEPS       4
 
-struct entry {
+struct _map_entry {
   void    *key;
   void    *val;
   uint32_t hash;
 };
 
-struct bucket {
-  struct entry *entries;
+struct _map_bucket {
+  struct _map_entry *entries;
   uint32_t      used;
   uint32_t      total;
 };
@@ -25,7 +27,7 @@ struct bucket {
 struct map {
   uint32_t       count;
   uint32_t       buckets_mask;
-  struct bucket *buckets;
+  struct _map_bucket *buckets;
 
   int      (*cmp_fn)(const void*, const void*);
   uint32_t (*hash_key_fn)(const void*);
@@ -34,30 +36,30 @@ struct map {
   int int_key_as_pointer_value;
 };
 
-static void _noop_kv_free(void *key, void *val) {
+static void _map_noop_kv_free(void *key, void *val) {
 }
 
-static void _noop_uint64_kv_free(void *key, void *val) {
+static void _map_noop_uint64_kv_free(void *key, void *val) {
   if (key) {
     free(key);
   }
 }
 
-static inline uint32_t _n_buckets(struct map *hm) {
+static inline uint32_t _map_n_buckets(struct map *hm) {
   return hm->buckets_mask + 1;
 }
 
-static int _ptr_cmp(const void *v1, const void *v2) {
+static int _map_ptr_cmp(const void *v1, const void *v2) {
   return v1 > v2 ? 1 : v1 < v2 ? -1 : 0;
 }
 
-static int _uint32_cmp(const void *v1, const void *v2) {
+static int _map_uint32_cmp(const void *v1, const void *v2) {
   intptr_t p1 = (intptr_t) v1;
   intptr_t p2 = (intptr_t) v2;
   return p1 > p2 ? 1 : p1 < p2 ? -1 : 0;
 }
 
-static int _uint64_cmp(const void *v1, const void *v2) {
+static int _map_uint64_cmp(const void *v1, const void *v2) {
   if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
     intptr_t p1 = (intptr_t) v1;
     intptr_t p2 = (intptr_t) v2;
@@ -70,7 +72,7 @@ static int _uint64_cmp(const void *v1, const void *v2) {
   }
 }
 
-static inline uint32_t _hash_uint32(uint32_t x) {
+static inline uint32_t _map_hash_uint32(uint32_t x) {
   x ^= x >> 16;
   x *= 0x85ebca6bU;
   x ^= x >> 13;
@@ -79,7 +81,7 @@ static inline uint32_t _hash_uint32(uint32_t x) {
   return x;
 }
 
-static inline uint32_t _hash_uint64(uint64_t x) {
+static inline uint32_t _map_hash_uint64(uint64_t x) {
   x ^= x >> 33;
   x *= 0xff51afd7ed558ccdULL;
   x ^= x >> 33;
@@ -88,17 +90,17 @@ static inline uint32_t _hash_uint64(uint64_t x) {
   return x;
 }
 
-static inline uint32_t _hash_uint64_key(const void *key) {
+static inline uint32_t _map_hash_uint64_key(const void *key) {
   uint64_t lv = 0;
   memcpy(&lv, key, sizeof(key));
-  return _hash_uint64(lv);
+  return _map_hash_uint64(lv);
 }
 
-static inline uint32_t _hash_uint32_key(const void *key) {
-  return _hash_uint32((uintptr_t) key);
+static inline uint32_t _map_hash_uint32_key(const void *key) {
+  return _map_hash_uint32((uintptr_t) key);
 }
 
-static inline uint32_t _hash_buf_key(const void *key) {
+static inline uint32_t _map_hash_buf_key(const void *key) {
   const char *str = key;
   uint32_t hash = 2166136261U;
   while (*str) {
@@ -109,21 +111,21 @@ static inline uint32_t _hash_buf_key(const void *key) {
   return hash;
 }
 
-static struct entry* _entry_add(struct map *hm, void *key, uint32_t hash) {
-  struct entry *entry;
-  struct bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
+static struct _map_entry* _map_entry_add(struct map *hm, void *key, uint32_t hash) {
+  struct _map_entry *entry;
+  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
 
   if (bucket->used + 1 >= bucket->total) {
     if (UINT32_MAX - bucket->total < STEPS) {
       akfatal(AK_ERROR_OVERFLOW, 0, 0, 0);
     }
     uint32_t new_total = bucket->total + STEPS;
-    struct entry *new_entries = xrealloc(bucket->entries, new_total * sizeof(new_entries[0]));
+    struct _map_entry *new_entries = xrealloc(bucket->entries, new_total * sizeof(new_entries[0]));
     bucket->entries = new_entries;
     bucket->total = new_total;
   }
   entry = bucket->entries;
-  for (struct entry *end = entry + bucket->used; entry < end; ++entry) {
+  for (struct _map_entry *end = entry + bucket->used; entry < end; ++entry) {
     if ((hash == entry->hash) && (hm->cmp_fn(key, entry->key) == 0)) {
       return entry;
     }
@@ -138,10 +140,10 @@ static struct entry* _entry_add(struct map *hm, void *key, uint32_t hash) {
   return entry;
 }
 
-static struct entry* _entry_find(struct map *hm, const void *key, uint32_t hash) {
-  struct bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
-  struct entry *entry = bucket->entries;
-  for (struct entry *end = entry + bucket->used; entry < end; ++entry) {
+static struct _map_entry* _map_entry_find(struct map *hm, const void *key, uint32_t hash) {
+  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
+  struct _map_entry *entry = bucket->entries;
+  for (struct _map_entry *end = entry + bucket->used; entry < end; ++entry) {
     if (hash == entry->hash && hm->cmp_fn(key, entry->key) == 0) {
       return entry;
     }
@@ -149,10 +151,10 @@ static struct entry* _entry_find(struct map *hm, const void *key, uint32_t hash)
   return 0;
 }
 
-static void _rehash(struct map *hm, uint32_t num_buckets) {
-  struct bucket *buckets = xcalloc(num_buckets, sizeof(*buckets));
-  struct bucket *bucket,
-                *bucket_end = hm->buckets + _n_buckets(hm);
+static void _map_rehash(struct map *hm, uint32_t num_buckets) {
+  struct _map_bucket *buckets = xcalloc(num_buckets, sizeof(*buckets));
+  struct _map_bucket *bucket,
+                *bucket_end = hm->buckets + _map_n_buckets(hm);
 
   struct map hm_copy = *hm;
   hm_copy.count = 0;
@@ -160,11 +162,11 @@ static void _rehash(struct map *hm, uint32_t num_buckets) {
   hm_copy.buckets = buckets;
 
   for (bucket = hm->buckets; bucket < bucket_end; ++bucket) {
-    struct entry *entry_old = bucket->entries;
+    struct _map_entry *entry_old = bucket->entries;
     if (entry_old) {
-      struct entry *entry_old_end = entry_old + bucket->used;
+      struct _map_entry *entry_old_end = entry_old + bucket->used;
       for ( ; entry_old < entry_old_end; ++entry_old) {
-        struct entry *entry_new = _entry_add(&hm_copy, entry_old->key, entry_old->hash);
+        struct _map_entry *entry_new = _map_entry_add(&hm_copy, entry_old->key, entry_old->hash);
         entry_new->key = entry_old->key;
         entry_new->val = entry_old->val;
       }
@@ -181,10 +183,10 @@ static void _rehash(struct map *hm, uint32_t num_buckets) {
   return;
 }
 
-static void _entry_remove(struct map *hm, struct bucket *bucket, struct entry *entry) {
+static void _map_entry_remove(struct map *hm, struct _map_bucket *bucket, struct _map_entry *entry) {
   hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : entry->key, entry->val);
   if (bucket->used > 1) {
-    struct entry *entry_last = bucket->entries + bucket->used - 1;
+    struct _map_entry *entry_last = bucket->entries + bucket->used - 1;
     if (entry != entry_last) {
       memcpy(entry, entry_last, sizeof(*entry));
     }
@@ -193,12 +195,12 @@ static void _entry_remove(struct map *hm, struct bucket *bucket, struct entry *e
   --hm->count;
 
   if ((hm->buckets_mask > MIN_BUCKETS - 1) && (hm->count < hm->buckets_mask / 2)) {
-    _rehash(hm, _n_buckets(hm) / 2);
+    _map_rehash(hm, _map_n_buckets(hm) / 2);
   } else {
     uint32_t steps_used = bucket->used / STEPS;
     uint32_t steps_total = bucket->total / STEPS;
     if (steps_used + 1 < steps_total) {
-      struct entry *entries_new = realloc(bucket->entries, ((size_t) steps_used + 1) * STEPS * sizeof(entries_new[0]));
+      struct _map_entry *entries_new = realloc(bucket->entries, ((size_t) steps_used + 1) * STEPS * sizeof(entries_new[0]));
       if (entries_new) {
         bucket->entries = entries_new;
         bucket->total = (steps_used + 1) * STEPS;
@@ -224,10 +226,10 @@ struct map* map_create(
     return 0;
   }
   if (!cmp_fn) {
-    cmp_fn = _ptr_cmp;
+    cmp_fn = _map_ptr_cmp;
   }
   if (!kv_free_fn) {
-    kv_free_fn = _noop_kv_free;
+    kv_free_fn = _map_noop_kv_free;
   }
 
   struct map *hm = xmalloc(sizeof(*hm));
@@ -243,9 +245,9 @@ struct map* map_create(
 
 void map_destroy(struct map *hm) {
   if (hm) {
-    for (struct bucket *b = hm->buckets, *be = hm->buckets + _n_buckets(hm); b < be; ++b) {
+    for (struct _map_bucket *b = hm->buckets, *be = hm->buckets + _map_n_buckets(hm); b < be; ++b) {
       if (b->entries) {
-        for (struct entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
+        for (struct _map_entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
           hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
         }
         free(b->entries);
@@ -258,9 +260,9 @@ void map_destroy(struct map *hm) {
 
 struct map* map_create_u64(void (*kv_free_fn)(void*, void*)) {
   if (!kv_free_fn) {
-    kv_free_fn = _noop_uint64_kv_free;
+    kv_free_fn = _map_noop_uint64_kv_free;
   }
-  struct map *hm = map_create(_uint64_cmp, _hash_uint64_key, kv_free_fn);
+  struct map *hm = map_create(_map_uint64_cmp, _map_hash_uint64_key, kv_free_fn);
   if (hm) {
     if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
       hm->int_key_as_pointer_value = 1;
@@ -270,7 +272,7 @@ struct map* map_create_u64(void (*kv_free_fn)(void*, void*)) {
 }
 
 struct map* map_create_u32(void (*kv_free_fn)(void*, void*)) {
-  struct map *hm = map_create(_uint32_cmp, _hash_uint32_key, kv_free_fn);
+  struct map *hm = map_create(_map_uint32_cmp, _map_hash_uint32_key, kv_free_fn);
   if (hm) {
     hm->int_key_as_pointer_value = 1;
   }
@@ -278,17 +280,17 @@ struct map* map_create_u32(void (*kv_free_fn)(void*, void*)) {
 }
 
 struct map* map_create_str(void (*kv_free_fn)(void*, void*)) {
-  return map_create((int (*)(const void*, const void*)) strcmp, _hash_buf_key, kv_free_fn);
+  return map_create((int (*)(const void*, const void*)) strcmp, _map_hash_buf_key, kv_free_fn);
 }
 
 void map_put(struct map *hm, void *key, void *val) {
   uint32_t hash = hm->hash_key_fn(key);
-  struct entry *entry = _entry_add(hm, key, hash);
+  struct _map_entry *entry = _map_entry_add(hm, key, hash);
   hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : entry->key, entry->val);
   entry->key = key;
   entry->val = val;
   if (hm->count > hm->buckets_mask) {
-    _rehash(hm, _n_buckets(hm) * 2);
+    _map_rehash(hm, _map_n_buckets(hm) * 2);
   }
 }
 
@@ -317,10 +319,10 @@ void map_put_str_no_copy(struct map *hm, const char *key, void *val) {
 
 int map_remove(struct map *hm, const void *key) {
   uint32_t hash = hm->hash_key_fn(key);
-  struct bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
-  struct entry *entry = _entry_find(hm, key, hash);
+  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
+  struct _map_entry *entry = _map_entry_find(hm, key, hash);
   if (entry) {
-    _entry_remove(hm, bucket, entry);
+    _map_entry_remove(hm, bucket, entry);
     return 1;
   } else {
     return 0;
@@ -341,7 +343,7 @@ int map_remove_u32(struct map *hm, uint32_t key) {
 
 void* map_get(struct map *hm, const void *key) {
   uint32_t hash = hm->hash_key_fn(key);
-  struct entry *entry = _entry_find(hm, key, hash);
+  struct _map_entry *entry = _map_entry_find(hm, key, hash);
   if (entry) {
     return entry->val;
   } else {
@@ -369,8 +371,8 @@ void map_clear(struct map *hm) {
   if (!hm) {
     return;
   }
-  for (struct bucket *b = hm->buckets, *be = hm->buckets + _n_buckets(hm); b < be; ++b) {
-    for (struct entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
+  for (struct _map_bucket *b = hm->buckets, *be = hm->buckets + _map_n_buckets(hm); b < be; ++b) {
+    for (struct _map_entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
       hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
     }
     free(b->entries);
@@ -378,8 +380,8 @@ void map_clear(struct map *hm) {
     b->total = 0;
     b->entries = 0;
   }
-  if (_n_buckets(hm) > MIN_BUCKETS) {
-    struct bucket *buckets_new = realloc(hm->buckets, sizeof(buckets_new[0]) * MIN_BUCKETS);
+  if (_map_n_buckets(hm) > MIN_BUCKETS) {
+    struct _map_bucket *buckets_new = realloc(hm->buckets, sizeof(buckets_new[0]) * MIN_BUCKETS);
     if (buckets_new) {
       memset(buckets_new, 0, sizeof(buckets_new[0]) * MIN_BUCKETS);
       hm->buckets = buckets_new;
@@ -401,12 +403,12 @@ int map_iter_next(struct map_iter *iter) {
   if (!iter->hm) {
     return 0;
   }
-  struct entry *entry;
-  struct bucket *bucket = iter->hm->buckets + iter->bucket;
+  struct _map_entry *entry;
+  struct _map_bucket *bucket = iter->hm->buckets + iter->bucket;
 
   ++iter->entry;
   if ((uint32_t) iter->entry >= bucket->used) {
-    uint32_t n = _n_buckets(iter->hm);
+    uint32_t n = _map_n_buckets(iter->hm);
     iter->entry = 0;
     for (++iter->bucket; iter->bucket < n; ++iter->bucket) {
       bucket = iter->hm->buckets + iter->bucket;

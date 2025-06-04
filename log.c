@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include "log.h"
 #include "xstr.h"
@@ -9,6 +10,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#endif
 
 #define LEVEL_VERBOSE 0
 #define LEVEL_INFO    1
@@ -51,7 +53,7 @@ static const char* _error_get(int code) {
   }
 }
 
-static char* _basename(char *path) {
+static char* _log_basename(char *path) {
   size_t i;
   if (!path || *path == '\0') {
     return ".";
@@ -94,8 +96,8 @@ static void _event_va(
   if (file) {
     char *cfile = xstrdup(file);
     if (cfile) {
-      cfile = _basename(cfile);
-      xstr_printf(xstr, "%s:%d ", cfile, line);
+      char *p = _log_basename(cfile);
+      xstr_printf(xstr, "%s:%d ", p, line);
       free(cfile);
     }
   }

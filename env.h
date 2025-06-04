@@ -1,12 +1,14 @@
 #ifndef ENV_H
 #define ENV_H
 
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include "pool.h"
 #include "map.h"
 #include "ulist.h"
 
 #include <stdbool.h>
+#endif
 
 #define AUTARK_CACHE  "autark-cache"
 #define AUTARK_SCRIPT "Autark"

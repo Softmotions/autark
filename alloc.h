@@ -1,23 +1,17 @@
 #ifndef ALLOC_H
 #define ALLOC_H
 
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include "log.h"
 
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#endif
 
 AK_ALLOC static inline char* xstrdup(const char *str) {
   char *ret = strdup(str);
-  if (!ret) {
-    akfatal2("Allocation failed");
-  }
-  return ret;
-}
-
-AK_ALLOC static inline char* xstrndup(const char *str, size_t n) {
-  char *ret = strndup(str, n);
   if (!ret) {
     akfatal2("Allocation failed");
   }

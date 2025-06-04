@@ -1,8 +1,10 @@
 #ifndef POOL_H
 #define POOL_H
 
+#ifndef _AMALGAMATE_
 #include <stddef.h>
 #include <stdarg.h>
+#endif
 
 struct  pool_unit {
   void *heap;

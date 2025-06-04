@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "env.h"
 #include "pool.h"
@@ -11,8 +12,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#endif
 
-struct _ctx {
+struct _configure_ctx {
   struct pool *pool;
   struct node *n;
   struct ulist sources;  // char*
@@ -165,7 +167,7 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
 
 static void _on_resolve(struct node_resolve *r) {
   struct node *n = r->n;
-  struct _ctx *ctx = n->impl;
+  struct _configure_ctx *ctx = n->impl;
   struct ulist *slist = &ctx->sources;
   struct ulist rlist = { .usize = sizeof(char*) };
   struct unit *unit = unit_peek();
@@ -224,7 +226,7 @@ static void _on_resolve(struct node_resolve *r) {
   ulist_destroy_keep(&rlist);
 }
 
-static void _build(struct node *n) {
+static void _configure_build(struct node *n) {
   node_resolve(&(struct node_resolve) {
     .n = n,
     .path = n->vfile,
@@ -232,16 +234,16 @@ static void _build(struct node *n) {
   });
 }
 
-static void _init(struct node *n) {
+static void _configure_init(struct node *n) {
   struct pool *pool = pool_create_empty();
-  struct _ctx *ctx = n->impl = pool_calloc(pool, sizeof(*ctx));
+  struct _configure_ctx *ctx = n->impl = pool_calloc(pool, sizeof(*ctx));
   ctx->pool = pool;
   ulist_init(&ctx->sources, 32, sizeof(char*));
 }
 
 static void _setup_item(struct node *n, const char *v) {
   char buf[PATH_MAX];
-  struct _ctx *ctx = n->impl;
+  struct _configure_ctx *ctx = n->impl;
   struct unit *unit = unit_peek();
 
   char *tgt = 0, *src = path_normalize_cwd(v, unit->dir, buf);
@@ -267,7 +269,7 @@ static void _setup_item(struct node *n, const char *v) {
   free(src);
 }
 
-static void _setup(struct node *n) {
+static void _configure_setup(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     const char *v = node_value(nn);
     if (is_vlist(v)) {
@@ -284,8 +286,8 @@ static void _setup(struct node *n) {
   }
 }
 
-static void _dispose(struct node *n) {
-  struct _ctx *ctx = n->impl;
+static void _configure_dispose(struct node *n) {
+  struct _configure_ctx *ctx = n->impl;
   if (ctx) {
     ulist_destroy_keep(&ctx->sources);
     pool_destroy(ctx->pool);
@@ -294,9 +296,9 @@ static void _dispose(struct node *n) {
 
 int node_configure_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
-  n->dispose = _dispose;
-  n->init = _init;
-  n->setup = _setup;
-  n->build = _build;
+  n->dispose = _configure_dispose;
+  n->init = _configure_init;
+  n->setup = _configure_setup;
+  n->build = _configure_build;
   return 0;
 }

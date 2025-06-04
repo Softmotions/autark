@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "basedefs.h"
 #include "pool.h"
 #include "utils.h"
@@ -5,6 +6,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#endif
 
 #define _UNIT_ALIGN_SIZE 8UL
 

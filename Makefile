@@ -9,7 +9,7 @@ SRC = xstr.c \
 			utils.c \
 			map.c \
 			paths.c \
-			autark.c \
+			autark_core.c \
 			script.c \
 			spawn.c \
 			deps.c \
@@ -27,8 +27,7 @@ SRC = xstr.c \
 
 
 OBJ = $(SRC:.c=.o)
-HDRS = config.h \
-			 basedefs.h \
+HDRS = basedefs.h \
 			 alloc.h \
 			 xstr.h \
 			 ulist.h \
@@ -43,6 +42,7 @@ HDRS = config.h \
 			 spawn.h \
 			 deps.h \
 			 scriptx.h \
+			 script_impl.h \
 			 nodes.h
 
 all: autark libs

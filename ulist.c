@@ -1,8 +1,10 @@
+#ifndef _AMALGAMATE_
 #include "ulist.h"
 #include "alloc.h"
 #include "xstr.h"
 
 #include <string.h>
+#endif
 
 #define _ALLOC_UNIT 32
 

@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "deps.h"
 #include "log.h"
 #include "utils.h"
@@ -9,6 +10,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <inttypes.h>
+#endif
 
 int deps_open(const char *path, int omode, struct deps *d) {
   int rc = 0;

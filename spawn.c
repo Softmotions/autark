@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "spawn.h"
 #include "log.h"
 #include "ulist.h"
@@ -7,13 +8,13 @@
 #include "utils.h"
 
 #include <errno.h>
-#include <linux/limits.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
 
 extern char **environ;
 

@@ -1,9 +1,11 @@
 #ifndef SPAWN_H
 #define SPAWN_H
 
+#ifndef _AMALGAMATE_
 #include <stddef.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#endif
 
 struct spawn;
 

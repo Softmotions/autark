@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "script.h"
 #include "spawn.h"
 #include "env.h"
@@ -6,27 +7,28 @@
 
 #include <unistd.h>
 #include <string.h>
+#endif
 
-struct _spawn_data {
+struct _run_spawn_data {
   struct node *n;
   const char  *cmd;
 };
 
-static void _stdout_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _run_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stdout, "%s", buf);
 }
 
-static void _stderr_handler(char *buf, size_t buflen, struct spawn *s) {
+static void _run_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
   fprintf(stderr, "%s", buf);
 }
 
-struct _on_resolve_ctx {
+struct _run_on_resolve_ctx {
   struct node_resolve *r;
   struct ulist consumes; // sizeof(char*)
 };
 
-static void _on_resolve(struct node_resolve *r) {
-  struct _on_resolve_ctx *ctx = r->user_data;
+static void _run_on_resolve(struct node_resolve *r) {
+  struct _run_on_resolve_ctx *ctx = r->user_data;
   struct node *n = r->n;
 
   struct node *ncmd = n->child;
@@ -40,14 +42,14 @@ static void _on_resolve(struct node_resolve *r) {
   }
 
   struct unit *unit = unit_peek();
-  struct spawn *s = spawn_create(cmd, &(struct _spawn_data) {
+  struct spawn *s = spawn_create(cmd, &(struct _run_spawn_data) {
     .cmd = cmd,
     .n = n
   });
   spawn_env_path_prepend(s, unit->dir);
   spawn_env_path_prepend(s, unit->cache_dir);
-  spawn_set_stdout_handler(s, _stdout_handler);
-  spawn_set_stderr_handler(s, _stderr_handler);
+  spawn_set_stdout_handler(s, _run_stdout_handler);
+  spawn_set_stderr_handler(s, _run_stderr_handler);
 
   for (struct node *nn = (ncmd == n->child) ? ncmd->child : ncmd->next; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
@@ -92,7 +94,7 @@ static void _on_resolve(struct node_resolve *r) {
   deps_close(&deps);
 }
 
-static void _setup(struct node *n) {
+static void _run_setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
   if (!nn) {
     nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
@@ -110,21 +112,21 @@ static void _setup(struct node *n) {
   }
 }
 
-static void _on_consumed_resolved(const char *path_, void *d) {
-  struct _on_resolve_ctx *ctx = d;
+static void _run_on_consumed_resolved(const char *path_, void *d) {
+  struct _run_on_resolve_ctx *ctx = d;
   const char *path = pool_strdup(ctx->r->pool, path_);
   ulist_push(&ctx->consumes, &path);
 }
 
-static void _on_resolve_init(struct node_resolve *r) {
-  struct _on_resolve_ctx *ctx = r->user_data;
+static void _run_on_resolve_init(struct node_resolve *r) {
+  struct _run_on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
   node_consumes_resolve(
-    r->n, node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes"), _on_consumed_resolved, ctx);
+    r->n, node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes"), _run_on_consumed_resolved, ctx);
 }
 
-static void _build(struct node *n) {
-  struct _on_resolve_ctx ctx = {
+static void _run_build(struct node *n) {
+  struct _run_on_resolve_ctx ctx = {
     .consumes = { .usize = sizeof(char*) }
   };
 
@@ -132,8 +134,8 @@ static void _build(struct node *n) {
     .n = n,
     .path = n->vfile,
     .user_data = &ctx,
-    .on_init = _on_resolve_init,
-    .on_resolve = _on_resolve,
+    .on_init = _run_on_resolve_init,
+    .on_resolve = _run_on_resolve,
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
@@ -156,7 +158,7 @@ static void _build(struct node *n) {
 
 int node_run_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
-  n->setup = _setup;
-  n->build = _build;
+  n->setup = _run_setup;
+  n->build = _run_build;
   return 0;
 }

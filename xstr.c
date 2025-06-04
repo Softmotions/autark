@@ -1,9 +1,11 @@
+#ifndef _AMALGAMATE_
 #include "xstr.h"
 #include "alloc.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#endif
 
 struct xstr* xstr_create(size_t siz) {
   if (!siz) {

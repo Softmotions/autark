@@ -1,3 +1,4 @@
+#ifndef _AMALGAMATE_
 #include "utils.h"
 #include "xstr.h"
 #include "log.h"
@@ -8,6 +9,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#endif
 
 int utils_exec_path(char buf[PATH_MAX]) {
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
