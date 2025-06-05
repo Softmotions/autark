@@ -17,7 +17,7 @@
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U
 
-#define DEPS_BUF_SZ 8192
+#define DEPS_BUF_SZ 16384
 
 struct deps {
   char    type;
