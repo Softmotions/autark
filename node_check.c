@@ -26,7 +26,9 @@ static void _check_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 static void _check_on_env_value(struct node_resolve *nr, const char *key, const char *val) {
   struct unit *unit = nr->user_data;
   akassert(unit->n);
-  akinfo("%s %s=%s", unit->rel_path, key, val);
+  if (g_env.verbose) {
+    akinfo("%s %s=%s", unit->rel_path, key, val);
+  }
   node_env_set(unit->n, key, val);
 }
 
@@ -66,7 +68,9 @@ static void _check_on_resolve(struct node_resolve *r) {
 static void _check_script(struct node *n) {
   struct unit *parent = unit_peek();
   const char *script = node_value(n);
-  node_info(n->parent, "%s", script);
+  if (g_env.verbose) {
+    node_info(n->parent, "%s", script);
+  }
 
   struct pool *pool = pool_create(on_unit_pool_destroy);
   const char *path = pool_printf(pool, "%s/.autark/%s", parent->dir, script);

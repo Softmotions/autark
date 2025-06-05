@@ -352,7 +352,7 @@ static void _cc_setup(struct node *n) {
     const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";
     if (key) {
       ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
-      if (ctx->cc) {
+      if (g_env.verbose && ctx->cc) {
         node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
       }
     }
@@ -360,7 +360,7 @@ static void _cc_setup(struct node *n) {
   if (!ctx->cc) {
     ctx->cc = "cc";
     node_warn(n, "Fallback compiler: %s", ctx->cc);
-  } else {
+  } else if (g_env.verbose) {
     node_info(n, "Compiler: %s", ctx->cc);
   }
 
@@ -375,7 +375,9 @@ static void _cc_setup(struct node *n) {
       objskey = "CXX_OBJS";
     }
   }
-  node_info(n, "Objects in ${%s}", objskey);
+  if (g_env.verbose) {
+    node_info(n, "Objects in ${%s}", objskey);
+  }
   char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, objskey, objs);
   free(objs);

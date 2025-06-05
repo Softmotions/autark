@@ -537,7 +537,9 @@ void node_build(struct node *n) {
   if (!node_is_built(n)) {
     _build_subnodes(n);
     if (n->build) {
-      node_info(n, "Build");
+      if (g_env.verbose) {
+        node_info(n, "Build");
+      }
       struct xnode *x = (void*) n;
       x->bld_calls++;
       if (x->bld_calls > 1) {
