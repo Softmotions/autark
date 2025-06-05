@@ -1,6 +1,7 @@
 #ifndef _AMALGAMATE_
 
-#define VERSION "dev"
+#define VERSION  "dev"
+#define REVISION ""
 
 #include "env.h"
 #include "utils.h"
@@ -219,11 +220,14 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
   fprintf(stderr,
-          "\nautark set <key> <value>\n"
+          "\nautark set <key>=<value>\n"
           "  Sets key/value pair as output for check script.\n");
   fprintf(stderr,
           "\nautark dep <file>\n"
           "  Registers a given file as dependency for check script.\n");
+  fprintf(stderr,
+          "\nautark env <env>\n"
+          "  Registers a given environment variable as dependency for check script.\n");
 
   fprintf(stderr, "\n");
   return AK_ERROR_INVALID_ARGS;
@@ -356,7 +360,12 @@ static void _on_command_set(int argc, const char **argv) {
   fclose(f);
 }
 
-static void _on_command_dep_impl(const char *file) {
+static void _on_command_dep(int argc, const char **argv) {
+  _project_env_read();
+  if (optind >= argc) {
+    _usage("Missing required dependency option");
+  }
+  const char *file = argv[optind];
   if (g_env.verbose) {
     akinfo("autark dep %s", file);
   }
@@ -378,12 +387,31 @@ static void _on_command_dep_impl(const char *file) {
   deps_close(&deps);
 }
 
-static void _on_command_dep(int argc, const char **argv) {
+static void _on_command_dep_env(int argc, const char **argv) {
   _project_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
   }
-  _on_command_dep_impl(argv[optind]);
+  const char *key = argv[optind];
+  if (g_env.verbose) {
+    akinfo("autark dep env %s", key);
+  }
+  const char *val = getenv(key);
+  if (!val) {
+    val = "";
+  }
+  struct deps deps;
+  struct unit *unit = unit_peek();
+  const char *deps_path = pool_printf(g_env.pool, "%s.%s", unit->cache_path, "deps.tmp");
+  int rc = deps_open(deps_path, false, &deps);
+  if (rc) {
+    akfatal(rc, "Failed to open deps file: %s", deps_path);
+  }
+  rc = deps_add_sys_env(&deps, 0, key, val);
+  if (rc) {
+    akfatal(rc, "Failed to write deps file: %s", deps_path);
+  }
+  deps_close(&deps);
 }
 
 #ifdef TESTS
@@ -394,6 +422,10 @@ void on_command_set(int argc, const char **argv) {
 
 void on_command_dep(int argc, const char **argv) {
   _on_command_dep(argc, argv);
+}
+
+void on_command_dep_env(int argc, const char **argv) {
+  _on_command_dep_env(argc, argv);
 }
 
 #endif
@@ -451,9 +483,11 @@ void autark_run(int argc, const char **argv) {
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "quiet", 0, 0, 'q' },
-    {"version", 0, 0, 'v'},
+    { "version", 0, 0, 'v' },
     { 0 }
   };
+
+  bool version = false;
 
   for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvq", long_options, 0)) != -1; ) {
     switch (ch) {
@@ -470,12 +504,21 @@ void autark_run(int argc, const char **argv) {
         g_env.project.cleanup = true;
         break;
       case 'v':
-        puts(VERSION);
-        exit(0);
+        version = true;
+        break;
       case 'h':
       default:
         _usage(0);
     }
+  }
+
+  if (version) {
+    printf(VERSION);
+    if (g_env.verbose) {
+      puts("\nRevision: " REVISION);
+    }
+    fflush(stdout);
+    _exit(0);
   }
 
   if (!g_env.verbose) {
@@ -483,6 +526,11 @@ void autark_run(int argc, const char **argv) {
     if (v && *v == '1') {
       g_env.verbose = true;
     }
+  }
+
+  const char *home = getenv("AUTARK_HOME");
+  if (home) {
+    g_env.spawn.extra_env_paths = path_normalize_pool(pool_strdup(g_env.pool, home), g_env.pool);
   }
 
   if (optind < argc) {
@@ -493,6 +541,9 @@ void autark_run(int argc, const char **argv) {
       return;
     } else if (strcmp(arg, "dep") == 0) {
       _on_command_dep(argc, argv);
+      return;
+    } else if (strcmp(arg, "env") == 0) {
+      _on_command_dep_env(argc, argv);
       return;
     } else { // Root dir expected
       g_env.project.root_dir = pool_strdup(g_env.pool, arg);

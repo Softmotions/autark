@@ -3,13 +3,19 @@ set -e
 
 cd "$(cd "$(dirname "$0")" pwd -P)"
 
-VERSION=0.98
-F=./autark.c
+VERSION=${VERSION:-dev}
+REVISION="$(git rev-parse --short HEAD)"
 
-REV="$(git rev-parse --short HEAD)"
-echo "#define VERSION \"${VERSION} (${REV})\"" > ${F}
+#rm -rf ./dist
+mkdir -p ./dist
 
-cat <<EOF >> ${F}
+F=./dist/autark.c
+B=./dist/build.sh
+
+echo "#define VERSION \"${VERSION}\"" > ${F}
+echo "#define REVISION \"${REVISION}\"" >> ${F}
+
+cat <<'EOF' >> ${F}
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
 #define _DEFAULT_SOURCE
@@ -77,3 +83,58 @@ cat ./main.c >> ${F}
 cat ./script_impl.h >> ${F}
 leg -P ./scriptx.leg >> ${F}
 cat ./script.c >> ${F}
+
+# Make a build script
+
+cat<<EOF > ${B}
+#!/bin/sh
+# Autark build system script wrapper.
+
+VERSION=${VERSION}
+REVISION=${REVISION}
+EOF
+
+cat <<'EOF' >> ${B}
+cd "$(cd "$(dirname "$0")" pwd -P)"
+
+export AUTARK_HOME=${HOME}/.autark
+AUTARK=${AUTARK_HOME}/autark
+
+if [ ${VERSION} = "$(${AUTARK} -v)" ]; then
+  ${AUTARK} "$@"
+  exit $?
+fi
+
+set -e
+echo "Building Autark executable in ${AUTARK_HOME}"
+
+if [ -n "$CC" ] && command -v "$CC" >/dev/null 2>&1; then
+  COMPILER="$CC"
+elif command -v clang >/dev/null 2>&1; then
+  COMPILER=clang
+elif command -v gcc >/dev/null 2>&1; then
+  COMPILER=gcc
+else
+  echo "No suitable C compiler found" >&2
+  exit 1
+fi
+
+mkdir -p ${AUTARK_HOME}
+cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
+EOF
+
+cat ${F} | sed -r '/^\s*$/d' >> ${B}
+echo 'a292effa503b' >> ${B}
+
+cat <<'EOF' >> ${B}
+
+(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -o ${AUTARK_HOME}/autark)
+echo "Done"
+
+set +e
+${AUTARK} "$@"
+exit $?
+EOF
+
+chmod u+x ${B}
+ln -sf ${B} ./build.sh

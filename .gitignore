@@ -1,10 +1,10 @@
+dist/
 .cache/
 autark
+/build.sh
 Scratch
 compile_commands.json
-
-/autark.c
-autark-cache
+autark-cache/
 
 # Prerequisites
 *.d

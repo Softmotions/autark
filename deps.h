@@ -11,6 +11,7 @@
 #define DEPS_TYPE_FILE       102 // f
 #define DEPS_TYPE_NODE_VALUE 118 // v
 #define DEPS_TYPE_ENV        101 // e
+#define DEPS_TYPE_SYS_ENV    69  // E
 #define DEPS_TYPE_OUTDATED   111 // o
 #define DEPS_TYPE_ALIAS      97  // a
 
@@ -41,6 +42,8 @@ int deps_add(struct deps*, char type, char flags, const char *resource, int64_t 
 int deps_add_alias(struct deps*, char flags, const char *resource, const char *alias);
 
 int deps_add_env(struct deps *d, char flags, const char *key, const char *value);
+
+int deps_add_sys_env(struct deps *d, char flags, const char *key, const char *value);
 
 void deps_close(struct deps*);
 

@@ -1,7 +1,7 @@
-/autark.c
-autark-cache
+autark-cache/
 .data/
 .cache/
 build/
+dist/
 *.o
 *.a
