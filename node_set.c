@@ -25,13 +25,13 @@ static const char* _set_value_get(struct node *n) {
   struct node *nn = n->child->next;
   if (!nn) {
     n->impl = xstrdup("");
-    goto finish;
+    return n->impl;
   }
 
   if (!nn->next && nn->value[0] != '.') { // Single value
     const char *v = node_value(nn);
     n->impl = xstrdup(v);
-    goto finish;
+    return n->impl;
   }
 
   struct xstr *xstr = xstr_create_empty();
@@ -51,8 +51,6 @@ static const char* _set_value_get(struct node *n) {
   }
 
   n->impl = xstr_destroy_keep_ptr(xstr);
-
-finish:
   return n->impl;
 }
 
