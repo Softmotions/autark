@@ -22,6 +22,7 @@ struct _cc_ctx {
   struct node *n_sources;
   struct node *n_cc;
   struct node *n_consumes;
+  struct node *n_objects;
   const char  *cc;
   struct ulist consumes; // sizeof(char*)
 };
@@ -350,9 +351,9 @@ static void _cc_setup(struct node *n) {
   if (!ctx->cc) {
     const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";
     if (key) {
-      ctx->cc = pool_strdup(ctx->pool, getenv(key));
+      ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
       if (ctx->cc) {
-        node_warn(n, "Found %s compiler in environment: %s", ctx->cc, key);
+        node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
       }
     }
   }
@@ -363,12 +364,18 @@ static void _cc_setup(struct node *n) {
     node_info(n, "Compiler: %s", ctx->cc);
   }
 
-  const char *objskey;
-  if (strcmp(n->value, "cc") == 0) {
-    objskey = "CC_OBJS";
-  } else {
-    objskey = "CXX_OBJS";
+  const char *objskey = 0;
+  if (ctx->n_objects && ctx->n_objects->child) {
+    objskey = node_value(ctx->n_objects->child);
   }
+  if (!objskey) {
+    if (strcmp(n->value, "cc") == 0) {
+      objskey = "CC_OBJS";
+    } else {
+      objskey = "CXX_OBJS";
+    }
+  }
+  node_info(n, "Objects in ${%s}", objskey);
   char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, objskey, objs);
   free(objs);
@@ -379,6 +386,9 @@ static void _cc_init(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "consumes") == 0) {
       ctx->n_consumes = nn;
+      continue;
+    } else if (strcmp(nn->value, "objects") == 0) {
+      ctx->n_objects = nn;
       continue;
     }
     if (!ctx->n_sources) {

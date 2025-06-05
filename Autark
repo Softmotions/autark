@@ -61,21 +61,52 @@ set {
   ulist.c
   utils.c
   xstr.c
-  main.c
 }
 
 cc {
   ${SOURCES}
   ${CFLAGS}
   ${CC}
+  objects {
+    CC_LIB_OBJS
+  }
+  consumes {
+    scriptx.h
+  }
+}
+
+cc {
+  main.c
+  ${CFLAGS}
 }
 
 run {
-  exec { ${CC} -o autark ${CC_OBJS} }
+  exec { ${AR} rcs libautark.a ${CC_LIB_OBJS} }
   consumes {
+    ${CC_LIB_OBJS}
+  }
+  produces {
+    libautark.a
+  }
+}
+
+run {
+  exec { ${CC} -o autark ${CC_LIB_OBJS} ${CC_OBJS} }
+  consumes {
+    ${CC_LIB_OBJS}
     ${CC_OBJS}
   }
   produces {
     autark
+  }
+}
+
+run {
+  exec { ${LEG} ../scriptx.leg -o scriptx.h }
+  consumes {
+    scriptx.leg
+  }
+  produces {
+    scriptx.h
   }
 }

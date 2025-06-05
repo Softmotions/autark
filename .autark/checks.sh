@@ -13,5 +13,4 @@ esac
 set -e
 
 autark set "LEG=${LEG}"
-autark set "CC=${CC:=cc}"
-autark env CC
+autark set "AR=ar"
