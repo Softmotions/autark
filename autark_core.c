@@ -469,7 +469,7 @@ void _build(void) {
   }
   script_build(x);
   script_close(&x);
-  akinfo("Build success");
+  akinfo("Build successful");
 }
 
 void autark_init(void) {

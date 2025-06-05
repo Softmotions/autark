@@ -38,7 +38,7 @@ set {
 }
 
 set {
-  SOURCES
+  SOURCES_LIB
   autark_core.c
   deps.c
   log.c
@@ -64,11 +64,11 @@ set {
 }
 
 cc {
-  ${SOURCES}
+  ${SOURCES_LIB}
   ${CFLAGS}
   ${CC}
   objects {
-    CC_LIB_OBJS
+    CC_OBJS_LIB
   }
   consumes {
     scriptx.h
@@ -81,9 +81,9 @@ cc {
 }
 
 run {
-  exec { ${AR} rcs libautark.a ${CC_LIB_OBJS} }
+  exec { ${AR} rcs libautark.a ${CC_OBJS_LIB} }
   consumes {
-    ${CC_LIB_OBJS}
+    ${CC_OBJS_LIB}
   }
   produces {
     libautark.a
@@ -91,9 +91,9 @@ run {
 }
 
 run {
-  exec { ${CC} -o autark ${CC_LIB_OBJS} ${CC_OBJS} }
+  exec { ${CC} -o autark ${CC_OBJS_LIB} ${CC_OBJS} }
   consumes {
-    ${CC_LIB_OBJS}
+    ${CC_OBJS_LIB}
     ${CC_OBJS}
   }
   produces {
