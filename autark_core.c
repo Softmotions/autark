@@ -451,8 +451,6 @@ void autark_init(void) {
       akfatal(errno, 0, 0);
     }
     g_env.cwd = pool_strdup(g_env.pool, buf);
-    akcheck(utils_exec_path(buf));
-    g_env.program = pool_strdup(g_env.pool, buf);
     g_env.map_path_to_unit = map_create_str(0);
   }
 }

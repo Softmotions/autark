@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define ASSERT(label__, expr__)                                       \
         if (!(expr__)) {                                              \
@@ -47,10 +48,11 @@ static inline void test_init(bool cleanup) {
   g_env.verbose = true;
   g_env.project.cleanup = cleanup;
   autark_init();
-  g_env.spawn.extra_env_paths = path_normalize_pool(pool_printf(g_env.pool, "%s/../..", g_env.program), g_env.pool);
+  g_env.spawn.extra_env_paths = path_normalize_pool("./..", g_env.pool);
 }
 
 static inline void test_reinit(bool cleanup) {
   autark_dispose();
   test_init(cleanup);
 }
+

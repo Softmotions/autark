@@ -47,7 +47,6 @@ struct unit_ctx {
 /// Global env
 struct env {
   const char  *cwd;
-  const char  *program;
   struct pool *pool;
   int verbose;
   int quiet;
