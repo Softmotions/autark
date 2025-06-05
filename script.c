@@ -650,13 +650,13 @@ const char* node_env_get(struct node *n, const char *key) {
   const char *ret = 0;
   for ( ; n; n = n->parent) {
     if (n->unit) {
-      ret = map_get(n->unit->env, key);
+      ret = unit_env_get_raw(n->unit, key);
       if (ret) {
         return ret;
       }
     }
   }
-  return 0;
+  return getenv(key);
 }
 
 void node_env_set(struct node *n, const char *key, const char *val) {
@@ -664,7 +664,7 @@ void node_env_set(struct node *n, const char *key, const char *val) {
     if (val) {
       node_info(n, "%s=%s", key, val);
     } else {
-      node_info(n, "UNSET %s=%s", key);
+      node_info(n, "UNSET %s", key);
     }
   }
   if (key[0] == '_' && key[1] == '\0') {
@@ -674,10 +674,23 @@ void node_env_set(struct node *n, const char *key, const char *val) {
   for ( ; n; n = n->parent) {
     if (n->unit) {
       if (val) {
-        unit_env_set(n->unit, key, val);
+        unit_env_set_val(n->unit, key, val);
       } else {
         unit_env_remove(n->unit, key);
       }
+      return;
+    }
+  }
+}
+
+void node_env_set_node(struct node *n_, const char *key) {
+  if (key[0] == '_' && key[1] == '\0') {
+    // Skip on special '_' key
+    return;
+  }
+  for (struct node *n = n_; n; n = n->parent) {
+    if (n->unit) {
+      unit_env_set_node(n->unit, key, n_);
       return;
     }
   }

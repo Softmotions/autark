@@ -29,9 +29,40 @@ static void _unit_destroy(struct unit *unit) {
   map_destroy(unit->env);
 }
 
-void unit_env_set(struct unit *u, const char *key, const char *val_) {
-  char *val = val_ ? xstrdup(val_) : 0;
-  map_put_str(u->env, key, val);
+void unit_env_set_val(struct unit *u, const char *key, const char *val) {
+  size_t len = sizeof(struct unit_env_item);
+  if (val) {
+    len += strlen(val) + 1;
+  }
+  struct unit_env_item *item = xmalloc(len);
+  item->n = 0;
+  if (len > sizeof(struct unit_env_item)) {
+    char *wp = ((char*) item) + sizeof(struct unit_env_item);
+    memcpy(wp, val, len - sizeof(struct unit_env_item));
+    item->val = wp;
+  } else {
+    item->val = 0;
+  }
+  map_put_str(u->env, key, item);
+}
+
+void unit_env_set_node(struct unit *u, const char *key, struct node *n) {
+  struct unit_env_item *item = xmalloc(sizeof(*item));
+  item->val = 0;
+  item->n = n;
+  map_put_str(u->env, key, item);
+}
+
+const char* unit_env_get_raw(struct unit *u, const char *key) {
+  struct unit_env_item *item = map_get(u->env, key);
+  if (item) {
+    if (item->val) {
+      return item->val;
+    } else {
+      return node_value(item->n);
+    }
+  }
+  return 0;
 }
 
 const char* unit_env_get(struct unit *u, const char *key) {
@@ -39,14 +70,14 @@ const char* unit_env_get(struct unit *u, const char *key) {
   for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
     struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
     if (prev != c->unit) {
-      const char *ret = map_get(c->unit->env, key);
+      const char *ret = unit_env_get_raw(c->unit, key);
       if (ret) {
         return ret;
       }
     }
     prev = c->unit;
   }
-  return 0;
+  return getenv(key);
 }
 
 void unit_env_remove(struct unit *u, const char *key) {
@@ -127,11 +158,11 @@ struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *po
     }
   }
   if (unit->flags & UNIT_FLG_ROOT) {
-    unit_env_set(unit, "AUTARK_ROOT_DIR", unit->dir);
-    unit_env_set(unit, "AUTARK_CACHE_DIR", unit->cache_dir);
+    unit_env_set_val(unit, "AUTARK_ROOT_DIR", unit->dir);
+    unit_env_set_val(unit, "AUTARK_CACHE_DIR", unit->cache_dir);
   }
-  unit_env_set(unit, "UNIT_DIR", unit->dir);
-  unit_env_set(unit, "UNIT_CACHE_DIR", unit->cache_dir);
+  unit_env_set_val(unit, "UNIT_DIR", unit->dir);
+  unit_env_set_val(unit, "UNIT_CACHE_DIR", unit->cache_dir);
 
   return unit;
 }
@@ -407,7 +438,7 @@ static void _on_command_dep_env(int argc, const char **argv) {
   if (rc) {
     akfatal(rc, "Failed to open deps file: %s", deps_path);
   }
-  rc = deps_add_sys_env(&deps, 0, key, val);
+  rc = deps_add_env(&deps, 0, key, val);
   if (rc) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }

@@ -10,18 +10,30 @@ static void _set_init(struct node *n) {
   if (!name) {
     return;
   }
+  node_env_set_node(n, name);
+}
+
+static const char* _set_value_get(struct node *n) {
+  if ((uintptr_t) n->impl == (uintptr_t) -1) {
+    return 0;
+  } else if (n->impl) {
+    return n->impl;
+  }
+
+  n->impl = (void*) (uintptr_t) -1;
+
   struct node *nn = n->child->next;
   if (!nn) {
-    node_env_set(n, name, "");
     n->impl = xstrdup("");
-    return;
+    goto finish;
   }
+
   if (!nn->next && nn->value[0] != '.') { // Single value
     const char *v = node_value(nn);
-    node_env_set(n, name, v);
     n->impl = xstrdup(v);
-    return;
+    goto finish;
   }
+
   struct xstr *xstr = xstr_create_empty();
   for ( ; nn; nn = nn->next) {
     const char *v = node_value(nn);
@@ -37,21 +49,23 @@ static void _set_init(struct node *n) {
       xstr_cat(xstr, v);
     }
   }
-  node_env_set(n, name, xstr_ptr(xstr));
-  n->impl = xstr_destroy_keep_ptr(xstr);
-}
 
-static const char* _set_value_get(struct node *n) {
+  n->impl = xstr_destroy_keep_ptr(xstr);
+
+finish:
   return n->impl;
 }
 
 static void _set_dispose(struct node *n) {
-  free(n->impl);
+  if ((uintptr_t) n->impl != (uintptr_t) -1) {
+    free(n->impl);
+    n->impl = 0;
+  }
 }
 
 int node_set_setup(struct node *n) {
   n->init = _set_init;
-  n->dispose = _set_dispose;
   n->value_get = _set_value_get;
+  n->dispose = _set_dispose;
   return 0;
 }

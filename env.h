@@ -23,9 +23,14 @@
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
 #define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
 
+struct unit_env_item {
+  const char  *val;
+  struct node *n;
+};
+
 /// Current execution unit.
 struct unit {
-  struct map  *env;         // Environment associated with unit.
+  struct map  *env;         // Environment associated with unit. struct unit_env_item.
   const char  *rel_path;    // Path to unit relative to the project root and project cache.
   const char  *basename;    // Basename of unit path.
   const char  *dir;         // Absolute path to unit dir.
@@ -89,9 +94,13 @@ void unit_ch_cache_dir(struct unit*, char *prevcwd);
 
 void unit_ch_src_dir(struct unit*, char *prevcwd);
 
-void unit_env_set(struct unit*, const char *key, const char *val);
+void unit_env_set_val(struct unit*, const char *key, const char *val);
+
+void unit_env_set_node(struct unit*, const char *key, struct node *n);
 
 const char* unit_env_get(struct unit*, const char *key);
+
+const char* unit_env_get_raw(struct unit *u, const char *key);
 
 void unit_env_remove(struct unit*, const char *key);
 

@@ -92,7 +92,7 @@ static inline uint32_t _map_hash_uint64(uint64_t x) {
 
 static inline uint32_t _map_hash_uint64_key(const void *key) {
   uint64_t lv = 0;
-  memcpy(&lv, key, sizeof(key));
+  memcpy(&lv, key, sizeof(void*));
   return _map_hash_uint64(lv);
 }
 

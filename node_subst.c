@@ -37,14 +37,7 @@ static const char* _subst_value(struct node *n) {
       return _subst_setval(n, 0, dv);
     }
     const char *vv = node_env_get(n, key);
-    if (vv) {
-      return _subst_setval(n, vv, 0);
-    }
-    const char *ev = getenv(key);
-    if (!ev && !dv_ && g_env.verbose) {
-      node_warn(n, "No ${%s} variable/env", key);
-    }
-    return _subst_setval(n, ev, dv);
+    return _subst_setval(n, vv, dv);
   }
   return "";
 }

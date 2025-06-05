@@ -1,3 +1,13 @@
+meta {
+  name { Autark }
+  description { Autark build system }
+  author { Adamansky Anton (adamansky@gmail.com) }
+  website { https://autark.dev }
+  sources { https://git.sr.ht/~adamansky/autark }
+  license { MIT }
+  version { 0.9.0 }
+}
+
 check {
   checks.sh
 }
@@ -5,4 +15,67 @@ check {
 set {
   CC
   ${CC cc}
+}
+
+set {
+  CFLAGS
+  -std=c99
+  -D_XOPEN_SOURCE=600
+  -D_DEFAULT_SOURCE
+  if { defined { BUILD_TESTS } -DTESTS }
+  if { eq { ${BUILD_TYPE} Release }
+    -O1
+    -DNDEBUG
+  } else {
+    -O0
+    -ggdb
+    -DDEBUG=1
+  }
+  -Wall -Wextra -Wpedantic
+  -Wno-sign-compare
+  -Wno-unused-parameter
+  ..${CFLAGS}
+}
+
+set {
+  SOURCES
+  autark_core.c
+  deps.c
+  log.c
+  map.c
+  node_cc.c
+  node_check.c
+  node_configure.c
+  node_if.c
+  node_include.c
+  node_join.c
+  node_meta.c
+  node_run.c
+  node_script.c
+  node_set.c
+  node_subst.c
+  paths.c
+  pool.c
+  script.c
+  spawn.c
+  ulist.c
+  utils.c
+  xstr.c
+  main.c
+}
+
+cc {
+  ${SOURCES}
+  ${CFLAGS}
+  ${CC}
+}
+
+run {
+  exec { ${CC} -o autark ${CC_OBJS} }
+  consumes {
+    ${CC_OBJS}
+  }
+  produces {
+    autark
+  }
 }

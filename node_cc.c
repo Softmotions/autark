@@ -65,17 +65,28 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
     return;
   }
 
+  bool nl = false;
+
   while ((p = fgets(buf, sizeof(buf), f))) {
-    if (!utils_startswith(p, obj)) {
-      continue;
+    if (!nl) {
+      if (!utils_startswith(p, obj)) {
+        continue;
+      }
+      p += len;
+      if (*p++ != ':') {
+        continue;
+      }
+    } else {
+      nl = false;
     }
-    p += len;
-    if (*p++ != ':') {
-      continue;
-    }
+
     while (*p != '\0') {
       while (*p != '\0' && utils_char_is_space(*p)) {
         ++p;
+      }
+      if (p[0] == '\\' && p[1] == '\n') {
+        nl = true;
+        break;
       }
       char *sp = p;
       char *ep = sp;
