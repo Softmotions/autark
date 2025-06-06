@@ -41,6 +41,7 @@ cc {
 
 run {
   exec { ${CC} -o hello ${CC_OBJS} ${LDFLAGS}}
+  shell { LC_ALL=C ls -al ./hello }
   consumes {
     ${CC_OBJS}
   }

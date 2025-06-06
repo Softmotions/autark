@@ -4,7 +4,10 @@
 #include "env.h"
 #include "log.h"
 #include "spawn.h"
+#include "utils.h"
+#include "log.h"
 
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #endif
@@ -27,15 +30,42 @@ struct _run_on_resolve_ctx {
   struct ulist consumes; // sizeof(char*)
 };
 
-static void _run_on_resolve(struct node_resolve *r) {
-  struct _run_on_resolve_ctx *ctx = r->user_data;
+static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
   struct node *n = r->n;
-
-  struct node *ncmd = n->child;
-  if (strcmp(ncmd->value, "exec") == 0) {
-    ncmd = ncmd->child;
+  struct xstr *xstr = xstr_create_empty();
+  for (struct node *nn = nn_; nn; nn = nn->next) {
+    if (nn != nn_) {
+      xstr_cat2(xstr, " ", 1);
+    }
+    const char *v = node_value(nn);
+    if (is_vlist(v)) {
+      struct vlist_iter iter;
+      vlist_iter_init(v, &iter);
+      while (vlist_iter_next(&iter)) {
+        if (xstr_size(xstr)) {
+          xstr_cat2(xstr, " ", 1);
+        }
+        xstr_cat2(xstr, iter.item, iter.len);
+      }
+    } else {
+      xstr_cat(xstr, v);
+    }
   }
 
+  if (!g_env.quiet) {
+    puts(xstr_ptr(xstr));
+  }
+  int rc = system(xstr_ptr(xstr));
+  if (rc == -1) {
+    node_fatal(errno, n, "Failed to execute shell command: %s", xstr_ptr(xstr));
+  } else if (rc) {
+    node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", xstr_ptr(xstr), rc);
+  }
+  xstr_destroy(xstr);
+}
+
+static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
+  struct node *n = r->n;
   const char *cmd = node_value(ncmd);
   if (!cmd) {
     node_fatal(AK_ERROR_FAIL, n, "No run command specified");
@@ -51,7 +81,7 @@ static void _run_on_resolve(struct node_resolve *r) {
   spawn_set_stdout_handler(s, _run_stdout_handler);
   spawn_set_stderr_handler(s, _run_stderr_handler);
 
-  for (struct node *nn = (ncmd == n->child) ? ncmd->child : ncmd->next; nn; nn = nn->next) {
+  for (struct node *nn = ncmd->next; nn; nn = nn->next) {
     if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
       spawn_arg_add(s, node_value(nn));
     }
@@ -71,9 +101,21 @@ static void _run_on_resolve(struct node_resolve *r) {
     }
   }
   spawn_destroy(s);
+}
+
+static void _run_on_resolve(struct node_resolve *r) {
+  struct _run_on_resolve_ctx *ctx = r->user_data;
+  struct node *n = r->n;
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    if (strcmp(nn->value, "exec") == 0) {
+      _run_on_resolve_exec(r, nn->child);
+    } else if (strcmp(nn->value, "shell") == 0) {
+      _run_on_resolve_shell(r, nn->child);
+    }
+  }
 
   struct deps deps;
-  rc = deps_open(r->deps_path_tmp, 0, &deps);
+  int rc = deps_open(r->deps_path_tmp, 0, &deps);
   if (rc) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
@@ -139,16 +181,19 @@ static void _run_build(struct node *n) {
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
-  struct node *nn = n->child;
-  if (strcmp(nn->value, "exec") == 0) {
-    nn = nn->child;
-  }
-  if (!nn) {
-    node_fatal(AK_ERROR_SCRIPT, n, "No command specified. Check 'exec' section.");
-  }
-  for ( ; nn; nn = nn->next) {
-    if (nn->type != NODE_TYPE_VALUE) {
-      ulist_push(&r.node_val_deps, &nn);
+
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    struct node *cn = nn;
+    if (strcmp(cn->value, "exec") == 0 || strcmp(cn->value, "shell") == 0) {
+      cn = cn->child;
+    }
+    if (!cn) {
+      node_fatal(AK_ERROR_SCRIPT, n, "No command specified. Check 'exec/shell' sections.");
+    }
+    for ( ; cn; cn = cn->next) {
+      if (cn->type != NODE_TYPE_VALUE) {
+        ulist_push(&r.node_val_deps, &cn);
+      }
     }
   }
 
