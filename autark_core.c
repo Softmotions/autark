@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <errno.h>
+#include <glob.h>
 #endif
 
 struct env g_env;
@@ -238,11 +239,10 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr, "Usage\n");
   fprintf(stderr, "\nCommon options:\n"
           "    -V, --verbose               Outputs verbose execution info.\n"
-          "    -q, --quiet                 Do not output anything.\n"
           "    -v, --version               Prints version info.\n"
           "    -h, --help                  Prints usage help.\n");
   fprintf(stderr,
-          "\nautark [sources_dir] [options]\n"
+          "\nautark [sources_dir/command] [options]\n"
           "  Build project in given sources dir.\n");
   fprintf(stderr,
           "    -C, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
@@ -259,6 +259,9 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "\nautark env <env>\n"
           "  Registers a given environment variable as dependency for check script.\n");
+  fprintf(stderr,
+          "\nautark glob <pattern>\n"
+          "  Lists files in current directory filtered by glob pattern.\n");
 
   fprintf(stderr, "\n");
   return AK_ERROR_INVALID_ARGS;
@@ -445,6 +448,24 @@ static void _on_command_dep_env(int argc, const char **argv) {
   deps_close(&deps);
 }
 
+static void _on_command_glob(int argc, const char **argv) {
+  const char *pattern = "*";
+  if (optind < argc) {
+    pattern = argv[optind];
+  }
+  glob_t g;
+  int rc = glob(pattern, 0, 0, &g);
+  if (rc == 0) {
+    for (int i = 0; i < g.gl_pathc; ++i) {
+      puts(g.gl_pathv[i]);
+    }
+  };
+  globfree(&g);
+  if (rc && rc != GLOB_NOMATCH) {
+    exit(1);
+  }
+}
+
 #ifdef TESTS
 
 void on_command_set(int argc, const char **argv) {
@@ -511,7 +532,6 @@ void autark_run(int argc, const char **argv) {
     { "clean", 0, 0, 'c' },
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
-    { "quiet", 0, 0, 'q' },
     { "version", 0, 0, 'v' },
     { 0 }
   };
@@ -525,9 +545,6 @@ void autark_run(int argc, const char **argv) {
         break;
       case 'V':
         g_env.verbose = 1;
-        break;
-      case 'q':
-        g_env.quiet = 1;
         break;
       case 'c':
         g_env.project.cleanup = true;
@@ -573,6 +590,9 @@ void autark_run(int argc, const char **argv) {
       return;
     } else if (strcmp(arg, "env") == 0) {
       _on_command_dep_env(argc, argv);
+      return;
+    } else if (strcmp(arg, "glob") == 0) {
+      _on_command_glob(argc, argv);
       return;
     } else { // Root dir expected
       g_env.project.root_dir = pool_strdup(g_env.pool, arg);

@@ -54,7 +54,6 @@ struct env {
   const char  *cwd;
   struct pool *pool;
   int verbose;
-  int quiet;
   struct {
     const char *root_dir;  // Project root source dir.
     const char *cache_dir; // Project artifacts cache dir.

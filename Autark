@@ -110,3 +110,7 @@ run {
     scriptx.h
   }
 }
+
+if { defined { BUILD_TESTS }
+  include { ./tests/Autark }
+}

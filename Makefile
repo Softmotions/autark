@@ -23,7 +23,8 @@ SRC = xstr.c \
 			node_run.c \
 			node_join.c \
 			node_cc.c \
-			node_configure.c
+			node_configure.c \
+			node_basename.c
 
 
 OBJ = $(SRC:.c=.o)

@@ -100,9 +100,6 @@ static const char* _node_file(struct node *n) {
 }
 
 void node_info(struct node *n, const char *fmt, ...) {
-  if (g_env.quiet) {
-    return;
-  }
   struct xstr *xstr = xstr_create_empty();
   if (fmt) {
     va_list ap;

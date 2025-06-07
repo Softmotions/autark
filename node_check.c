@@ -12,15 +12,11 @@
 #endif
 
 static void _check_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  if (!g_env.quiet) {
-    fprintf(stdout, "%s", buf);
-  }
+  fprintf(stdout, "%s", buf);
 }
 
 static void _check_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  if (!g_env.quiet) {
-    fprintf(stderr, "%s", buf);
-  }
+  fprintf(stderr, "%s", buf);
 }
 
 static void _check_on_env_value(struct node_resolve *nr, const char *key, const char *val) {

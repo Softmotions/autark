@@ -1,0 +1,21 @@
+set {
+  TESTS
+  ..@{autark glob '*.c'}
+}
+
+cc {
+  ${TESTS}
+  set { _ ${CFLAGS} -I../../ }
+  ${CC}
+}
+
+run {
+  exec { ${CC} ${OBJ} -o basename{${OBJ}} }
+  foreach {
+    OBJ
+    ${CC_OBJS}
+  }
+  produces {
+    basename{${OBJ}}
+  }
+}

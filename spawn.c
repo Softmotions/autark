@@ -274,7 +274,7 @@ int spawn_do(struct spawn *s) {
   char **args = _args_create(s);
   const char *file = args[0];
 
-  if (!g_env.quiet) {
+  {
     struct xstr *xstr = xstr_create_empty();
     for (char **a = args; *a; ++a) {
       if (a != args) {

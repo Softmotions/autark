@@ -55,17 +55,13 @@ struct _subst_ctx {
 };
 
 static void _subst_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  if (!g_env.quiet) {
-    fprintf(stderr, "%s", buf);
-  }
+  fprintf(stderr, "%s", buf);
 }
 
 static void _subst_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
   struct _subst_ctx *ctx = spawn_user_data(s);
   xstr_cat2(ctx->xstr, buf, buflen);
-  if (!g_env.quiet) {
-    fprintf(stdout, "%s", buf);
-  }
+  fprintf(stdout, "%s", buf);
 }
 
 static const char* _subst_value_proc(struct node *n) {

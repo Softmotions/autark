@@ -52,9 +52,7 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
     }
   }
 
-  if (!g_env.quiet) {
-    puts(xstr_ptr(xstr));
-  }
+  puts(xstr_ptr(xstr));
   int rc = system(xstr_ptr(xstr));
   if (rc == -1) {
     node_fatal(errno, n, "Failed to execute shell command: %s", xstr_ptr(xstr));

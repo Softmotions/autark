@@ -24,6 +24,7 @@ cat <<'EOF' >> ${F}
 #include <fcntl.h>
 #include <ftw.h>
 #include <getopt.h>
+#include <glob.h>
 #include <inttypes.h>
 #include <libgen.h>
 #include <limits.h>
@@ -77,6 +78,7 @@ cat ./node_include.c >> ${F}
 cat ./node_run.c >> ${F}
 cat ./node_configure.c >> ${F}
 cat ./node_cc.c >> ${F}
+cat ./node_basename.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

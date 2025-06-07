@@ -153,12 +153,10 @@ void _akverbose(const char *file, int line, const char *fmt, ...) {
 }
 
 void akinfo(const char *fmt, ...) {
-  if (!g_env.quiet) {
-    va_list ap;
-    va_start(ap, fmt);
-    _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
-    va_end(ap);
-  }
+  va_list ap;
+  va_start(ap, fmt);
+  _event_va(LEVEL_INFO, 0, 0, 0, fmt, ap);
+  va_end(ap);
 }
 
 void akwarn(const char *fmt, ...) {
