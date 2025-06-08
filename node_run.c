@@ -294,7 +294,7 @@ static void _run_build(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "exec") == 0 || strcmp(nn->value, "shell") == 0) {
       for (struct node *cn = nn->child; cn; cn = cn->next) {
-        if (cn->type != NODE_TYPE_VALUE) {
+        if (node_is_value_may_be_dep_saved(cn)) {
           ulist_push(&r.node_val_deps, &cn);
         }
       }

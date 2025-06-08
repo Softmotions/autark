@@ -769,6 +769,28 @@ struct node* node_find_prev_sibling(struct node *n) {
   return 0;
 }
 
+bool node_is_value_may_be_dep_saved(struct node *n) {
+  if (n->type == NODE_TYPE_VALUE) {
+    return false;
+  }
+  if (n->type == NODE_TYPE_SUBST || n->type == NODE_TYPE_SET) {
+    struct node_foreach *fe = 0;
+    for (struct node *p = n->parent; p; p = p->parent) {
+      if (p->fe) {
+        fe = p->fe;
+        break;
+      }
+    }
+    if (fe && fe->name && n->child) {
+      const char *key = node_value(n);
+      if (key && strcmp(fe->name, key) == 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 struct node* node_consumes_resolve(
   struct node *n,
   struct node *nn,

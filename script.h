@@ -122,6 +122,8 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node* node_find_prev_sibling(struct node *n);
 
+bool node_is_value_may_be_dep_saved(struct node *n);
+
 struct node* node_consumes_resolve(
   struct node *n,
   struct node *nn,
