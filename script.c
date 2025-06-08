@@ -460,6 +460,7 @@ static void _node_context_pop(struct node *n) {
 
 const char* node_value(struct node *n) {
   if (n) {
+    node_setup(n);
     if (n->value_get) {
       return n->value_get(n);
     } else {
@@ -779,9 +780,12 @@ struct node* node_consumes_resolve(
   struct ulist rlist = { .usize = sizeof(char*) };
 
   struct pool *pool = pool_create_empty();
-  if (nn && nn->child) {
-    for (struct node *cn = nn->child; cn; cn = cn->next) {
-      const char *cv = node_value(cn);
+  if (nn) {
+    for ( ; nn; nn = nn->next) {
+      if (strcmp(nn->value, "foreach") == 0) {
+        continue;
+      }
+      const char *cv = node_value(nn);
       if (is_vlist(cv)) {
         struct vlist_iter iter;
         vlist_iter_init(cv, &iter);

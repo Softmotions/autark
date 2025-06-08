@@ -14,6 +14,16 @@ static void _set_init(struct node *n) {
 }
 
 static const char* _set_value_get(struct node *n) {
+  for (struct node *p = n->parent; p; p = p->parent) {
+    if (p->fe) {
+      if ((uintptr_t) n->impl != (uintptr_t) -1) {
+        free(n->impl);
+      }
+      n->impl = 0;
+      break;
+    }
+  }
+
   if ((uintptr_t) n->impl == (uintptr_t) -1) {
     return 0;
   } else if (n->impl) {
@@ -57,8 +67,8 @@ static const char* _set_value_get(struct node *n) {
 static void _set_dispose(struct node *n) {
   if ((uintptr_t) n->impl != (uintptr_t) -1) {
     free(n->impl);
-    n->impl = 0;
   }
+  n->impl = 0;
 }
 
 int node_set_setup(struct node *n) {

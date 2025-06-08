@@ -4,7 +4,6 @@
 #include "spawn.h"
 #include "xstr.h"
 #include "utils.h"
-#include "env.h"
 
 #include <stdlib.h>
 #endif
@@ -35,6 +34,14 @@ static const char* _subst_value(struct node *n) {
     if (!key) {
       node_warn(n, "No key specified");
       return _subst_setval(n, 0, dv);
+    }
+    for (struct node *p = n->parent; p; p = p->parent) {
+      if (p->fe) {
+        if (strcmp(p->fe->name, key) == 0) {
+          return _subst_setval(n, p->fe->value, dv);
+        }
+        break;
+      }
     }
     const char *vv = node_env_get(n, key);
     return _subst_setval(n, vv, dv);

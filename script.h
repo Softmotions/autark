@@ -43,6 +43,13 @@
 
 #define NODE_PRINT_INDENT 2
 
+struct node_foreach {
+  char *name;
+  char *value;
+  char *items;
+  void *op;
+};
+
 struct node {
   unsigned type;
   unsigned flags;
@@ -68,6 +75,7 @@ struct node {
   void (*dispose)(struct node*);
 
   void *impl;
+  struct node_foreach *fe;
 };
 
 struct sctx {

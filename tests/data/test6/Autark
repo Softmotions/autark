@@ -45,7 +45,7 @@ run {
   consumes {
     ${CC_OBJS}
   }
-  products {
+  produces {
     hello
   }
 }

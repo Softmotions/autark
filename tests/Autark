@@ -11,11 +11,13 @@ cc {
 
 run {
   exec { ${CC} ${OBJ} -o basename{${OBJ}} }
-  foreach {
-    OBJ
-    ${CC_OBJS}
-  }
   produces {
     basename{${OBJ}}
+  }
+  consumes {
+    foreach {
+      OBJ
+      ${CC_OBJS}
+    }
   }
 }

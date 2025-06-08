@@ -1,8 +1,6 @@
 #ifndef _AMALGAMATE_
 #include "script.h"
 #include "log.h"
-#include "utils.h"
-#include "paths.h"
 #include "xstr.h"
 
 #include <stdlib.h>
@@ -10,9 +8,18 @@
 #endif
 
 static const char* _basename_value(struct node *n) {
+  for (struct node *p = n->parent; p; p = p->parent) {
+    if (p->fe) {
+      free(n->impl);
+      n->impl = 0;
+      break;
+    }
+  }
+
   if (n->impl) {
     return n->impl;
   }
+
   const char *val = 0;
   const char *replace_ext = 0;
   if (!n->child || !(val = node_value(n->child))) {

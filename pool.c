@@ -10,9 +10,16 @@
 
 #define _UNIT_ALIGN_SIZE 8UL
 
+static int _extend(struct pool *pool, size_t siz);
+
 struct pool* pool_create_empty(void) {
-  struct pool *p = xcalloc(1, sizeof(*p));
-  return p;
+  return xcalloc(1, sizeof(struct pool));
+}
+
+struct pool* pool_create_preallocated(size_t sz) {
+  struct pool *pool = pool_create_empty();
+  _extend(pool, sz);
+  return pool;
 }
 
 struct pool* pool_create(void (*on_pool_destroy)(struct pool*)) {

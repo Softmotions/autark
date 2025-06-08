@@ -22,6 +22,8 @@ struct pool {
 
 struct pool* pool_create_empty(void);
 
+struct pool* pool_create_preallocated(size_t);
+
 struct pool* pool_create(void (*)(struct pool*));
 
 void pool_destroy(struct pool*);

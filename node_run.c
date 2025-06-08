@@ -6,6 +6,8 @@
 #include "spawn.h"
 #include "utils.h"
 #include "log.h"
+#include "alloc.h"
+#include "paths.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -27,7 +29,8 @@ static void _run_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 
 struct _run_on_resolve_ctx {
   struct node_resolve *r;
-  struct ulist consumes; // sizeof(char*)
+  struct ulist consumes;         // sizeof(char*)
+  struct ulist consumes_foreach; // sizeof(char*)
 };
 
 static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
@@ -101,15 +104,44 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
   spawn_destroy(s);
 }
 
-static void _run_on_resolve(struct node_resolve *r) {
-  struct _run_on_resolve_ctx *ctx = r->user_data;
-  struct node *n = r->n;
+static void _run_on_resolve_do(struct node_resolve *r, struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "exec") == 0) {
       _run_on_resolve_exec(r, nn->child);
     } else if (strcmp(nn->value, "shell") == 0) {
       _run_on_resolve_shell(r, nn->child);
     }
+  }
+}
+
+static void _run_on_resolve(struct node_resolve *r) {
+  struct _run_on_resolve_ctx *ctx = r->user_data;
+  struct ulist _flist = { .usize = sizeof(char*) };
+  struct ulist *flist = &ctx->consumes_foreach;
+  struct node *n = r->n;
+
+  if (n->fe) {
+    if (r->resolve_outdated.num) {
+      for (int i = 0; i < r->resolve_outdated.num; ++i) {
+        struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+        if (u->flags != 'f') {
+          flist = &ctx->consumes_foreach;
+          break;
+        }
+        char *path = pool_strdup(r->pool, u->path);
+        ulist_push(&_flist, &path);
+        flist = &_flist;
+      }
+    }
+    struct unit *unit = unit_peek();
+    for (int i = 0; i < flist->num; ++i) {
+      char *p = *(char**) ulist_get(flist, i);
+      p = path_relativize_cwd(unit->cache_dir, p, unit->cache_dir);
+      n->fe->value = p;
+      _run_on_resolve_do(r, n);
+    }
+  } else {
+    _run_on_resolve_do(r, n);
   }
 
   struct deps deps;
@@ -130,15 +162,82 @@ static void _run_on_resolve(struct node_resolve *r) {
     const char *path = *(const char**) ulist_get(&ctx->consumes, i);
     deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   }
+
+  for (int i = 0; i < ctx->consumes_foreach.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes_foreach, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 'f', path, 0);
+  }
+
   node_add_unit_deps(&deps);
   deps_close(&deps);
+  ulist_destroy_keep(&_flist);
+}
+
+static bool _run_setup_foreach(struct node *n) {
+  struct node *cn = node_find_direct_child(n, NODE_TYPE_BAG, "consumes");
+  if (!cn) {
+    return false;
+  }
+  struct node *nn = node_find_direct_child(cn, NODE_TYPE_BAG, "foreach");
+  if (!nn) {
+    return false;
+  }
+  if (!nn->child) {
+    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "foreach must have variable name as first parameter");
+  }
+
+  struct node_foreach *fe = xcalloc(1, sizeof(*fe));
+  n->impl = fe;
+  fe->name = xstrdup(node_value(nn->child));
+
+  struct xstr *xstr = xstr_create_empty();
+  for (nn = nn->child->next; nn; nn = nn->next) {
+    const char *v = node_value(nn);
+    if (!v) {
+      v = "";
+    }
+    if (nn->value[0] == '.' && nn->value[1] == '.') {
+      utils_split_values_add(v, xstr);
+    } else {
+      if (!is_vlist(v)) {
+        xstr_cat(xstr, "\1");
+      }
+      xstr_cat(xstr, v);
+    }
+  }
+  if (!is_vlist(xstr_ptr(xstr))) {
+    xstr_unshift(xstr, "\1", 1);
+  }
+  fe->items = xstr_destroy_keep_ptr(xstr);
+
+  struct node *pn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
+  if (pn && pn->child) {
+    struct vlist_iter iter;
+    vlist_iter_init(fe->items, &iter);
+    while (vlist_iter_next(&iter)) {
+      char buf[iter.len + 1];
+      memcpy(buf, iter.item, iter.len);
+      buf[iter.len] = '\0';
+      fe->value = buf;
+      for (struct node *nn = pn->child; nn; nn = nn->next) {
+        if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+          const char *value = node_value(nn);
+          if (g_env.verbose) {
+            node_info(n, "Product: %s", value);
+          }
+          node_product_add(n, value, 0);
+        }
+      }
+    }
+  }
+  return true;
 }
 
 static void _run_setup(struct node *n) {
-  struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "products");
-  if (!nn) {
-    nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
+  if (_run_setup_foreach(n)) {
+    return;
   }
+  struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
       if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
@@ -158,16 +257,29 @@ static void _run_on_consumed_resolved(const char *path_, void *d) {
   ulist_push(&ctx->consumes, &path);
 }
 
+static void _run_on_consumed_foreach_resolved(const char *path_, void *d) {
+  struct _run_on_resolve_ctx *ctx = d;
+  const char *path = pool_strdup(ctx->r->pool, path_);
+  ulist_push(&ctx->consumes_foreach, &path);
+}
+
 static void _run_on_resolve_init(struct node_resolve *r) {
   struct _run_on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
-  node_consumes_resolve(
-    r->n, node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes"), _run_on_consumed_resolved, ctx);
+  struct node *nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes");
+  if (nn && nn->child) {
+    node_consumes_resolve(r->n, nn->child, _run_on_consumed_resolved, ctx);
+    nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "foreach");
+    if (nn && nn->child && nn->child->next) {
+      node_consumes_resolve(r->n, nn->child->next, _run_on_consumed_foreach_resolved, ctx);
+    }
+  }
 }
 
 static void _run_build(struct node *n) {
   struct _run_on_resolve_ctx ctx = {
-    .consumes = { .usize = sizeof(char*) }
+    .consumes = { .usize = sizeof(char*) },
+    .consumes_foreach = { .usize = sizeof(char*) }
   };
 
   struct node_resolve r = {
@@ -179,29 +291,36 @@ static void _run_build(struct node *n) {
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
-
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    struct node *cn = nn;
-    if (strcmp(cn->value, "exec") == 0 || strcmp(cn->value, "shell") == 0) {
-      cn = cn->child;
-    }
-    if (!cn) {
-      node_fatal(AK_ERROR_SCRIPT, n, "No command specified. Check 'exec/shell' sections.");
-    }
-    for ( ; cn; cn = cn->next) {
-      if (cn->type != NODE_TYPE_VALUE) {
-        ulist_push(&r.node_val_deps, &cn);
+    if (strcmp(nn->value, "exec") == 0 || strcmp(nn->value, "shell") == 0) {
+      for (struct node *cn = nn->child; cn; cn = cn->next) {
+        if (cn->type != NODE_TYPE_VALUE) {
+          ulist_push(&r.node_val_deps, &cn);
+        }
       }
     }
   }
 
   node_resolve(&r);
+
   ulist_destroy_keep(&ctx.consumes);
+  ulist_destroy_keep(&ctx.consumes_foreach);
+}
+
+static void _run_dispose(struct node *n) {
+  struct node_foreach *fe = n->fe;
+  if (fe) {
+    n->fe = 0;
+    free(fe->items);
+    free(fe->name);
+    free(fe);
+  }
 }
 
 int node_run_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
   n->setup = _run_setup;
   n->build = _run_build;
+  n->dispose = _run_dispose;
   return 0;
 }

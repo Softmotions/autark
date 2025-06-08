@@ -8,7 +8,7 @@ run {
     run1-product1.txt
     run1-product2.txt
   }
-  products {
+  produces {
     run2-product1.txt
     run2-product2.txt
   }
@@ -17,7 +17,7 @@ run {
 if { eq { ${KEY1} VAL1 }
   run {
     exec { run1.sh arg1 ${KEY2}}
-    products {
+    produces {
       run1-product1.txt
       run1-product2.txt
     }
