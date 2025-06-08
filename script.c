@@ -701,8 +701,19 @@ void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) 
   if (!pathbuf) {
     pathbuf = buf;
   }
-  prod = path_normalize(prod, pathbuf);
-  node_product_add_raw(n, prod);
+  if (is_vlist(prod)) {
+    struct vlist_iter iter;
+    vlist_iter_init(prod, &iter);
+    while (vlist_iter_next(&iter)) {
+      char path[PATH_MAX];
+      utils_strnncpy(path, iter.item, iter.len, sizeof(path));
+      prod = path_normalize(prod, pathbuf);
+      node_product_add_raw(n, prod);
+    }
+  } else {
+    prod = path_normalize(prod, pathbuf);
+    node_product_add_raw(n, prod);
+  }
 }
 
 void node_product_add_raw(struct node *n, const char *prod) {

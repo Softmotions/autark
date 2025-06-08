@@ -220,7 +220,7 @@ static bool _run_setup_foreach(struct node *n) {
       buf[iter.len] = '\0';
       fe->value = buf;
       for (struct node *nn = pn->child; nn; nn = nn->next) {
-        if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+        if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST || nn->type == NODE_TYPE_SET) {
           const char *value = node_value(nn);
           if (g_env.verbose) {
             node_info(n, "Product: %s", value);
@@ -240,7 +240,7 @@ static void _run_setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
-      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST || nn->type == NODE_TYPE_SET) {
         const char *value = node_value(nn);
         if (g_env.verbose) {
           node_info(n, "Product: %s", value);
