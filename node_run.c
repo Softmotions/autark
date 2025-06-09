@@ -116,7 +116,7 @@ static void _run_on_resolve_do(struct node_resolve *r, struct node *n) {
 
 static void _run_on_resolve(struct node_resolve *r) {
   struct _run_on_resolve_ctx *ctx = r->user_data;
-  struct ulist _flist = { .usize = sizeof(char*) };
+  struct ulist flist_ = { .usize = sizeof(char*) };
   struct ulist *flist = &ctx->consumes_foreach;
   struct node *n = r->n;
 
@@ -129,8 +129,8 @@ static void _run_on_resolve(struct node_resolve *r) {
           break;
         }
         char *path = pool_strdup(r->pool, u->path);
-        ulist_push(&_flist, &path);
-        flist = &_flist;
+        ulist_push(&flist_, &path);
+        flist = &flist_;
       }
     }
     struct unit *unit = unit_peek();
@@ -172,7 +172,7 @@ static void _run_on_resolve(struct node_resolve *r) {
 
   node_add_unit_deps(&deps);
   deps_close(&deps);
-  ulist_destroy_keep(&_flist);
+  ulist_destroy_keep(&flist_);
 }
 
 static bool _run_setup_foreach(struct node *n) {

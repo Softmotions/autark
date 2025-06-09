@@ -89,6 +89,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_BASENAME;
   } else if (strcmp(key, "foreach") == 0) {
     return NODE_TYPE_FOREACH;
+  } else if (strcmp(key, "in-sources") == 0) {
+    return NODE_TYPE_IN_SOURCES;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -406,6 +408,7 @@ static void _script_destroy(struct sctx *s) {
 }
 
 static int _node_bind(struct node *n) {
+  int rc = 0;
   // Tree has been built since its safe to compute node name
   if (n->type != NODE_TYPE_SCRIPT) {
     n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
@@ -418,32 +421,62 @@ static int _node_bind(struct node *n) {
     n->flags |= NODE_FLG_BOUND;
     switch (n->type) {
       case NODE_TYPE_SCRIPT:
-        return node_script_setup(n);
+        rc = node_script_setup(n);
+        break;
       case NODE_TYPE_META:
-        return node_meta_setup(n);
+        rc = node_meta_setup(n);
+        break;
       case NODE_TYPE_CHECK:
-        return node_check_setup(n);
+        rc = node_check_setup(n);
+        break;
       case NODE_TYPE_SET:
-        return node_set_setup(n);
+        rc = node_set_setup(n);
+        break;
       case NODE_TYPE_INCLUDE:
-        return node_include_setup(n);
+        rc = node_include_setup(n);
+        break;
       case NODE_TYPE_IF:
-        return node_if_setup(n);
+        rc = node_if_setup(n);
+        break;
       case NODE_TYPE_SUBST:
-        return node_subst_setup(n);
+        rc = node_subst_setup(n);
+        break;
       case NODE_TYPE_RUN:
-        return node_run_setup(n);
+        rc = node_run_setup(n);
+        break;
       case NODE_TYPE_JOIN:
-        return node_join_setup(n);
+        rc = node_join_setup(n);
+        break;
       case NODE_TYPE_CC:
-        return node_cc_setup(n);
+        rc = node_cc_setup(n);
+        break;
       case NODE_TYPE_CONFIGURE:
-        return node_configure_setup(n);
+        rc = node_configure_setup(n);
+        break;
+      case NODE_TYPE_BASENAME:
+        rc = node_basename_setup(n);
+        break;
       case NODE_TYPE_FOREACH:
-        return node_foreach_setup(n);
+        rc = node_foreach_setup(n);
+        break;
+      case NODE_TYPE_IN_SOURCES:
+        rc = node_in_sources_setup(n);
+        break;
+    }
+
+    switch (n->type) {
+      case NODE_TYPE_SUBST: {
+        struct node *nn = node_find_parent_of_type(n, NODE_TYPE_IN_SOURCES);
+        if (nn) {
+          if (n->flags & NODE_FLG_IN_CACHE) {
+            n->flags &= ~(NODE_FLG_IN_CACHE);
+          }
+          n->flags |= NODE_FLG_IN_SRC;
+        }
+      }
     }
   }
-  return 0;
+  return rc;
 }
 
 static struct node* _unit_node_find(struct node *n) {
@@ -468,7 +501,10 @@ const char* node_value(struct node *n) {
   if (n) {
     node_setup(n);
     if (n->value_get) {
-      return n->value_get(n);
+      _node_context_push(n);
+      const char *ret = n->value_get(n);
+      _node_context_pop(n);
+      return ret;
     } else {
       return n->value;
     }
@@ -509,18 +545,23 @@ static void _build_subnodes(struct node *n) {
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
-    if (n->type != NODE_TYPE_IF && n->type != NODE_TYPE_INCLUDE && n->type != NODE_TYPE_FOREACH) {
-      _init_subnodes(n);
-      if (n->init) {
+    switch (n->type) {
+      case NODE_TYPE_IF:
+      case NODE_TYPE_INCLUDE:
+      case NODE_TYPE_FOREACH:
+      case NODE_TYPE_IN_SOURCES:
         _node_context_push(n);
         n->init(n);
         _node_context_pop(n);
-      }
-    } else {
-      _node_context_push(n);
-      n->init(n);
-      _node_context_pop(n);
-      _init_subnodes(n);
+        _init_subnodes(n);
+        break;
+      default:
+        _init_subnodes(n);
+        if (n->init) {
+          _node_context_push(n);
+          n->init(n);
+          _node_context_pop(n);
+        }
     }
   }
 }

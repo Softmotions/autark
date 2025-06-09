@@ -1,14 +1,13 @@
+
 set {
-  TESTS
+  SOURCES
   in-sources {
     ..@{autark glob '*.c'}
   }
 }
 
 cc {
-  ${TESTS}
-  set { _ ${CFLAGS} -I../../ }
-  ${CC}
+  ${SOURCES}
 }
 
 foreach {

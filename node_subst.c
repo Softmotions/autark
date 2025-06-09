@@ -4,6 +4,7 @@
 #include "spawn.h"
 #include "xstr.h"
 #include "utils.h"
+#include "env.h"
 
 #include <stdlib.h>
 #endif
@@ -38,6 +39,9 @@ static const char* _subst_value(struct node *n) {
 
     struct node_foreach *fe = node_find_parent_foreach(n);
     if (fe && strcmp(fe->name, key) == 0) {
+      if (g_env.check.log) {
+        xstr_printf(g_env.check.log, "%s: subst set from foreach: %s=%s\n", n->name, n->name, n->value);
+      }
       return _subst_setval(n, fe->value, dv);
     }
 

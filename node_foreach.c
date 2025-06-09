@@ -6,16 +6,15 @@
 #endif
 
 static void _foreach_setup(struct node *n) {
-  struct node *nn = n->child;
-  if (!nn) {
+  if (!n->child) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Foreach must have a variable name as first parameter");
   }
    struct node_foreach *fe = xcalloc(1, sizeof(*fe));
   n->impl = fe;
-  fe->name = xstrdup(node_value(nn->child));
+  fe->name = xstrdup(node_value(n->child));
 
   struct xstr *xstr = xstr_create_empty();
-  for (nn = nn->child->next; nn; nn = nn->next) {
+  for (struct node *nn = n->child->next; nn; nn = nn->next) {
     const char *v = node_value(nn);
     if (v == 0 || *v == '\0') {
       continue;
@@ -44,8 +43,12 @@ static void _foreach_dispose(struct node *n) {
   }
 }
 
+static void _foreach_init(struct node *n) {
+}
+
 int node_foreach_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
+  n->init = _foreach_init;
   n->setup = _foreach_setup;
   n->dispose = _foreach_dispose;
   return 0;
