@@ -35,14 +35,12 @@ static const char* _subst_value(struct node *n) {
       node_warn(n, "No key specified");
       return _subst_setval(n, 0, dv);
     }
-    for (struct node *p = n->parent; p; p = p->parent) {
-      if (p->fe) {
-        if (strcmp(p->fe->name, key) == 0) {
-          return _subst_setval(n, p->fe->value, dv);
-        }
-        break;
-      }
+
+    struct node_foreach *fe = node_find_parent_foreach(n);
+    if (fe && strcmp(fe->name, key) == 0) {
+      return _subst_setval(n, fe->value, dv);
     }
+
     const char *vv = node_env_get(n, key);
     return _subst_setval(n, vv, dv);
   }

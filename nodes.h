@@ -18,5 +18,6 @@ int node_join_setup(struct node *n);
 int node_cc_setup(struct node *n);
 int node_configure_setup(struct node *n);
 int node_basename_setup(struct node *n);
+int node_foreach_setup(struct node *n);
 
 #endif

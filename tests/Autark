@@ -9,15 +9,16 @@ cc {
   ${CC}
 }
 
-run {
-  exec { ${CC} ${OBJ} -o basename{${OBJ}} }
-  produces {
-    basename{${OBJ}}
-  }
-  consumes {
-    foreach {
-      OBJ
-      ${CC_OBJS}
+foreach {
+  OBJ
+  ${CC_OBJS}
+  run {
+    exec { ${CC} ${OBJ} -o basename{${OBJ}} }
+    produces {
+      basename{${OBJ}}
+    }
+    consumes {
+      ${OBJ}
     }
   }
 }

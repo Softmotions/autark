@@ -85,6 +85,10 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_CC;
   } else if (strcmp(key, "configure") == 0) {
     return NODE_TYPE_CONFIGURE;
+  } else if (strcmp(key, "basename") == 0) {
+    return NODE_TYPE_BASENAME;
+  } else if (strcmp(key, "foreach") == 0) {
+    return NODE_TYPE_FOREACH;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -435,6 +439,8 @@ static int _node_bind(struct node *n) {
         return node_cc_setup(n);
       case NODE_TYPE_CONFIGURE:
         return node_configure_setup(n);
+      case NODE_TYPE_FOREACH:
+        return node_foreach_setup(n);
     }
   }
   return 0;
@@ -503,7 +509,7 @@ static void _build_subnodes(struct node *n) {
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
-    if (n->type != NODE_TYPE_IF && n->type != NODE_TYPE_INCLUDE) {
+    if (n->type != NODE_TYPE_IF && n->type != NODE_TYPE_INCLUDE && n->type != NODE_TYPE_FOREACH) {
       _init_subnodes(n);
       if (n->init) {
         _node_context_push(n);
@@ -522,11 +528,18 @@ void node_init(struct node *n) {
 void node_setup(struct node *n) {
   if (!node_is_setup(n)) {
     n->flags |= NODE_FLG_SETUP;
-    _setup_subnodes(n);
-    if (n->setup) {
+    if (n->type != NODE_TYPE_FOREACH) {
+      _setup_subnodes(n);
+      if (n->setup) {
+        _node_context_push(n);
+        n->setup(n);
+        _node_context_pop(n);
+      }
+    } else {
       _node_context_push(n);
       n->setup(n);
       _node_context_pop(n);
+      _setup_subnodes(n);
     }
   }
 }
@@ -780,18 +793,30 @@ struct node* node_find_prev_sibling(struct node *n) {
   return 0;
 }
 
+struct  node* node_find_parent_of_type(struct node *n, int type) {
+  for (struct node *nn = n->parent; nn; nn = nn->parent) {
+    if (type == 0 || nn->type == type) {
+      return nn;
+    }
+  }
+  return 0;
+}
+
+struct node_foreach* node_find_parent_foreach(struct node *n) {
+  struct node *nn = node_find_parent_of_type(n, NODE_TYPE_FOREACH);
+  if (nn) {
+    return nn->impl;
+  } else {
+    return 0;
+  }
+}
+
 bool node_is_value_may_be_dep_saved(struct node *n) {
   if (n->type == NODE_TYPE_VALUE) {
     return false;
   }
   if (n->type == NODE_TYPE_SUBST || n->type == NODE_TYPE_SET) {
-    struct node_foreach *fe = 0;
-    for (struct node *p = n->parent; p; p = p->parent) {
-      if (p->fe) {
-        fe = p->fe;
-        break;
-      }
-    }
+    struct node_foreach *fe = node_find_parent_foreach(n);
     if (fe && fe->name && n->child) {
       const char *key = node_value(n);
       if (key && strcmp(fe->name, key) == 0) {
@@ -805,6 +830,7 @@ bool node_is_value_may_be_dep_saved(struct node *n) {
 struct node* node_consumes_resolve(
   struct node *n,
   struct node *nn,
+  struct ulist *paths,
   void (*on_resolved)(const char *path, void*),
   void *opq) {
   char prevcwd[PATH_MAX];
@@ -813,11 +839,8 @@ struct node* node_consumes_resolve(
   struct ulist rlist = { .usize = sizeof(char*) };
 
   struct pool *pool = pool_create_empty();
-  if (nn) {
+  if (nn || paths) {
     for ( ; nn; nn = nn->next) {
-      if (strcmp(nn->value, "foreach") == 0) {
-        continue;
-      }
       const char *cv = node_value(nn);
       if (is_vlist(cv)) {
         struct vlist_iter iter;
@@ -830,6 +853,14 @@ struct node* node_consumes_resolve(
         ulist_push(&rlist, &cv);
       }
     }
+
+    if (paths) {
+      for (int i = 0; i < paths->num; ++i) {
+        const char *p = *(char**) ulist_get(paths, i);
+        ulist_push(&rlist, &p);
+      }
+    }
+
     unit_ch_cache_dir(unit, prevcwd);
     for (int i = 0; i < rlist.num; ++i) {
       const char *cv = *(char**) ulist_get(&rlist, i);
@@ -847,6 +878,7 @@ struct node* node_consumes_resolve(
       }
     }
     akcheck(chdir(prevcwd));
+
     if (rlist.num) {
       unit_ch_src_dir(unit, prevcwd);
       for (int i = 0; i < rlist.num; ++i) {
@@ -863,6 +895,7 @@ struct node* node_consumes_resolve(
       akcheck(chdir(prevcwd));
     }
   }
+
   ulist_destroy_keep(&rlist);
   pool_destroy(pool);
   return nn;

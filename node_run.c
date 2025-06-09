@@ -6,7 +6,6 @@
 #include "spawn.h"
 #include "utils.h"
 #include "log.h"
-#include "alloc.h"
 #include "paths.h"
 
 #include <errno.h>
@@ -29,6 +28,7 @@ static void _run_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
 
 struct _run_on_resolve_ctx {
   struct node_resolve *r;
+  struct node_foreach *fe;
   struct ulist consumes;         // sizeof(char*)
   struct ulist consumes_foreach; // sizeof(char*)
 };
@@ -120,7 +120,7 @@ static void _run_on_resolve(struct node_resolve *r) {
   struct ulist *flist = &ctx->consumes_foreach;
   struct node *n = r->n;
 
-  if (n->fe) {
+  if (ctx->fe) {
     if (r->resolve_outdated.num) {
       for (int i = 0; i < r->resolve_outdated.num; ++i) {
         struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
@@ -137,8 +137,10 @@ static void _run_on_resolve(struct node_resolve *r) {
     for (int i = 0; i < flist->num; ++i) {
       char *p = *(char**) ulist_get(flist, i);
       p = path_relativize_cwd(unit->cache_dir, p, unit->cache_dir);
-      n->fe->value = p;
+      ctx->fe->value = p;
       _run_on_resolve_do(r, n);
+      ctx->fe->value = 0;
+      free(p);
     }
   } else {
     _run_on_resolve_do(r, n);
@@ -174,42 +176,10 @@ static void _run_on_resolve(struct node_resolve *r) {
 }
 
 static bool _run_setup_foreach(struct node *n) {
-  struct node *cn = node_find_direct_child(n, NODE_TYPE_BAG, "consumes");
-  if (!cn) {
+  struct node_foreach *fe = node_find_parent_foreach(n);
+  if (!fe) {
     return false;
   }
-  struct node *nn = node_find_direct_child(cn, NODE_TYPE_BAG, "foreach");
-  if (!nn) {
-    return false;
-  }
-  if (!nn->child) {
-    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "foreach must have variable name as first parameter");
-  }
-
-  struct node_foreach *fe = xcalloc(1, sizeof(*fe));
-  n->impl = fe;
-  fe->name = xstrdup(node_value(nn->child));
-
-  struct xstr *xstr = xstr_create_empty();
-  for (nn = nn->child->next; nn; nn = nn->next) {
-    const char *v = node_value(nn);
-    if (!v) {
-      v = "";
-    }
-    if (nn->value[0] == '.' && nn->value[1] == '.') {
-      utils_split_values_add(v, xstr);
-    } else {
-      if (!is_vlist(v)) {
-        xstr_cat(xstr, "\1");
-      }
-      xstr_cat(xstr, v);
-    }
-  }
-  if (!is_vlist(xstr_ptr(xstr))) {
-    xstr_unshift(xstr, "\1", 1);
-  }
-  fe->items = xstr_destroy_keep_ptr(xstr);
-
   struct node *pn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
   if (pn && pn->child) {
     struct vlist_iter iter;
@@ -257,7 +227,7 @@ static void _run_on_consumed_resolved(const char *path_, void *d) {
   ulist_push(&ctx->consumes, &path);
 }
 
-static void _run_on_consumed_foreach_resolved(const char *path_, void *d) {
+static void _run_on_consumed_resolved_foreach(const char *path_, void *d) {
   struct _run_on_resolve_ctx *ctx = d;
   const char *path = pool_strdup(ctx->r->pool, path_);
   ulist_push(&ctx->consumes_foreach, &path);
@@ -268,11 +238,21 @@ static void _run_on_resolve_init(struct node_resolve *r) {
   ctx->r = r;
   struct node *nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes");
   if (nn && nn->child) {
-    node_consumes_resolve(r->n, nn->child, _run_on_consumed_resolved, ctx);
-    nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "foreach");
-    if (nn && nn->child && nn->child->next) {
-      node_consumes_resolve(r->n, nn->child->next, _run_on_consumed_foreach_resolved, ctx);
+    node_consumes_resolve(r->n, nn->child, 0, _run_on_consumed_resolved, ctx);
+  }
+  struct node_foreach *fe = node_find_parent_foreach(r->n);
+  if (fe) {
+    struct vlist_iter iter;
+    struct ulist paths = { .usize = sizeof(char*) };
+    vlist_iter_init(fe->items, &iter);
+    while (vlist_iter_next(&iter)) {
+      char buf[iter.len + 1];
+      memcpy(buf, iter.item, iter.len);
+      char *p = pool_strndup(r->pool, buf, iter.len);
+      ulist_push(&paths, &p);
     }
+    node_consumes_resolve(r->n, 0, &paths, _run_on_consumed_resolved_foreach, ctx);
+    ulist_destroy_keep(&paths);
   }
 }
 
@@ -307,20 +287,9 @@ static void _run_build(struct node *n) {
   ulist_destroy_keep(&ctx.consumes_foreach);
 }
 
-static void _run_dispose(struct node *n) {
-  struct node_foreach *fe = n->fe;
-  if (fe) {
-    n->fe = 0;
-    free(fe->items);
-    free(fe->name);
-    free(fe);
-  }
-}
-
 int node_run_setup(struct node *n) {
   n->flags |= NODE_FLG_IN_CACHE;
   n->setup = _run_setup;
   n->build = _run_build;
-  n->dispose = _run_dispose;
   return 0;
 }

@@ -8,12 +8,10 @@
 #endif
 
 static const char* _basename_value(struct node *n) {
-  for (struct node *p = n->parent; p; p = p->parent) {
-    if (p->fe) {
-      free(n->impl);
-      n->impl = 0;
-      break;
-    }
+  struct node_foreach *fe = node_find_parent_foreach(n);
+  if (fe) {
+    free(n->impl);
+    n->impl = 0;
   }
 
   if (n->impl) {

@@ -24,6 +24,7 @@
 #define NODE_TYPE_CC        0x1000U
 #define NODE_TYPE_CONFIGURE 0x2000U
 #define NODE_TYPE_BASENAME  0x4000U
+#define NODE_TYPE_FOREACH   0x8000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U
@@ -75,7 +76,6 @@ struct node {
   void (*dispose)(struct node*);
 
   void *impl;
-  struct node_foreach *fe;
 };
 
 struct sctx {
@@ -122,11 +122,16 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node* node_find_prev_sibling(struct node *n);
 
+struct  node* node_find_parent_of_type(struct node *n, int type);
+
+struct node_foreach* node_find_parent_foreach(struct node *n);
+
 bool node_is_value_may_be_dep_saved(struct node *n);
 
 struct node* node_consumes_resolve(
   struct node *n,
-  struct node *nn,
+  struct node *npaths,
+  struct ulist *paths,
   void (*on_resolved)(const char *path, void *opq),
   void *opq);
 

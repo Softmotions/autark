@@ -260,7 +260,7 @@ static void _cc_on_consumed_resolved(const char *path_, void *d) {
 static void _cc_on_resolve_init(struct node_resolve *r) {
   struct _cc_ctx *ctx = r->n->impl;
   if (ctx->n_consumes) {
-    node_consumes_resolve(r->n, ctx->n_consumes->child, _cc_on_consumed_resolved, r->n);
+    node_consumes_resolve(r->n, ctx->n_consumes->child, 0, _cc_on_consumed_resolved, r->n);
   }
 }
 

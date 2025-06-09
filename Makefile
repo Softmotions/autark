@@ -24,7 +24,8 @@ SRC = xstr.c \
 			node_join.c \
 			node_cc.c \
 			node_configure.c \
-			node_basename.c
+			node_basename.c \
+			node_foreach.c
 
 
 OBJ = $(SRC:.c=.o)

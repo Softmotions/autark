@@ -14,14 +14,12 @@ static void _set_init(struct node *n) {
 }
 
 static const char* _set_value_get(struct node *n) {
-  for (struct node *p = n->parent; p; p = p->parent) {
-    if (p->fe) {
-      if ((uintptr_t) n->impl != (uintptr_t) -1) {
-        free(n->impl);
-      }
-      n->impl = 0;
-      break;
+  struct node_foreach *fe = node_find_parent_foreach(n);
+  if (fe) {
+    if ((uintptr_t) n->impl != (uintptr_t) -1) {
+      free(n->impl);
     }
+    n->impl = 0;
   }
 
   if ((uintptr_t) n->impl == (uintptr_t) -1) {

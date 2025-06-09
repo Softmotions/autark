@@ -79,6 +79,7 @@ cat ./node_run.c >> ${F}
 cat ./node_configure.c >> ${F}
 cat ./node_cc.c >> ${F}
 cat ./node_basename.c >> ${F}
+cat ./node_foreach.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 
