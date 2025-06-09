@@ -85,7 +85,7 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_CC;
   } else if (strcmp(key, "configure") == 0) {
     return NODE_TYPE_CONFIGURE;
-  } else if (strcmp(key, "basename") == 0) {
+  } else if (strcmp(key, "%") == 0) {
     return NODE_TYPE_BASENAME;
   } else if (strcmp(key, "foreach") == 0) {
     return NODE_TYPE_FOREACH;

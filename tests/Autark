@@ -15,9 +15,9 @@ foreach {
   OBJ
   ${CC_OBJS}
   run {
-    exec { ${CC} ${OBJ} -o basename{${OBJ}} }
+    exec { ${CC} ${OBJ} -o %{${OBJ}} }
     produces {
-      basename{${OBJ}}
+      %{${OBJ}}
     }
     consumes {
       ${OBJ}
