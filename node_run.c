@@ -56,13 +56,38 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
     }
   }
 
-  puts(xstr_ptr(xstr));
-  int rc = system(xstr_ptr(xstr));
-  if (rc == -1) {
-    node_fatal(errno, n, "Failed to execute shell command: %s", xstr_ptr(xstr));
-  } else if (rc) {
-    node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", xstr_ptr(xstr), rc);
+  const char *shell = node_env_get(n, "SHELL");
+  if (!shell || *shell == '\0') {
+    node_fatal(AK_ERROR_FAIL, n, "Required $SHELL variable/env is not set");
   }
+
+  struct unit *unit = unit_peek();
+  struct spawn *s = spawn_create(shell, &(struct _run_spawn_data) {
+    .cmd = shell,
+    .n = n
+  });
+  spawn_env_path_prepend(s, unit->dir);
+  spawn_env_path_prepend(s, unit->cache_dir);
+  spawn_set_stdout_handler(s, _run_stdout_handler);
+  spawn_set_stderr_handler(s, _run_stderr_handler);
+
+  spawn_arg_add(s, "-c");
+  spawn_arg_add(s, xstr_ptr(xstr));
+
+  if (g_env.check.log) {
+    xstr_printf(g_env.check.log, "%s: %s\n", n->name, shell);
+  }
+
+  int rc = spawn_do(s);
+  if (rc) {
+    node_fatal(rc, n, "%s", shell);
+  } else {
+    int code = spawn_exit_code(s);
+    if (code != 0) {
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", shell, code);
+    }
+  }
+  spawn_destroy(s);
   xstr_destroy(xstr);
 }
 
@@ -84,7 +109,8 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
   spawn_set_stderr_handler(s, _run_stderr_handler);
 
   for (struct node *nn = ncmd->next; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST) {
+    if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
+       || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
       spawn_arg_add(s, node_value(nn));
     }
   }
@@ -138,18 +164,18 @@ static void _run_on_resolve(struct node_resolve *r) {
 
       struct unit *unit = unit_peek();
       for (int i = 0; i < flist->num; ++i) {
-        char *p, *lp = *(char**) ulist_get(flist, i);
+        char *p, *fi = *(char**) ulist_get(flist, i);
         if (n->flags & NODE_FLG_IN_CACHE) {
-          p = path_relativize_cwd(unit->cache_dir, lp, unit->cache_dir);
+          p = path_relativize_cwd(unit->cache_dir, fi, unit->cache_dir);
         } else if (n->flags & NODE_FLG_IN_SRC) {
-          p = path_relativize_cwd(unit->dir, lp, unit->dir);
+          p = path_relativize_cwd(unit->dir, fi, unit->dir);
         } else {
-          p = lp;
+          p = fi;
         }
         ctx->fe->value = p;
         _run_on_resolve_do(r, n);
         ctx->fe->value = 0;
-        if (p != lp) {
+        if (p != fi) {
           free(p);
         }
       }

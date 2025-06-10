@@ -1,5 +1,10 @@
 
 set {
+  SHELL
+  sh
+}
+
+set {
   SOURCES
   in-sources {
     ..@{autark glob '*.c'}
@@ -22,6 +27,7 @@ foreach {
   ${CC_OBJS}
   run {
     exec { ${CC} ${OBJ} -o %{${OBJ}} }
+    shell { %{${OBJ}} >> ./tests.log }
     produces {
       %{${OBJ}}
     }
