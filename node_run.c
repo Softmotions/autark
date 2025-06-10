@@ -31,6 +31,7 @@ struct _run_on_resolve_ctx {
   struct node_foreach *fe;
   struct ulist consumes;         // sizeof(char*)
   struct ulist consumes_foreach; // sizeof(char*)
+  bool fe_consumed;              // Foreach variable is consumed
 };
 
 static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
@@ -116,31 +117,56 @@ static void _run_on_resolve_do(struct node_resolve *r, struct node *n) {
 
 static void _run_on_resolve(struct node_resolve *r) {
   struct _run_on_resolve_ctx *ctx = r->user_data;
-  struct ulist flist_ = { .usize = sizeof(char*) };
-  struct ulist *flist = &ctx->consumes_foreach;
   struct node *n = r->n;
 
   if (ctx->fe) {
-    if (r->resolve_outdated.num) {
-      for (int i = 0; i < r->resolve_outdated.num; ++i) {
-        struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
-        if (u->flags != 'f') {
-          flist = &ctx->consumes_foreach;
-          break;
+    if (ctx->fe_consumed) { // Foreach variable is consumed by run
+      struct ulist flist_ = { .usize = sizeof(char*) };
+      struct ulist *flist = &ctx->consumes_foreach;
+      if (r->resolve_outdated.num) {
+        for (int i = 0; i < r->resolve_outdated.num; ++i) {
+          struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+          if (u->flags != 'f') {
+            flist = &ctx->consumes_foreach; // Fallback to all consumed
+            break;
+          }
+          char *path = pool_strdup(r->pool, u->path);
+          ulist_push(&flist_, &path);
+          flist = &flist_;
         }
-        char *path = pool_strdup(r->pool, u->path);
-        ulist_push(&flist_, &path);
-        flist = &flist_;
       }
-    }
-    struct unit *unit = unit_peek();
-    for (int i = 0; i < flist->num; ++i) {
-      char *p = *(char**) ulist_get(flist, i);
-      p = path_relativize_cwd(unit->cache_dir, p, unit->cache_dir);
-      ctx->fe->value = p;
-      _run_on_resolve_do(r, n);
-      ctx->fe->value = 0;
-      free(p);
+
+      struct unit *unit = unit_peek();
+      for (int i = 0; i < flist->num; ++i) {
+        char *p, *lp = *(char**) ulist_get(flist, i);
+        if (n->flags & NODE_FLG_IN_CACHE) {
+          p = path_relativize_cwd(unit->cache_dir, lp, unit->cache_dir);
+        } else if (n->flags & NODE_FLG_IN_SRC) {
+          p = path_relativize_cwd(unit->dir, lp, unit->dir);
+        } else {
+          p = lp;
+        }
+        ctx->fe->value = p;
+        _run_on_resolve_do(r, n);
+        ctx->fe->value = 0;
+        if (p != lp) {
+          free(p);
+        }
+      }
+
+      ulist_destroy_keep(&flist_);
+    } else {
+      struct vlist_iter iter;
+      vlist_iter_init(ctx->fe->items, &iter);
+      while (vlist_iter_next(&iter)) {
+        char buf[iter.len + 1];
+        memcpy(buf, iter.item, iter.len);
+        buf[iter.len] = '\0';
+
+        ctx->fe->value = buf;
+        _run_on_resolve_do(r, n);
+        ctx->fe->value = 0;
+      }
     }
   } else {
     _run_on_resolve_do(r, n);
@@ -172,7 +198,6 @@ static void _run_on_resolve(struct node_resolve *r) {
 
   node_add_unit_deps(&deps);
   deps_close(&deps);
-  ulist_destroy_keep(&flist_);
 }
 
 static bool _run_setup_foreach(struct node *n) {
@@ -190,7 +215,8 @@ static bool _run_setup_foreach(struct node *n) {
       buf[iter.len] = '\0';
       fe->value = buf;
       for (struct node *nn = pn->child; nn; nn = nn->next) {
-        if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST || nn->type == NODE_TYPE_SET) {
+        if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
+           || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
           const char *value = node_value(nn);
           if (g_env.verbose) {
             node_info(n, "Product: %s", value);
@@ -198,6 +224,7 @@ static bool _run_setup_foreach(struct node *n) {
           node_product_add(n, value, 0);
         }
       }
+      fe->value = 0;
     }
   }
   return true;
@@ -210,7 +237,8 @@ static void _run_setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
-      if (nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST || nn->type == NODE_TYPE_SET) {
+      if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
+         || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
         const char *value = node_value(nn);
         if (g_env.verbose) {
           node_info(n, "Product: %s", value);
@@ -237,14 +265,21 @@ static void _run_on_resolve_init(struct node_resolve *r) {
   struct _run_on_resolve_ctx *ctx = r->user_data;
   ctx->r = r;
   struct node *nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes");
+
+  if (ctx->fe) {
+    ctx->fe->access_cnt = 0;
+  }
+
   if (nn && nn->child) {
     node_consumes_resolve(r->n, nn->child, 0, _run_on_consumed_resolved, ctx);
   }
-  struct node_foreach *fe = node_find_parent_foreach(r->n);
-  if (fe) {
+
+  if (ctx->fe && ctx->fe->access_cnt) {
+    ctx->fe_consumed = true;
+
     struct vlist_iter iter;
     struct ulist paths = { .usize = sizeof(char*) };
-    vlist_iter_init(fe->items, &iter);
+    vlist_iter_init(ctx->fe->items, &iter);
     while (vlist_iter_next(&iter)) {
       char buf[iter.len + 1];
       memcpy(buf, iter.item, iter.len);
@@ -259,7 +294,8 @@ static void _run_on_resolve_init(struct node_resolve *r) {
 static void _run_build(struct node *n) {
   struct _run_on_resolve_ctx ctx = {
     .consumes = { .usize = sizeof(char*) },
-    .consumes_foreach = { .usize = sizeof(char*) }
+    .consumes_foreach = { .usize = sizeof(char*) },
+    .fe = node_find_parent_foreach(n),
   };
 
   struct node_resolve r = {

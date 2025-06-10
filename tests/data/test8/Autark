@@ -6,8 +6,15 @@ set {
   }
 }
 
+set {
+  CC
+  ${CC cc}
+}
+
 cc {
   ${SOURCES}
+  ${CFLAGS}
+  ${CC}
 }
 
 foreach {

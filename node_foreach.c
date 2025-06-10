@@ -14,19 +14,9 @@ static void _foreach_setup(struct node *n) {
   fe->name = xstrdup(node_value(n->child));
 
   struct xstr *xstr = xstr_create_empty();
-  for (struct node *nn = n->child->next; nn; nn = nn->next) {
-    const char *v = node_value(nn);
-    if (v == 0 || *v == '\0') {
-      continue;
-    }
-    if (nn->value[0] == '.' && nn->value[1] == '.') {
-      utils_split_values_add(v, xstr);
-    } else {
-      if (!is_vlist(v)) {
-        xstr_cat(xstr, "\1");
-      }
-      xstr_cat(xstr, v);
-    }
+  const char *v = node_value(n->child->next);
+  if (v && *v != '\0') {
+    xstr_cat(xstr, v);
   }
   if (!is_vlist(xstr_ptr(xstr))) {
     xstr_unshift(xstr, "\1", 1);

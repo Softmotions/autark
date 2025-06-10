@@ -42,6 +42,7 @@ static const char* _subst_value(struct node *n) {
       if (g_env.check.log) {
         xstr_printf(g_env.check.log, "%s: subst set from foreach: %s=%s\n", n->name, n->name, n->value);
       }
+      ++fe->access_cnt;
       return _subst_setval(n, fe->value, dv);
     }
 

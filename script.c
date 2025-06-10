@@ -890,7 +890,7 @@ struct node* node_consumes_resolve(
           cv = pool_strndup(pool, iter.item, iter.len);
           ulist_push(&rlist, &cv);
         }
-      } else {
+      } else if (cv && *cv != '\0') {
         ulist_push(&rlist, &cv);
       }
     }
@@ -898,7 +898,9 @@ struct node* node_consumes_resolve(
     if (paths) {
       for (int i = 0; i < paths->num; ++i) {
         const char *p = *(char**) ulist_get(paths, i);
-        ulist_push(&rlist, &p);
+        if (p && *p != '\0') {
+          ulist_push(&rlist, &p);
+        }
       }
     }
 
