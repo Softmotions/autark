@@ -966,9 +966,9 @@ void node_resolve(struct node_resolve *r) {
   struct unit *unit = unit_peek();
 
   const char *deps_path = pool_printf(pool, "%s/%s.deps", unit->cache_dir, r->path);
-  const char *env_path = pool_printf(pool, "%s.env", r->path);
+  const char *env_path = pool_printf(pool, "%s/%s.env", unit->cache_dir, r->path);
   const char *deps_path_tmp = pool_printf(pool, "%s/%s.deps.tmp", unit->cache_dir, r->path);
-  const char *env_path_tmp = pool_printf(pool, "%s.env.tmp", r->path);
+  const char *env_path_tmp = pool_printf(pool, "%s/%s.env.tmp", unit->cache_dir, r->path);
 
   unlink(deps_path_tmp);
   unlink(env_path_tmp);
