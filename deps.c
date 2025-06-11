@@ -38,6 +38,10 @@ bool deps_cur_next(struct deps *d) {
     d->type = *rp++;
     d->flags = *rp++;
 
+    if (d->type == DEPS_TYPE_NODE_VALUE || d->type == DEPS_TYPE_ENV) {
+      utils_chars_replace(d->buf, '\2', '\n');
+    }
+
     if (d->type == DEPS_TYPE_ALIAS || d->type == DEPS_TYPE_ENV) {
       d->alias = rp;
       d->resource = 0;
@@ -130,6 +134,10 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     if (!path_stat(alias, &st) && st.ftype != AKPATH_NOT_EXISTS) {
       serial = st.mtime;
     }
+  } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE) {
+    utils_strncpy(buf[0], resource, PATH_MAX);
+    utils_chars_replace(buf[0], '\n', '\2');
+    resource = buf[0];
   }
 
   long int off = ftell(d->file);

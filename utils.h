@@ -14,7 +14,7 @@ static inline bool utils_char_is_space(char c) {
 }
 
 static inline void utils_chars_replace(char *buf, char c, char r) {
-  for ( ; *buf; ++buf) {
+  for ( ; *buf != '\0'; ++buf) {
     if (*buf == c) {
       *buf = r;
     }
