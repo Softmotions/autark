@@ -5,6 +5,11 @@ set {
   }
 }
 
+set {
+  LIBAUTARK
+  ../libautark.a
+}
+
 cc {
   ${TESTS}
   set { _ ${CFLAGS} -I../../ }
@@ -15,11 +20,13 @@ foreach {
   OBJ
   ${CC_OBJS}
   run {
-    exec { ${CC} ${OBJ} -o %{${OBJ}} }
+    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }
+    shell { %{${OBJ}} }
     produces {
       %{${OBJ}}
     }
     consumes {
+      ${LIBAUTARK}
       ${OBJ}
     }
   }

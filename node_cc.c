@@ -287,12 +287,16 @@ static void _cc_build(struct node *n) {
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
-  if (ctx->n_cc && ctx->n_cc->type != NODE_TYPE_VALUE) {
+  if (node_is_value_may_be_dep_saved(ctx->n_cc)) {
     ulist_push(&r.node_val_deps, &ctx->n_cc);
   }
 
-  if (ctx->n_cflags && ctx->n_cflags->type != NODE_TYPE_VALUE) {
+  if (node_is_value_may_be_dep_saved(ctx->n_cflags)) {
     ulist_push(&r.node_val_deps, &ctx->n_cflags);
+  }
+
+  if (node_is_value_may_be_dep_saved(ctx->n_sources)) {
+    ulist_push(&r.node_val_deps, &ctx->n_sources);
   }
 
   node_resolve(&r);

@@ -12,5 +12,6 @@ esac
 
 set -e
 
+autark set "SHELL=sh"
 autark set "LEG=${LEG}"
 autark set "AR=ar"

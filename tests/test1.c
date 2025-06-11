@@ -8,11 +8,11 @@ int main(void) {
   struct sctx *p;
   struct xstr *xstr = xstr_create_empty();
 
-  rc = test_script_parse("./data/test1/Autark", &p);
+  rc = test_script_parse("../../tests/data/test1/Autark", &p);
   ASSERT(assert, rc == 0);
 
   script_dump(p, xstr);
-  ASSERT(assert, cmp_file_with_xstr("./data/test1/Autark.dump", xstr) == 0);
+  ASSERT(assert, cmp_file_with_xstr("../../tests/data/test1/Autark.dump", xstr) == 0);
 
   script_close(&p);
   xstr_destroy(xstr);

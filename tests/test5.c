@@ -8,7 +8,7 @@ int main(void) {
   akassert(getcwd(cwd_prev, sizeof(cwd_prev)));
 
   struct sctx *sctx;
-  int rc = script_open("./data/test5/Autark", &sctx);
+  int rc = script_open("../../tests/data/test5/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
@@ -24,7 +24,7 @@ int main(void) {
 
   // Now do the second run
   chdir(cwd_prev);
-  akassert(script_open("./data/test5/Autark", &sctx) == 0);
+  akassert(script_open("../../tests/data/test5/Autark", &sctx) == 0);
   script_build(sctx);
   script_close(&sctx);
 

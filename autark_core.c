@@ -1,7 +1,12 @@
 #ifndef _AMALGAMATE_
 
+#ifndef VERSION
 #define VERSION  "dev"
+#endif
+
+#ifndef REVISION
 #define REVISION ""
+#endif
 
 #include "env.h"
 #include "utils.h"
@@ -301,7 +306,9 @@ void autark_build_prepare(const char *script_path) {
 
   g_env.project.root_dir = root_dir;
   g_env.cwd = root_dir;
-  akcheck(chdir(root_dir));
+  if (chdir(root_dir)) {
+    akfatal(errno, "Failed to change dir to: %s", root_dir);
+  }
 
   if (!g_env.project.cache_dir) {
     g_env.project.cache_dir = AUTARK_CACHE;

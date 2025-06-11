@@ -9,11 +9,11 @@ int main(void) {
   struct xstr *xstr = xstr_create_empty();
   autark_init();
 
-  rc = test_script_parse("./data/test2/Autark", &p);
+  rc = test_script_parse("../../tests/data/test2/Autark", &p);
   ASSERT(assert, rc == 0);
 
   script_dump(p, xstr);
-  ASSERT(assert, cmp_file_with_xstr("./data/test2/Autark.dump", xstr) == 0);
+  ASSERT(assert, cmp_file_with_xstr("../../tests/data/test2/Autark.dump", xstr) == 0);
 
   script_close(&p);
   xstr_destroy(xstr);

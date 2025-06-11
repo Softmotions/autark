@@ -45,6 +45,7 @@
         (  (n__)->type == NODE_TYPE_VALUE \
         || (n__)->type == NODE_TYPE_SUBST \
         || (n__)->type == NODE_TYPE_SET   \
+        || (n__)->type == NODE_TYPE_JOIN  \
         || (n__)->type == NODE_TYPE_BASENAME)
 
 #define node_is_rule(n__) !node_is_value(n__)

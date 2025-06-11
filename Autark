@@ -43,10 +43,13 @@ set {
   deps.c
   log.c
   map.c
+  node_basename.c
   node_cc.c
   node_check.c
   node_configure.c
+  node_foreach.c
   node_if.c
+  node_in_sources.c
   node_include.c
   node_join.c
   node_meta.c

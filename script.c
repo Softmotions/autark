@@ -853,7 +853,7 @@ struct node_foreach* node_find_parent_foreach(struct node *n) {
 }
 
 bool node_is_value_may_be_dep_saved(struct node *n) {
-  if (n->type == NODE_TYPE_VALUE) { // Hardcoded value
+  if (!n || n->type == NODE_TYPE_VALUE) { // Hardcoded value
     return false;
   }
   if (node_is_can_be_value(n)) {

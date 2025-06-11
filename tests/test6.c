@@ -12,7 +12,7 @@ int main(void) {
   akassert(getcwd(cwd_prev, sizeof(cwd_prev)));
 
   struct sctx *sctx;
-  int rc = script_open("./data/test6/Autark", &sctx);
+  int rc = script_open("../../tests/data/test6/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
@@ -40,7 +40,7 @@ int main(void) {
   chdir(cwd_prev);
   test_reinit(false);
   g_env.check.log = xstr_clear(xlog);
-  rc = script_open("./data/test6/Autark", &sctx);
+  rc = script_open("../../tests/data/test6/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
@@ -53,10 +53,10 @@ int main(void) {
 
   fprintf(stderr, "\n\n");
   chdir(cwd_prev);
-  akassert(system("touch ./data/test6/hello.c") == 0);
+  akassert(system("touch ../../tests/data/test6/hello.c") == 0);
   test_reinit(false);
   g_env.check.log = xstr_clear(xlog);
-  rc = script_open("./data/test6/Autark", &sctx);
+  rc = script_open("../../tests/data/test6/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
@@ -77,10 +77,10 @@ int main(void) {
 
   fprintf(stderr, "\n\n");
   chdir(cwd_prev);
-  akassert(system("touch ./data/test6/hello.h") == 0);
+  akassert(system("touch ../../tests/data/test6/hello.h") == 0);
   test_reinit(false);
   g_env.check.log = xstr_clear(xlog);
-  rc = script_open("./data/test6/Autark", &sctx);
+  rc = script_open("../../tests/data/test6/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
@@ -103,10 +103,10 @@ int main(void) {
   fprintf(stderr, "\n\n");
   setenv("CFLAGS", "-O2", 1);
   chdir(cwd_prev);
-  akassert(system("touch ./data/test6/hello.h") == 0);
+  akassert(system("touch ../../tests/data/test6/hello.h") == 0);
   test_reinit(false);
   g_env.check.log = xstr_clear(xlog);
-  rc = script_open("./data/test6/Autark", &sctx);
+  rc = script_open("../../tests/data/test6/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
   script_close(&sctx);
