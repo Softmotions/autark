@@ -29,7 +29,8 @@ int main(void) {
       "Autark:36     cc: build src=../main.c obj=main.o\n"
       "Autark:36     cc: build src=../hello.c obj=hello.o\n"
       "Autark:42    run: resolved outdated outdated=0\n"
-      "Autark:42    run: cc\n",
+      "Autark:42    run: cc\n"
+      "Autark:42    run: sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -67,7 +68,8 @@ int main(void) {
       "Autark:36     cc: build src=../hello.c obj=hello.o\n"
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=1\n"
-      "Autark:42    run: cc\n",
+      "Autark:42    run: cc\n"
+      "Autark:42    run: sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -93,7 +95,8 @@ int main(void) {
       "Autark:42    run: outdated main.o t=f f= \n"
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=2\n"
-      "Autark:42    run: cc\n",
+      "Autark:42    run: cc\n"
+      "Autark:42    run: sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -119,7 +122,8 @@ int main(void) {
       "Autark:42    run: outdated main.o t=f f= \n"
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=2\n"
-      "Autark:42    run: cc\n",
+      "Autark:42    run: cc\n"
+      "Autark:42    run: sh\n",
       xstr_ptr(xlog)) == 0
     );
 

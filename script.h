@@ -40,8 +40,14 @@
 #define node_is_init(n__)  (((n__)->flags & NODE_FLG_INIT) != 0)
 #define node_is_setup(n__) (((n__)->flags & NODE_FLG_SETUP) != 0)
 #define node_is_built(n__) (((n__)->flags & NODE_FLG_BUILT) != 0)
-#define node_is_value(n__) ((n__)->type & NODE_TYPE_VALUE)
-#define node_is_rule(n__)  !node_is_value(n__)
+#define node_is_value(n__) ((n__)->type == NODE_TYPE_VALUE)
+#define node_is_can_be_value(n__)         \
+        (  (n__)->type == NODE_TYPE_VALUE \
+        || (n__)->type == NODE_TYPE_SUBST \
+        || (n__)->type == NODE_TYPE_SET   \
+        || (n__)->type == NODE_TYPE_BASENAME)
+
+#define node_is_rule(n__) !node_is_value(n__)
 
 #define NODE_PRINT_INDENT 2
 

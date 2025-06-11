@@ -4,7 +4,6 @@
 #include "spawn.h"
 #include "xstr.h"
 #include "utils.h"
-#include "env.h"
 
 #include <stdlib.h>
 #endif

@@ -8,7 +8,6 @@
 #include "log.h"
 #include "paths.h"
 
-#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #endif
@@ -109,8 +108,7 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
   spawn_set_stderr_handler(s, _run_stderr_handler);
 
   for (struct node *nn = ncmd->next; nn; nn = nn->next) {
-    if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
-       || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
+    if (node_is_can_be_value(nn)) {
       spawn_arg_add(s, node_value(nn));
     }
   }
@@ -142,8 +140,8 @@ static void _run_on_resolve_do(struct node_resolve *r, struct node *n) {
 }
 
 static void _run_on_resolve(struct node_resolve *r) {
-  struct _run_on_resolve_ctx *ctx = r->user_data;
   struct node *n = r->n;
+  struct _run_on_resolve_ctx *ctx = r->user_data;
 
   if (ctx->fe) {
     if (ctx->fe_consumed) { // Foreach variable is consumed by run
@@ -241,8 +239,7 @@ static bool _run_setup_foreach(struct node *n) {
       buf[iter.len] = '\0';
       fe->value = buf;
       for (struct node *nn = pn->child; nn; nn = nn->next) {
-        if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
-           || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
+        if (node_is_can_be_value(nn)) {
           const char *value = node_value(nn);
           if (g_env.verbose) {
             node_info(n, "Product: %s", value);
@@ -263,8 +260,7 @@ static void _run_setup(struct node *n) {
   struct node *nn = node_find_direct_child(n, NODE_TYPE_BAG, "produces");
   if (nn && nn->child) {
     for (nn = nn->child; nn; nn = nn->next) {
-      if (  nn->type == NODE_TYPE_VALUE || nn->type == NODE_TYPE_SUBST
-         || nn->type == NODE_TYPE_SET || nn->type == NODE_TYPE_BASENAME) {
+      if (node_is_can_be_value(nn)) {
         const char *value = node_value(nn);
         if (g_env.verbose) {
           node_info(n, "Product: %s", value);
@@ -293,6 +289,7 @@ static void _run_on_resolve_init(struct node_resolve *r) {
   struct node *nn = node_find_direct_child(r->n, NODE_TYPE_BAG, "consumes");
 
   if (ctx->fe) {
+    ctx->fe->value = 0;
     ctx->fe->access_cnt = 0;
   }
 
@@ -300,7 +297,7 @@ static void _run_on_resolve_init(struct node_resolve *r) {
     node_consumes_resolve(r->n, nn->child, 0, _run_on_consumed_resolved, ctx);
   }
 
-  if (ctx->fe && ctx->fe->access_cnt) {
+  if (ctx->fe && ctx->fe->access_cnt > 0) {
     ctx->fe_consumed = true;
 
     struct vlist_iter iter;

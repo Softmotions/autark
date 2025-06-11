@@ -853,14 +853,15 @@ struct node_foreach* node_find_parent_foreach(struct node *n) {
 }
 
 bool node_is_value_may_be_dep_saved(struct node *n) {
-  if (n->type == NODE_TYPE_VALUE) {
+  if (n->type == NODE_TYPE_VALUE) { // Hardcoded value
     return false;
   }
-  if (n->type == NODE_TYPE_SUBST || n->type == NODE_TYPE_SET) {
+  if (node_is_can_be_value(n)) {
     struct node_foreach *fe = node_find_parent_foreach(n);
-    if (fe && fe->name && n->child) {
-      const char *key = node_value(n);
-      if (key && strcmp(fe->name, key) == 0) {
+    if (fe) {
+      fe->access_cnt = 0;
+      node_value(n);
+      if (fe->access_cnt > 0) {
         return false;
       }
     }
