@@ -1,0 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+//autarkdef META_VERSION "
+//autarkdef META_REVISION "
+
+#endif

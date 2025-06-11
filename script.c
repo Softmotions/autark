@@ -465,6 +465,7 @@ static int _node_bind(struct node *n) {
     }
 
     switch (n->type) {
+      case NODE_TYPE_RUN:
       case NODE_TYPE_SUBST: {
         struct node *nn = node_find_parent_of_type(n, NODE_TYPE_IN_SOURCES);
         if (nn) {
@@ -962,10 +963,11 @@ void node_resolve(struct node_resolve *r) {
   int rc;
   struct deps deps;
   struct pool *pool = pool_create_empty();
+  struct unit *unit = unit_peek();
 
-  const char *deps_path = pool_printf(pool, "%s.deps", r->path);
+  const char *deps_path = pool_printf(pool, "%s/%s.deps", unit->cache_dir, r->path);
   const char *env_path = pool_printf(pool, "%s.env", r->path);
-  const char *deps_path_tmp = pool_printf(pool, "%s.deps.tmp", r->path);
+  const char *deps_path_tmp = pool_printf(pool, "%s/%s.deps.tmp", unit->cache_dir, r->path);
   const char *env_path_tmp = pool_printf(pool, "%s.env.tmp", r->path);
 
   unlink(deps_path_tmp);

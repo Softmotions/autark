@@ -1,11 +1,11 @@
 #ifndef _AMALGAMATE_
 
-#ifndef VERSION
-#define VERSION  "dev"
+#ifndef META_VERSION
+#define META_VERSION  "dev"
 #endif
 
-#ifndef REVISION
-#define REVISION ""
+#ifndef META_REVISION
+#define META_REVISION ""
 #endif
 
 #include "env.h"
@@ -566,9 +566,9 @@ void autark_run(int argc, const char **argv) {
   }
 
   if (version) {
-    printf(VERSION);
+    printf(META_VERSION);
     if (g_env.verbose) {
-      puts("\nRevision: " REVISION);
+      puts("\nRevision: " META_REVISION);
     }
     fflush(stdout);
     _exit(0);

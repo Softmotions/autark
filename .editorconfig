@@ -13,5 +13,5 @@ quote_style = single
 [Makefile]
 indent_style = tab
 
-[*.{c,cpp,cc,h,hpp}]
+[*.{c,cpp,cc,h,hpp,in}]
 insert_final_newline = true

@@ -13,6 +13,11 @@ check {
 }
 
 set {
+  META_REVISION
+  @{ git rev-parse --short HEAD }
+}
+
+set {
   CC
   ${CC cc}
 }
@@ -75,6 +80,7 @@ cc {
   }
   consumes {
     scriptx.h
+    config.h
   }
 }
 
@@ -111,6 +117,24 @@ run {
   }
   produces {
     scriptx.h
+  }
+}
+
+configure {
+  config.h.in
+  version.sh.in
+}
+
+in-sources {
+  run {
+    exec { amalgamator.sh }
+    consumes {
+      amalgamator.sh
+    }
+    produces {
+      dist/autark.c
+      dist/build.sh
+    }
   }
 }
 

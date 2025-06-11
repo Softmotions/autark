@@ -1,19 +1,23 @@
 #!/bin/sh
 set -e
 
-cd "$(cd "$(dirname "$0")" pwd -P)"
+cd "$(cd "$(dirname "$0")"; pwd -P)"
 
-VERSION=${VERSION:-dev}
-REVISION="$(git rev-parse --short HEAD)"
-
-#rm -rf ./dist
+rm -rf ./dist
 mkdir -p ./dist
 
 F=./dist/autark.c
 B=./dist/build.sh
 
-echo "#define VERSION \"${VERSION}\"" > ${F}
-echo "#define REVISION \"${REVISION}\"" >> ${F}
+if [ -f ./autark-cache/config.h -a -f ./autark-cache/version.sh ]; then
+  . ./autark-cache/version.sh
+  cat ./autark-cache/config.h > ${F}
+else
+  META_VERSION="${META_VERSION:-dev}"
+  META_REVISION="$(git rev-parse --short HEAD)"
+  echo "#define META_VERSION \"${META_VERSION}\"" > ${F}
+  echo "#define META_REVISION \"${META_REVISION}\"" >> ${F}
+fi
 
 cat <<'EOF' >> ${F}
 #define _AMALGAMATE_
@@ -94,17 +98,17 @@ cat<<EOF > ${B}
 #!/bin/sh
 # Autark build system script wrapper.
 
-VERSION=${VERSION}
-REVISION=${REVISION}
+META_VERSION=${META_VERSION}
+META_REVISION=${META_REVISION}
 EOF
 
 cat <<'EOF' >> ${B}
-cd "$(cd "$(dirname "$0")" pwd -P)"
+cd "$(cd "$(dirname "$0")"; pwd -P)"
 
-export AUTARK_HOME=${HOME}/.autark
+export AUTARK_HOME=${AUTARK_HOME:-${HOME}/.autark}
 AUTARK=${AUTARK_HOME}/autark
 
-if [ ${VERSION} = "$(${AUTARK} -v)" ]; then
+if [ "${META_VERSION}" = "$(${AUTARK} -v)" ]; then
   ${AUTARK} "$@"
   exit $?
 fi
