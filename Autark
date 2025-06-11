@@ -39,6 +39,7 @@ set {
   -Wall -Wextra -Wpedantic
   -Wno-sign-compare
   -Wno-unused-parameter
+  -Wno-format-truncation
   ..${CFLAGS}
 }
 
