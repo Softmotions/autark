@@ -137,7 +137,7 @@ echo 'a292effa503b' >> ${B}
 
 cat <<'EOF' >> ${B}
 
-(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -o ${AUTARK_HOME}/autark)
+(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native -o ${AUTARK_HOME}/autark)
 echo "Done"
 
 set +e
