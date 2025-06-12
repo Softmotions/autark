@@ -70,6 +70,7 @@ static void _set_dispose(struct node *n) {
 }
 
 int node_set_setup(struct node *n) {
+  n->flags |= NODE_FLG_NO_CWD;
   n->init = _set_init;
   n->value_get = _set_value_get;
   n->dispose = _set_dispose;

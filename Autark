@@ -63,6 +63,7 @@ set {
   node_script.c
   node_set.c
   node_subst.c
+  node_dir.c
   paths.c
   pool.c
   script.c
@@ -112,7 +113,7 @@ run {
 }
 
 run {
-  exec { ${LEG} ../scriptx.leg -o scriptx.h }
+  exec { ${LEG} SRC{scriptx.leg} -o scriptx.h }
   consumes {
     scriptx.leg
   }

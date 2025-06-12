@@ -115,6 +115,7 @@ int node_subst_setup(struct node *n) {
   if (strchr(n->value, '@')) {
     n->value_get = _subst_value_proc;
   } else {
+    n->flags |= NODE_FLG_NO_CWD;
     n->value_get = _subst_value;
   }
   n->dispose = _subst_dispose;

@@ -85,6 +85,7 @@ cat ./node_cc.c >> ${F}
 cat ./node_basename.c >> ${F}
 cat ./node_foreach.c >> ${F}
 cat ./node_in_sources.c >> ${F}
+cat ./node_dir.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

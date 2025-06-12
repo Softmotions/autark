@@ -13,7 +13,6 @@ static const char* _basename_value(struct node *n) {
     free(n->impl);
     n->impl = 0;
   }
-
   if (n->impl) {
     return n->impl;
   }
@@ -45,7 +44,7 @@ static void _basename_dispose(struct node *n) {
 }
 
 int node_basename_setup(struct node *n) {
-  n->flags |= NODE_FLG_IN_CACHE;
+  n->flags |= NODE_FLG_NO_CWD;
   n->value_get = _basename_value;
   n->dispose = _basename_dispose;
   return 0;

@@ -26,6 +26,7 @@
 #define NODE_TYPE_BASENAME   0x2000U
 #define NODE_TYPE_FOREACH    0x4000U
 #define NODE_TYPE_IN_SOURCES 0x8000U
+#define NODE_TYPE_DIR        0x10000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U
@@ -34,19 +35,21 @@
 #define NODE_FLG_BUILT    0x10U // Node built
 #define NODE_FLG_IN_CACHE 0x40U
 #define NODE_FLG_IN_SRC   0x80U
+#define NODE_FLG_NO_CWD   0x100U
 
-#define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE)
+#define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
 #define node_is_init(n__)  (((n__)->flags & NODE_FLG_INIT) != 0)
 #define node_is_setup(n__) (((n__)->flags & NODE_FLG_SETUP) != 0)
 #define node_is_built(n__) (((n__)->flags & NODE_FLG_BUILT) != 0)
 #define node_is_value(n__) ((n__)->type == NODE_TYPE_VALUE)
-#define node_is_can_be_value(n__)         \
-        (  (n__)->type == NODE_TYPE_VALUE \
-        || (n__)->type == NODE_TYPE_SUBST \
-        || (n__)->type == NODE_TYPE_SET   \
-        || (n__)->type == NODE_TYPE_JOIN  \
-        || (n__)->type == NODE_TYPE_BASENAME)
+#define node_is_can_be_value(n__)            \
+        (  (n__)->type == NODE_TYPE_VALUE    \
+        || (n__)->type == NODE_TYPE_SUBST    \
+        || (n__)->type == NODE_TYPE_SET      \
+        || (n__)->type == NODE_TYPE_JOIN     \
+        || (n__)->type == NODE_TYPE_BASENAME \
+        || (n__)->type == NODE_TYPE_DIR)
 
 #define node_is_rule(n__) !node_is_value(n__)
 

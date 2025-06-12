@@ -30,6 +30,7 @@ static void _in_sources_init(struct node *n) {
 }
 
 int node_in_sources_setup(struct node *n) {
+  n->flags |= NODE_FLG_NO_CWD;
   n->init = _in_sources_init;
   return 0;
 }

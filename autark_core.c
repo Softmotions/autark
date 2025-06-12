@@ -1,7 +1,7 @@
 #ifndef _AMALGAMATE_
 
 #ifndef META_VERSION
-#define META_VERSION  "dev"
+#define META_VERSION "dev"
 #endif
 
 #ifndef META_REVISION
@@ -175,7 +175,10 @@ struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *po
 
 void unit_push(struct unit *unit, struct node *n) {
   akassert(unit);
-  struct unit_ctx ctx = { unit, n };
+  struct unit_ctx ctx = { unit, 0 };
+  if (n) {
+    ctx.flags = n->flags;
+  }
   ulist_push(&g_env.stack_units, &ctx);
   unit_ch_dir(&ctx, 0);
   setenv(AUTARK_UNIT, unit->rel_path, 1);
@@ -193,7 +196,15 @@ struct unit* unit_pop(void) {
 }
 
 struct unit* unit_peek(void) {
-  return unit_peek_ctx().unit;
+  struct unit *u = unit_peek_ctx().unit;
+  akassert(u);
+  return u;
+}
+
+struct  unit* unit_root(void) {
+  akassert(g_env.stack_units.num);
+  struct unit_ctx uc = *(struct unit_ctx*) ulist_get(&g_env.stack_units, 0);
+  return uc.unit;
 }
 
 struct unit_ctx unit_peek_ctx(void) {
@@ -206,10 +217,10 @@ struct unit_ctx unit_peek_ctx(void) {
 }
 
 void unit_ch_dir(struct unit_ctx *ctx, char *prevcwd) {
-  if (ctx->node && (ctx->node->flags & NODE_FLG_IN_ANY)) {
-    if (ctx->node->flags & NODE_FLG_IN_SRC) {
+  if (ctx->flags & NODE_FLG_IN_ANY) {
+    if (ctx->flags & NODE_FLG_IN_SRC) {
       unit_ch_src_dir(ctx->unit, prevcwd);
-    } else if (ctx->node->flags & NODE_FLG_IN_CACHE) {
+    } else if (ctx->flags & NODE_FLG_IN_CACHE) {
       unit_ch_cache_dir(ctx->unit, prevcwd);
     }
   } else if (ctx->unit->flags & UNIT_FLG_SRC_CWD) {
@@ -466,7 +477,8 @@ static void _on_command_glob(int argc, const char **argv) {
     for (int i = 0; i < g.gl_pathc; ++i) {
       puts(g.gl_pathv[i]);
     }
-  };
+  }
+  ;
   globfree(&g);
   if (rc && rc != GLOB_NOMATCH) {
     exit(1);

@@ -37,7 +37,7 @@ static void _foreach_init(struct node *n) {
 }
 
 int node_foreach_setup(struct node *n) {
-  n->flags |= NODE_FLG_IN_CACHE;
+  n->flags |= NODE_FLG_NO_CWD;
   n->init = _foreach_init;
   n->setup = _foreach_setup;
   n->dispose = _foreach_dispose;

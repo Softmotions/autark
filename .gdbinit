@@ -1,6 +1,6 @@
-cd ./tests
-file ./test8
-set args -V
+#cd ./tests
+file /home/adam/.autark/autark
+#set args -V
 
 set confirm off
 set follow-fork-mode parent

@@ -46,7 +46,7 @@ struct unit {
 /// Unit context in units stack.
 struct unit_ctx {
   struct unit *unit;
-  struct node *node;
+  unsigned flags;
 };
 
 /// Global env
@@ -86,6 +86,8 @@ struct unit* unit_pop(void);
 struct unit* unit_peek(void);
 
 struct unit_ctx unit_peek_ctx(void);
+
+struct  unit* unit_root(void);
 
 void unit_ch_dir(struct unit_ctx*, char *prevcwd);
 
