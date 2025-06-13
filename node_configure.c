@@ -74,9 +74,11 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
   struct xstr *kstr = xstr_create_empty();
 
   do {
-    xstr_clear(kstr);
     xstr_cat2(xstr, s, sp - s);
+    xstr_clear(kstr);
     char *p = ++sp;
+    sp = 0;
+
     while (*p) {
       if (*p == '@') {
         const char *key = xstr_ptr(kstr);
@@ -102,6 +104,7 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
         }
         s = ++p;
         sp = strchr(s, '@');
+        xstr_clear(kstr);
         break;
       } else {
         xstr_cat2(kstr, p++, 1);
@@ -109,7 +112,12 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
     }
   } while (sp);
 
-  xstr_cat(xstr, s);
+  if (xstr_size(kstr)) {
+    xstr_cat2(xstr, "@", 1);
+    xstr_cat(xstr, xstr_ptr(kstr));
+  } else {
+    xstr_cat(xstr, s);
+  }
   xstr_destroy(kstr);
 
   return xstr_destroy_keep_ptr(xstr);

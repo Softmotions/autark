@@ -1,5 +1,7 @@
-#cd ./tests
-file /home/adam/.autark/autark
+cd ./autark-cache/tests
+#set environment BUILD_TESTS=1
+#file /home/adam/.autark/autark
+file ./test7
 #set args -V
 
 set confirm off

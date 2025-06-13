@@ -1,6 +1,10 @@
 #ifndef HELLO_H
 #define HELLO_H
 
+
+/* Copyright (c) 2012-2024 Softmotions Ltd <info@softmotions.com>
+*/
+
 #define BAR "BAZ ZZ"
 #define GAZ 1
 #define FOO
