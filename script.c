@@ -93,6 +93,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_IN_SOURCES;
   } else if (strcmp(key, "SRC") == 0 || strcmp(key, "CRC") == 0) {
     return NODE_TYPE_DIR;
+  } else if (strcmp(key, "option") == 0) {
+    return NODE_TYPE_OPTION;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -466,6 +468,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_DIR:
         rc = node_dir_setup(n);
+        break;
+      case NODE_TYPE_OPTION:
+        rc = node_option_setup(n);
         break;
     }
 

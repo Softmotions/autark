@@ -264,6 +264,13 @@ static int _usage_va(const char *err, va_list ap) {
           "    -C, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
   fprintf(stderr,
           "    -c, --clean                 Clean build cache dir.\n");
+  fprintf(stderr,
+          "    -I, --prefix                Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
+  fprintf(stderr,
+          "    -l, --options               List of all available project options and their description.\n");
+  fprintf(stderr,
+          "    -D<option>[=<val>]          Set project build option.\n");
+
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
   fprintf(stderr,
@@ -512,6 +519,14 @@ void _build(void) {
   akinfo("Build successful");
 }
 
+static void _options(void) {
+  struct sctx *x;
+  int rc = script_open(AUTARK_SCRIPT, &x);
+  if  (rc) {
+    akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
+  }
+}
+
 void autark_init(void) {
   if (!g_env.pool) {
     g_env.stack_units.usize = sizeof(struct unit_ctx);
@@ -552,12 +567,14 @@ void autark_run(int argc, const char **argv) {
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "version", 0, 0, 'v' },
+    { "prefix", 1, 0, 'I' },
+    { "options", 0, 0, 'l' },
     { 0 }
   };
 
   bool version = false;
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvq", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvlI:D:", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'C':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -570,6 +587,15 @@ void autark_run(int argc, const char **argv) {
         break;
       case 'v':
         version = true;
+        break;
+      case 'l':
+        g_env.project.options = true;
+        break;
+      case 'I':
+        g_env.project.install_prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
+        break;
+      case 'D':
+        // TODO: Add option
         break;
       case 'h':
       default:
@@ -619,5 +645,10 @@ void autark_run(int argc, const char **argv) {
   }
 
   autark_build_prepare(AUTARK_SCRIPT);
-  _build();
+
+  if (g_env.project.options) {
+    _options();
+  } else {
+    _build();
+  }
 }

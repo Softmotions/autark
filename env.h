@@ -10,8 +10,9 @@
 #include <stdbool.h>
 #endif
 
-#define AUTARK_CACHE  "autark-cache"
-#define AUTARK_SCRIPT "Autark"
+#define AUTARK_CACHE           "autark-cache"
+#define AUTARK_SCRIPT          "Autark"
+#define INSTALL_PREFIX_DEFAULT "/usr/local"
 
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
@@ -46,7 +47,7 @@ struct unit {
 /// Unit context in units stack.
 struct unit_ctx {
   struct unit *unit;
-  unsigned flags;
+  unsigned     flags;
 };
 
 /// Global env
@@ -55,10 +56,12 @@ struct env {
   struct pool *pool;
   int verbose;
   struct {
-    const char *root_dir;  // Project root source dir.
-    const char *cache_dir; // Project artifacts cache dir.
-    bool cleanup;          // Clean project cache before build
-    bool prepared;         // Autark build prepared
+    const char *root_dir;           // Project root source dir.
+    const char *cache_dir;          // Project artifacts cache dir.
+    const char *install_prefix_dir; // Install prefix dir.
+    bool cleanup;                   // Clean project cache before build
+    bool prepared;                  // Autark build prepared
+    bool options;                   // Ask option values
   } project;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
