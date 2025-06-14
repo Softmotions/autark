@@ -1,11 +1,12 @@
 #ifndef _AMALGAMATE_
 #include "script.h"
 #include "xstr.h"
+#include "env.h"
 #include <stdio.h>
 #endif
 
 int node_option_setup(struct node *n) {
-  if (!n->child) {
+  if (!g_env.project.options || !n->child) {
     return 0;
   }
   const char *name = n->child->value;
