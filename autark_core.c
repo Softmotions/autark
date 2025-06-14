@@ -508,11 +508,26 @@ void on_command_dep_env(int argc, const char **argv) {
 
 #endif
 
-void _build(void) {
+void _build(struct ulist *options) {
   struct sctx *x;
   int rc = script_open(AUTARK_SCRIPT, &x);
   if (rc) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
+  }
+  struct unit *root = unit_root();
+  for (int i = 0; i < options->num; ++i) {
+    const char *opt = *(char**) ulist_get(options, i);
+    char *p = strchr(opt, '=');
+    if (p) {
+      *p = '\0';
+      char *val = p + 1;
+      for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
+        val[vlen - 1] = '\0';
+      }
+      unit_env_set_val(root, opt, val);
+    } else {
+      unit_env_set_val(root, opt, "");
+    }
   }
   script_build(x);
   script_close(&x);
@@ -522,7 +537,7 @@ void _build(void) {
 static void _options(void) {
   struct sctx *x;
   int rc = script_open(AUTARK_SCRIPT, &x);
-  if  (rc) {
+  if (rc) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
 }
@@ -573,6 +588,7 @@ void autark_run(int argc, const char **argv) {
   };
 
   bool version = false;
+  struct ulist options = { .usize = sizeof(char*) };
 
   for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvlI:D:", long_options, 0)) != -1; ) {
     switch (ch) {
@@ -594,9 +610,11 @@ void autark_run(int argc, const char **argv) {
       case 'I':
         g_env.project.install_prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
         break;
-      case 'D':
-        // TODO: Add option
+      case 'D': {
+        char *p = pool_strdup(g_env.pool, optarg);
+        ulist_push(&options, &p);
         break;
+      }
       case 'h':
       default:
         _usage(0);
@@ -649,6 +667,8 @@ void autark_run(int argc, const char **argv) {
   if (g_env.project.options) {
     _options();
   } else {
-    _build();
+    _build(&options);
   }
+
+  ulist_destroy_keep(&options);
 }
