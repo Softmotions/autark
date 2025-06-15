@@ -59,6 +59,9 @@ struct env {
     const char *root_dir;           // Project root source dir.
     const char *cache_dir;          // Project artifacts cache dir.
     const char *install_prefix_dir; // Install prefix dir.
+    const char *install_bin;
+    const char *install_lib;
+    const char *install_include;
     bool cleanup;                   // Clean project cache before build
     bool prepared;                  // Autark build prepared
     bool options;                   // Ask option values

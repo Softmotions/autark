@@ -265,11 +265,17 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -c, --clean                 Clean build cache dir.\n");
   fprintf(stderr,
-          "    -I, --prefix                Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
-  fprintf(stderr,
           "    -l, --options               List of all available project options and their description.\n");
   fprintf(stderr,
           "    -D<option>[=<val>]          Set project build option.\n");
+  fprintf(stderr,
+          "    -I, --prefix<>              Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
+  fprintf(stderr,
+          "        --bin=<>                Relative path to 'bin' dir within a `prefix` dir. Default: bin\n");
+  fprintf(stderr,
+          "        --lib=<>                Relative path to 'lib' dir within a `prefix` dir. Default: lib\n");
+  fprintf(stderr,
+          "        --bin=<>                Relative path to 'include' dir within `prefix` dir. Default: include\n");
 
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
@@ -515,6 +521,16 @@ void _build(struct ulist *options) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
   struct unit *root = unit_root();
+  unit_env_set_val(root, "INSTALL_PREFIX", g_env.project.install_prefix_dir);
+  unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.project.install_bin);
+  unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.project.install_lib);
+  unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.project.install_include);
+  if (g_env.verbose) {
+    akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.project.install_prefix_dir);
+    akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.project.install_bin);
+    akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.project.install_lib);
+    akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.project.install_include);
+  }
   for (int i = 0; i < options->num; ++i) {
     const char *opt = *(char**) ulist_get(options, i);
     char *p = strchr(opt, '=');
@@ -572,6 +588,39 @@ AK_DESTRUCTOR void autark_dispose(void) {
   }
 }
 
+static const char* _libdir(void) {
+ #if defined(__linux__)
+  #if defined(__x86_64__)
+  // RPM-style or Debian-style
+    #if defined(DEBIAN_MULTIARCH)
+  return "lib/x86_64-linux-gnu";      // Debian/Ubuntu
+    #else
+  return "lib64";                     // RHEL/Fedora
+    #endif
+  #elif defined(__i386__)
+  return "lib";
+  #elif defined(__aarch64__)
+    #if defined(DEBIAN_MULTIARCH)
+  return "aarch64-linux-gnu";
+    #else
+  return "lib64";
+    #endif
+  #elif defined(__arm__)
+  return "lib";
+  #else
+  return "lib";
+  #endif
+#elif defined(__APPLE__)
+  return "lib";    // macOS uses universal binaries
+#elif defined(_WIN64)
+  return "C:\\Windows\\System32";
+#elif defined(_WIN32)
+  return "C:\\Windows\\SysWOW64";
+#else
+  return "lib";
+#endif
+}
+
 void autark_run(int argc, const char **argv) {
   akassert(argc > 0 && argv[0]);
   autark_init();
@@ -582,8 +631,11 @@ void autark_run(int argc, const char **argv) {
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "version", 0, 0, 'v' },
-    { "prefix", 1, 0, 'I' },
     { "options", 0, 0, 'l' },
+    { "prefix", 1, 0, 'I' },
+    { "bin", 1, 0, -1 },
+    { "lib", 1, 0, -2 },
+    { "include", 1, 0, -3 },
     { 0 }
   };
 
@@ -607,14 +659,23 @@ void autark_run(int argc, const char **argv) {
       case 'l':
         g_env.project.options = true;
         break;
-      case 'I':
-        g_env.project.install_prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
-        break;
       case 'D': {
         char *p = pool_strdup(g_env.pool, optarg);
         ulist_push(&options, &p);
         break;
       }
+      case 'I':
+        g_env.project.install_prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
+        break;
+      case -1:
+        g_env.project.install_bin = pool_strdup(g_env.pool, optarg);
+        break;
+      case -2:
+        g_env.project.install_lib = pool_strdup(g_env.pool, optarg);
+        break;
+      case -3:
+        g_env.project.install_include = pool_strdup(g_env.pool, optarg);
+        break;
       case 'h':
       default:
         _usage(0);
@@ -640,6 +701,19 @@ void autark_run(int argc, const char **argv) {
   const char *home = getenv("AUTARK_HOME");
   if (home) {
     g_env.spawn.extra_env_paths = path_normalize_pool(pool_strdup(g_env.pool, home), g_env.pool);
+  }
+
+  if (!g_env.project.install_prefix_dir) {
+    g_env.project.install_prefix_dir = "/usr/local";
+  }
+  if (!g_env.project.install_bin) {
+    g_env.project.install_bin = "bin";
+  }
+  if (!g_env.project.install_lib) {
+    g_env.project.install_lib = _libdir();
+  }
+  if (!g_env.project.install_include) {
+    g_env.project.install_include = "include";
   }
 
   if (optind < argc) {

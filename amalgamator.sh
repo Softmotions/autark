@@ -137,8 +137,11 @@ cat ${F} | sed -r '/^\s*$/d' >> ${B}
 echo 'a292effa503b' >> ${B}
 
 cat <<'EOF' >> ${B}
+if grep -E '^ID(_LIKE)?=.*debian' /etc/os-release >/dev/null; then
+  CFLAGS="-DDEBIAN_MULTIARCH"
+fi
 
-(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native -o ${AUTARK_HOME}/autark)
+(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native ${CFLAGS} -o ${AUTARK_HOME}/autark)
 cp $0 ${AUTARK_HOME}/build.sh
 echo "Done"
 
