@@ -271,12 +271,18 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -I, --prefix<>              Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
   fprintf(stderr,
-          "        --bin=<>                Relative path to 'bin' dir within a `prefix` dir. Default: bin\n");
+          "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
-          "        --lib=<>                Relative path to 'lib' dir within a `prefix` dir. Default: lib\n");
+          "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
   fprintf(stderr,
-          "        --bin=<>                Relative path to 'include' dir within `prefix` dir. Default: include\n");
-
+          "        --includedir=<>         Path to 'include' dir relative to `prefix` dir. Default: include\n");
+#ifdef __FreeBSD__
+  fprintf(stderr,
+          "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: libdata/pkgconfig");
+#else
+  fprintf(stderr,
+          "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
+#endif
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from checker script.\n");
   fprintf(stderr,
@@ -521,15 +527,17 @@ void _build(struct ulist *options) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
   struct unit *root = unit_root();
-  unit_env_set_val(root, "INSTALL_PREFIX", g_env.project.install_prefix_dir);
-  unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.project.install_bin);
-  unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.project.install_lib);
-  unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.project.install_include);
+  unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
+  unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
+  unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
+  unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
+  unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
   if (g_env.verbose) {
-    akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.project.install_prefix_dir);
-    akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.project.install_bin);
-    akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.project.install_lib);
-    akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.project.install_include);
+    akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
+    akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
+    akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
+    akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
+    akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
   }
   for (int i = 0; i < options->num; ++i) {
     const char *opt = *(char**) ulist_get(options, i);
@@ -633,9 +641,10 @@ void autark_run(int argc, const char **argv) {
     { "version", 0, 0, 'v' },
     { "options", 0, 0, 'l' },
     { "prefix", 1, 0, 'I' },
-    { "bin", 1, 0, -1 },
-    { "lib", 1, 0, -2 },
-    { "include", 1, 0, -3 },
+    { "bindir", 1, 0, -1 },
+    { "libdir", 1, 0, -2 },
+    { "includedir", 1, 0, -3 },
+    { "pkgconfdir", 1, 0, -4 },
     { 0 }
   };
 
@@ -665,16 +674,19 @@ void autark_run(int argc, const char **argv) {
         break;
       }
       case 'I':
-        g_env.project.install_prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
+        g_env.install.prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
         break;
       case -1:
-        g_env.project.install_bin = pool_strdup(g_env.pool, optarg);
+        g_env.install.bin_dir = pool_strdup(g_env.pool, optarg);
         break;
       case -2:
-        g_env.project.install_lib = pool_strdup(g_env.pool, optarg);
+        g_env.install.lib_dir = pool_strdup(g_env.pool, optarg);
         break;
       case -3:
-        g_env.project.install_include = pool_strdup(g_env.pool, optarg);
+        g_env.install.include_dir = pool_strdup(g_env.pool, optarg);
+        break;
+      case -4:
+        g_env.install.pkgconf_dir = pool_strdup(g_env.pool, optarg);
         break;
       case 'h':
       default:
@@ -703,17 +715,24 @@ void autark_run(int argc, const char **argv) {
     g_env.spawn.extra_env_paths = path_normalize_pool(pool_strdup(g_env.pool, home), g_env.pool);
   }
 
-  if (!g_env.project.install_prefix_dir) {
-    g_env.project.install_prefix_dir = "/usr/local";
+  if (!g_env.install.prefix_dir) {
+    g_env.install.prefix_dir = "/usr/local";
   }
-  if (!g_env.project.install_bin) {
-    g_env.project.install_bin = "bin";
+  if (!g_env.install.bin_dir) {
+    g_env.install.bin_dir = "bin";
   }
-  if (!g_env.project.install_lib) {
-    g_env.project.install_lib = _libdir();
+  if (!g_env.install.lib_dir) {
+    g_env.install.lib_dir = _libdir();
   }
-  if (!g_env.project.install_include) {
-    g_env.project.install_include = "include";
+  if (!g_env.install.include_dir) {
+    g_env.install.include_dir = "include";
+  }
+  if (!g_env.install.pkgconf_dir) {
+#ifdef __FreeBSD__
+    g_env.install.pkgconf_dir = "libdata/pkgconfig";
+#else
+    g_env.install.pkgconf_dir = "lib/pkgconfig";
+#endif
   }
 
   if (optind < argc) {

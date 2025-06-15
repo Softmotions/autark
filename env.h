@@ -58,14 +58,17 @@ struct env {
   struct {
     const char *root_dir;           // Project root source dir.
     const char *cache_dir;          // Project artifacts cache dir.
-    const char *install_prefix_dir; // Install prefix dir.
-    const char *install_bin;
-    const char *install_lib;
-    const char *install_include;
     bool cleanup;                   // Clean project cache before build
     bool prepared;                  // Autark build prepared
     bool options;                   // Ask option values
   } project;
+  struct {
+    const char *prefix_dir;  // Install prefix dir.
+    const char *bin_dir;     // Path to the bin dir relative to prefix.
+    const char *lib_dir;     // Path to lib dir relative to prefix.
+    const char *include_dir; // Path to include headers dir relative to prefix.
+    const char *pkgconf_dir; // Path to pkgconfig dir.
+  } install;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;
