@@ -564,6 +564,7 @@ static void _options(void) {
   if (rc) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
+  node_init(x->root);
 }
 
 void autark_init(void) {
