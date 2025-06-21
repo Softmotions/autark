@@ -201,10 +201,21 @@ struct unit* unit_peek(void) {
   return u;
 }
 
-struct  unit* unit_root(void) {
+struct unit* unit_root(void) {
   akassert(g_env.stack_units.num);
   struct unit_ctx uc = *(struct unit_ctx*) ulist_get(&g_env.stack_units, 0);
   return uc.unit;
+}
+
+struct unit* unit_parent(void) {
+  struct unit *u = unit_peek();
+  for (int i = g_env.stack_units.num - 2; i >= 0; --i) {
+    struct unit_ctx uu = *(struct unit_ctx*) ulist_get(&g_env.stack_units, i);
+    if (uu.unit != u) {
+      return uu.unit;
+    }
+  }
+  return u;
 }
 
 struct unit_ctx unit_peek_ctx(void) {

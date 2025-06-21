@@ -337,19 +337,23 @@ static int _script_from_value(
 
   if (file) {
     struct unit *unit;
+    char *f = path_relativize(g_env.project.root_dir, file);
     if (parent == 0 && g_env.units.num == 1) {
       unit = unit_peek();
       akassert(unit->n == 0); // We are the root script
     } else {
-      unit = unit_create(file, UNIT_FLG_SRC_CWD, g_env.pool);
+      unit = unit_create(f, UNIT_FLG_SRC_CWD, g_env.pool);
     }
     unit->n = &x->base;
     x->base.unit = unit;
     unit_ch_dir(&(struct unit_ctx) { unit, 0 }, prevcwd_);
     prevcwd = prevcwd_;
+    x->base.value = pool_strdup(pool, f);
+    free(f);
+  } else {
+    x->base.value = "<script>";
   }
 
-  x->base.value = pool_strdup(pool, file ? file : "<script>");
   x->base.type = NODE_TYPE_SCRIPT;
   _node_register(x->base.ctx, x);
   _node_bind(&x->base);
@@ -568,14 +572,16 @@ void node_init(struct node *n) {
       case NODE_TYPE_IN_SOURCES:
         _node_context_push(n);
         n->init(n);
-        _node_context_pop(n);
         _init_subnodes(n);
+        _node_context_pop(n);
         break;
       default:
-        _init_subnodes(n);
-        if (n->init) {
+        if (n->init || n->child) {
           _node_context_push(n);
-          n->init(n);
+          _init_subnodes(n);
+          if (n->init) {
+            n->init(n);
+          }
           _node_context_pop(n);
         }
     }
@@ -586,17 +592,19 @@ void node_setup(struct node *n) {
   if (!node_is_setup(n)) {
     n->flags |= NODE_FLG_SETUP;
     if (n->type != NODE_TYPE_FOREACH) {
-      _setup_subnodes(n);
-      if (n->setup) {
+      if (n->child || n->setup) {
         _node_context_push(n);
-        n->setup(n);
+        _setup_subnodes(n);
+        if (n->setup) {
+          n->setup(n);
+        }
         _node_context_pop(n);
       }
     } else {
       _node_context_push(n);
       n->setup(n);
-      _node_context_pop(n);
       _setup_subnodes(n);
+      _node_context_pop(n);
     }
   }
 }
@@ -638,18 +646,13 @@ static int _script_open(struct node *parent, const char *file, struct node **out
   int rc = 0;
   struct node *n;
   char buf[PATH_MAX];
-
   autark_build_prepare(path_normalize(file, buf));
-
-  char *path = path_relativize(0, buf);
-  RCC(rc, finish, _script_from_file(parent, path, &n));
+  RCC(rc, finish, _script_from_file(parent, buf, &n));
   RCC(rc, finish, _script_bind(n->ctx));
-
   if (out) {
     *out = n;
   }
 finish:
-  free(path);
   return rc;
 }
 

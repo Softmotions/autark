@@ -3,14 +3,32 @@
 #include "xstr.h"
 #include "utils.h"
 #include "alloc.h"
+#include "env.h"
 #endif
 
+static struct unit* unit_for_set(struct node *nn, const char **keyp) {
+  if (nn->type == NODE_TYPE_BAG) {
+    if (strcmp(nn->value, "root") == 0) {
+      *keyp = node_value(nn->child);
+      return unit_root();
+    } else if (strcmp(nn->value, "parent") == 0) {
+      *keyp = node_value(nn->child);
+      return unit_parent();
+    }
+  } else {
+    *keyp = node_value(nn);
+  }
+  return unit_peek();
+}
+
 static void _set_init(struct node *n) {
-  const char *name = node_value(n->child);
-  if (!name) {
+  const char *key = 0;
+  struct unit *unit = unit_for_set(n->child, &key);
+  if (!key) {
+    node_warn(n, "No name specified for 'set' directive");
     return;
   }
-  node_env_set_node(n, name);
+  unit_env_set_node(unit, key, n);
 }
 
 static const char* _set_value_get(struct node *n) {

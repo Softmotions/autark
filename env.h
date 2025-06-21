@@ -74,7 +74,7 @@ struct env {
   } spawn;
   struct map  *map_path_to_unit; // Path to unit mapping
   struct ulist stack_units;      // Stack of nested unit contexts (struct unit_ctx)
-  struct ulist units;            // All created units.
+  struct ulist units;            // All created units. (struct unit*)
   struct {
     struct xstr *log;
   } check;
@@ -96,7 +96,9 @@ struct unit* unit_peek(void);
 
 struct unit_ctx unit_peek_ctx(void);
 
-struct  unit* unit_root(void);
+struct unit* unit_root(void);
+
+struct unit* unit_parent(void);
 
 void unit_ch_dir(struct unit_ctx*, char *prevcwd);
 

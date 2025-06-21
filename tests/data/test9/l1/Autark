@@ -1,0 +1,20 @@
+set {
+  parent {
+    L1K1
+  }
+  L1V1
+}
+
+set {
+  root {
+    L1K2
+  }
+  L1V2
+}
+
+set {
+  FOO
+  BAR
+}
+
+include { l2/Autark }
