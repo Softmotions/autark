@@ -66,6 +66,7 @@ set {
   node_dir.c
   node_option.c
   node_error.c
+  node_echo.c
   paths.c
   pool.c
   script.c

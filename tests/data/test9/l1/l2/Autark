@@ -5,9 +5,19 @@ set {
   L2V1
 }
 
+
 set {
   root {
     L2K2
   }
   L2V2
+}
+
+set {
+  parent {
+    COMPOSITE
+  }
+  ..${COMPOSITE}
+  three
+  four
 }

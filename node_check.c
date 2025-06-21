@@ -35,7 +35,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   spawn_set_stdout_handler(s, _check_stdout_handler);
   spawn_set_stderr_handler(s, _check_stderr_handler);
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (node_is_value(nn)) {
+    if (node_is_can_be_value(nn)) {
       spawn_arg_add(s, node_value(nn));
     }
   }

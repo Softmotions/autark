@@ -97,6 +97,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_OPTION;
   } else if (strcmp(key, "error") == 0) {
     return NODE_TYPE_ERROR;
+  } else if (strcmp(key, "echo") == 0) {
+    return NODE_TYPE_ECHO;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -480,6 +482,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_ERROR:
         rc = node_error_setup(n);
+        break;
+      case NODE_TYPE_ECHO:
+        rc = node_echo_setup(n);
         break;
     }
 

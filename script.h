@@ -29,6 +29,7 @@
 #define NODE_TYPE_DIR        0x10000U
 #define NODE_TYPE_OPTION     0x20000U
 #define NODE_TYPE_ERROR      0x40000U
+#define NODE_TYPE_ECHO       0x80000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U

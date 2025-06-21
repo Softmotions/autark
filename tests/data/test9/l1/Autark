@@ -17,4 +17,12 @@ set {
   BAR
 }
 
+set {
+  COMPOSITE
+  one
+  two
+}
+
+echo { V= ${COMPOSITE} }
+
 include { l2/Autark }
