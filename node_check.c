@@ -35,14 +35,14 @@ static void _check_on_resolve(struct node_resolve *r) {
   spawn_set_stdout_handler(s, _check_stdout_handler);
   spawn_set_stderr_handler(s, _check_stderr_handler);
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE) {
-      spawn_arg_add(s, nn->value);
+    if (node_is_value(nn)) {
+      spawn_arg_add(s, node_value(nn));
     }
   }
 
   int rc = spawn_do(s);
   if (rc) {
-    node_fatal(rc, unit->n, "%s", unit->source_path);
+    node_fatal(rc, n, "%s", unit->source_path);
   } else {
     int code = spawn_exit_code(s);
     if (code != 0) {
