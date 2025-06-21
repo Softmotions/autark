@@ -87,6 +87,7 @@ cat ./node_foreach.c >> ${F}
 cat ./node_in_sources.c >> ${F}
 cat ./node_dir.c >> ${F}
 cat ./node_option.c >> ${F}
+cat ./node_error.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

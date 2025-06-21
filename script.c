@@ -95,6 +95,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_DIR;
   } else if (strcmp(key, "option") == 0) {
     return NODE_TYPE_OPTION;
+  } else if (strcmp(key, "error") == 0) {
+    return NODE_TYPE_ERROR;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -471,6 +473,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_OPTION:
         rc = node_option_setup(n);
+        break;
+      case NODE_TYPE_ERROR:
+        rc = node_error_setup(n);
         break;
     }
 

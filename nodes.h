@@ -22,5 +22,6 @@ int node_foreach_setup(struct node *n);
 int node_in_sources_setup(struct node *n);
 int node_dir_setup(struct node *n);
 int node_option_setup(struct node *n);
+int node_error_setup(struct node *n);
 
 #endif
