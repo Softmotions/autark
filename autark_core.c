@@ -565,6 +565,9 @@ static void _options(void) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
   node_init(x->root);
+  if (xstr_size(g_env.project.options)) {
+    fprintf(stderr, "\n%s", xstr_ptr(g_env.project.options));
+  }
 }
 
 void autark_init(void) {
@@ -667,7 +670,9 @@ void autark_run(int argc, const char **argv) {
         version = true;
         break;
       case 'l':
-        g_env.project.options = true;
+        if (!g_env.project.options) {
+          g_env.project.options = xstr_create_empty();
+        }
         break;
       case 'D': {
         char *p = pool_strdup(g_env.pool, optarg);

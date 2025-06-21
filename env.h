@@ -60,7 +60,7 @@ struct env {
     const char *cache_dir;          // Project artifacts cache dir.
     bool cleanup;                   // Clean project cache before build
     bool prepared;                  // Autark build prepared
-    bool options;                   // Ask option values
+    struct xstr *options;           // Ask option values
   } project;
   struct {
     const char *prefix_dir;  // Install prefix dir.

@@ -2,7 +2,6 @@
 #include "script.h"
 #include "xstr.h"
 #include "env.h"
-#include <stdio.h>
 #endif
 
 int node_option_setup(struct node *n) {
@@ -17,7 +16,7 @@ int node_option_setup(struct node *n) {
     }
     xstr_cat(xstr, nn->value);
   }
-  fprintf(stdout, "%s: %s\n", name, xstr_ptr(xstr));
+  xstr_printf(g_env.project.options, "%s: %s\n", name, xstr_ptr(xstr));
   xstr_destroy(xstr);
   return 0;
 }
