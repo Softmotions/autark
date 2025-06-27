@@ -110,6 +110,8 @@ void unit_env_set_val(struct unit*, const char *key, const char *val);
 
 void unit_env_set_node(struct unit*, const char *key, struct node *n);
 
+struct node* unit_env_get_node(struct unit *u, const char *key);
+
 const char* unit_env_get(struct unit*, const char *key);
 
 const char* unit_env_get_raw(struct unit *u, const char *key);

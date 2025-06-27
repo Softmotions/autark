@@ -25,6 +25,10 @@ int main(void) {
       akassert(unit_env_get_raw(unit, "L1K2") == 0);
       akassert(unit_env_get_raw(unit, "L2K2") == 0);
       akassert(unit_env_get_raw(unit, "L2K1") != 0);
+
+      const char *v = unit_env_get_raw(unit, "COMPOSITE");
+      akassert(v);
+      akassert(strcmp(v, "\1one\1two\1three\1four") == 0);
     } else if (i == 2) {
       akassert(unit_env_get_raw(unit, "FOO") == 0);
       akassert(unit_env_get_raw(unit, "L1K1") == 0);
@@ -33,6 +37,7 @@ int main(void) {
       akassert(unit_env_get_raw(unit, "L2K1") == 0);
     }
   }
+
 
   script_close(&sctx);
   return 0;

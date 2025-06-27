@@ -59,6 +59,15 @@ void unit_env_set_node(struct unit *u, const char *key, struct node *n) {
   map_put_str(u->env, key, item);
 }
 
+
+struct node* unit_env_get_node(struct unit *u, const char *key) {
+  struct unit_env_item *item = map_get(u->env, key);
+  if (item) {
+    return item->n;
+  }
+  return 0;
+}
+
 const char* unit_env_get_raw(struct unit *u, const char *key) {
   struct unit_env_item *item = map_get(u->env, key);
   if (item) {

@@ -28,10 +28,19 @@ static void _set_init(struct node *n) {
     node_warn(n, "No name specified for 'set' directive");
     return;
   }
+  struct node *nn = unit_env_get_node(unit, key);
+  if (nn) {
+    n->recur_next.n = nn;
+  }
   unit_env_set_node(unit, key, n);
 }
 
 static const char* _set_value_get(struct node *n) {
+  if (n->recur_next.active && n->recur_next.n) {
+    return _set_value_get(n->recur_next.n);
+  }
+  n->recur_next.active = true;
+
   struct node_foreach *fe = node_find_parent_foreach(n);
   if (fe) {
     if ((uintptr_t) n->impl != (uintptr_t) -1) {
@@ -41,8 +50,10 @@ static const char* _set_value_get(struct node *n) {
   }
 
   if ((uintptr_t) n->impl == (uintptr_t) -1) {
+    n->recur_next.active = false;
     return 0;
   } else if (n->impl) {
+    n->recur_next.active = false;
     return n->impl;
   }
 
@@ -51,12 +62,14 @@ static const char* _set_value_get(struct node *n) {
   struct node *nn = n->child->next;
   if (!nn) {
     n->impl = xstrdup("");
+    n->recur_next.active = false;
     return n->impl;
   }
 
   if (!nn->next && nn->value[0] != '.') { // Single value
     const char *v = node_value(nn);
     n->impl = xstrdup(v);
+    n->recur_next.active = false;
     return n->impl;
   }
 
@@ -77,6 +90,7 @@ static const char* _set_value_get(struct node *n) {
   }
 
   n->impl = xstr_destroy_keep_ptr(xstr);
+  n->recur_next.active = false;
   return n->impl;
 }
 

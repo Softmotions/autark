@@ -80,6 +80,12 @@ struct node {
   struct node *next;
   struct node *parent;
 
+  // Recursive set
+  struct {
+    struct node *n;
+    bool active;
+  } recur_next;
+
   struct sctx *ctx;
   struct unit *unit;
 
