@@ -59,7 +59,6 @@ void unit_env_set_node(struct unit *u, const char *key, struct node *n) {
   map_put_str(u->env, key, item);
 }
 
-
 struct node* unit_env_get_node(struct unit *u, const char *key) {
   struct unit_env_item *item = map_get(u->env, key);
   if (item) {
@@ -281,7 +280,7 @@ static int _usage_va(const char *err, va_list ap) {
           "\nautark [sources_dir/command] [options]\n"
           "  Build project in given sources dir.\n");
   fprintf(stderr,
-          "    -C, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
+          "    -H, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
   fprintf(stderr,
           "    -c, --clean                 Clean build cache dir.\n");
   fprintf(stderr,
@@ -316,6 +315,7 @@ static int _usage_va(const char *err, va_list ap) {
           "  Registers a given environment variable as dependency for check script.\n");
   fprintf(stderr,
           "\nautark glob <pattern>\n"
+          "   -C, --dir                   Current directory for glob list.\n"
           "  Lists files in current directory filtered by glob pattern.\n");
 
   fprintf(stderr, "\n");
@@ -505,7 +505,10 @@ static void _on_command_dep_env(int argc, const char **argv) {
   deps_close(&deps);
 }
 
-static void _on_command_glob(int argc, const char **argv) {
+static void _on_command_glob(int argc, const char **argv, const char *cdir) {
+  if (cdir) {
+    akcheck(chdir(cdir));
+  }
   const char *pattern = "*";
   if (optind < argc) {
     pattern = argv[optind];
@@ -658,13 +661,14 @@ void autark_run(int argc, const char **argv) {
   autark_init();
 
   static const struct option long_options[] = {
-    { "cache", 1, 0, 'C' },
+    { "cache", 1, 0, 'H' },
     { "clean", 0, 0, 'c' },
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "version", 0, 0, 'v' },
     { "options", 0, 0, 'l' },
     { "prefix", 1, 0, 'I' },
+    { "dir", 1, 0, 'C' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
@@ -673,11 +677,12 @@ void autark_run(int argc, const char **argv) {
   };
 
   bool version = false;
+  const char *cdir = 0;
   struct ulist options = { .usize = sizeof(char*) };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+C:chVvlI:D:", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlI:C:D:", long_options, 0)) != -1; ) {
     switch (ch) {
-      case 'C':
+      case 'H':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
         break;
       case 'V':
@@ -701,6 +706,9 @@ void autark_run(int argc, const char **argv) {
       }
       case 'I':
         g_env.install.prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
+        break;
+      case 'C':
+        cdir = pool_strdup(g_env.pool, optarg);
         break;
       case -1:
         g_env.install.bin_dir = pool_strdup(g_env.pool, optarg);
@@ -774,7 +782,7 @@ void autark_run(int argc, const char **argv) {
       _on_command_dep_env(argc, argv);
       return;
     } else if (strcmp(arg, "glob") == 0) {
-      _on_command_glob(argc, argv);
+      _on_command_glob(argc, argv, cdir);
       return;
     } else { // Root dir expected
       g_env.project.root_dir = pool_strdup(g_env.pool, arg);
