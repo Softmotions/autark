@@ -12,7 +12,7 @@ set {
 
 cc {
   ${TESTS}
-  set { _ ${CFLAGS} -I SRC{} }
+  set { _ ${CFLAGS} -I S{} }
   ${CC}
 }
 

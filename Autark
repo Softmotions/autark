@@ -116,7 +116,7 @@ run {
 }
 
 run {
-  exec { ${LEG} SRC{scriptx.leg} -o scriptx.h }
+  exec { ${LEG} S{scriptx.leg} -o scriptx.h }
   consumes {
     scriptx.leg
   }

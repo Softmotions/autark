@@ -91,7 +91,7 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_FOREACH;
   } else if (strcmp(key, "in-sources") == 0) {
     return NODE_TYPE_IN_SOURCES;
-  } else if (strcmp(key, "SRC") == 0 || strcmp(key, "CRC") == 0) {
+  } else if (strcmp(key, "S") == 0 || strcmp(key, "C") == 0 || strcmp(key, "SS") == 0 || strcmp(key, "CC") == 0) {
     return NODE_TYPE_DIR;
   } else if (strcmp(key, "option") == 0) {
     return NODE_TYPE_OPTION;

@@ -25,8 +25,24 @@ static const char* _dir_value(struct node *n) {
   char buf[PATH_MAX];
 
   struct unit *root = unit_root();
+  struct unit *unit = unit_peek();
   struct xstr *xstr = xstr_create_empty();
-  const char *dir = strcmp(n->value, "CRC") == 0 ? root->cache_dir : root->dir;
+  const char *dir = 0;
+
+  if (n->value[0] == 'S') {
+    if (n->value[1] == 'S') {
+      dir = unit->dir;
+    } else {
+      dir = root->dir;
+    }
+  } else {
+    if (n->value[1] == 'C') {
+      dir = unit->cache_dir;
+    } else {
+      dir = root->cache_dir;
+    }
+  }
+
   if (!getcwd(cwd, PATH_MAX)) {
     akfatal(errno, "Cannot get CWD", 0);
   }
