@@ -350,7 +350,10 @@ static void _cc_setup(struct node *n) {
     _cc_source_add(n, val);
   }
   if (ctx->n_cc) {
-    ctx->cc = pool_strdup(ctx->pool, node_value(ctx->n_cc));
+    const char *cc = node_value(ctx->n_cc);
+    if (cc && *cc != '\0') {
+      ctx->cc = pool_strdup(ctx->pool, cc);
+    }
   }
   if (!ctx->cc) {
     const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";

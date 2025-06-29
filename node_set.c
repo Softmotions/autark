@@ -23,7 +23,7 @@ static struct unit* unit_for_set(struct node *nn, const char **keyp) {
 
 static void _set_init(struct node *n) {
   const char *key = 0;
-  struct unit *unit = unit_for_set(n->child, &key);
+  struct unit *unit = n->child ? unit_for_set(n->child, &key) : 0;
   if (!key) {
     node_warn(n, "No name specified for 'set' directive");
     return;
