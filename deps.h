@@ -8,11 +8,12 @@
 #include <stdint.h>
 #endif
 
-#define DEPS_TYPE_FILE       102 // f
-#define DEPS_TYPE_NODE_VALUE 118 // v
-#define DEPS_TYPE_ENV        101 // e
-#define DEPS_TYPE_OUTDATED   111 // o
-#define DEPS_TYPE_ALIAS      97  // a
+#define DEPS_TYPE_FILE          102 // f
+#define DEPS_TYPE_FILE_OUTDATED 111 // x
+#define DEPS_TYPE_NODE_VALUE    118 // v
+#define DEPS_TYPE_ENV           101 // e
+#define DEPS_TYPE_ALIAS         97  // a
+#define DEPS_TYPE_OUTDATED      120 // o
 
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U

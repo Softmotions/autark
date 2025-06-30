@@ -24,7 +24,8 @@ struct _cc_ctx {
   struct node *n_consumes;
   struct node *n_objects;
   const char  *cc;
-  struct ulist consumes; // sizeof(char*)
+  struct ulist consumes;    // sizeof(char*)
+  bool fail;
 };
 
 static void _cc_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
@@ -107,7 +108,8 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
   fclose(f);
 }
 
-static void _cc_on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static bool _cc_on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
+  int ret = true;
   if (g_env.check.log) {
     xstr_printf(g_env.check.log, "%s: build src=%s obj=%s\n", n->name, src, obj);
   }
@@ -140,14 +142,17 @@ static void _cc_on_build_source(struct node *n, struct deps *deps, const char *s
 
   int rc = spawn_do(s);
   if (rc) {
-    node_fatal(rc, ctx->n, "%s", ctx->cc);
+    node_error(rc, ctx->n, "%s", ctx->cc);
+    ret = false;
   } else {
     int code = spawn_exit_code(s);
     if (code != 0) {
-      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", ctx->cc, code);
+      node_error(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", ctx->cc, code);
+      ret = false;
     }
   }
   spawn_destroy(s);
+  return ret;
 }
 
 static void _cc_on_resolve(struct node_resolve *r) {
@@ -207,11 +212,15 @@ static void _cc_on_resolve(struct node_resolve *r) {
     p[1] = 'o';
     p[2] = '\0';
 
-    _cc_on_build_source(ctx->n, &deps, src, obj);
+    if (!ctx->fail && !_cc_on_build_source(ctx->n, &deps, src, obj)) {
+      ctx->fail = true;
+    }
 
     if (slist == &ctx->sources) {
-      deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
-      _cc_deps_MMD_add(ctx->n, &deps, src, obj);
+      deps_add(&deps, ctx->fail ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
+      if (!ctx->fail) {
+        _cc_deps_MMD_add(ctx->n, &deps, src, obj);
+      }
     }
 
     free(obj);
@@ -219,6 +228,9 @@ static void _cc_on_resolve(struct node_resolve *r) {
   }
 
   if (slist != &ctx->sources) {
+    if (ctx->fail) {
+      akfatal2(0);
+    }
     for (int i = 0; i < ctx->sources.num; ++i) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
@@ -300,6 +312,10 @@ static void _cc_build(struct node *n) {
   }
 
   node_resolve(&r);
+
+  if (ctx->fail) {
+    akfatal2(0);
+  }
 }
 
 static void _cc_source_add(struct node *n, const char *src) {

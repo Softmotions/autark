@@ -138,6 +138,11 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     utils_strncpy(buf[0], resource, PATH_MAX);
     utils_chars_replace(buf[0], '\n', '\2');
     resource = buf[0];
+  } else if (type == DEPS_TYPE_FILE_OUTDATED) {
+    type = DEPS_TYPE_FILE;
+    path_normalize(resource, buf[0]);
+    resource = buf[0];
+    serial = 0;
   }
 
   long int off = ftell(d->file);
