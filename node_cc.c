@@ -9,7 +9,7 @@
 #include "xstr.h"
 #include "spawn.h"
 #include "alloc.h"
-
+#include "map.h"
 #include <string.h>
 #endif
 
@@ -25,7 +25,7 @@ struct _cc_ctx {
   struct node *n_objects;
   const char  *cc;
   struct ulist consumes;    // sizeof(char*)
-  bool fail;
+  int num_failed;
 };
 
 static void _cc_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
@@ -161,6 +161,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
   struct unit *unit = unit_peek();
   struct ulist *slist = &ctx->sources;
   struct ulist rlist = { .usize = sizeof(char*) };
+  struct map *fmap = map_create_str(map_k_free);
 
   if (r->resolve_outdated.num) {
     for (int i = 0; i < r->resolve_outdated.num; ++i) {
@@ -212,15 +213,18 @@ static void _cc_on_resolve(struct node_resolve *r) {
     p[1] = 'o';
     p[2] = '\0';
 
-    if (!ctx->fail && !_cc_on_build_source(ctx->n, &deps, src, obj)) {
-      ctx->fail = true;
+    bool failed = !_cc_on_build_source(ctx->n, &deps, src, obj);
+    if (failed) {
+      ++ctx->num_failed;
+      map_put_str(fmap, src, (void*) (intptr_t) 1);
     }
 
     if (slist == &ctx->sources) {
-      deps_add(&deps, ctx->fail ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
-      if (!ctx->fail) {
+      deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
+      if (!failed) {
         _cc_deps_MMD_add(ctx->n, &deps, src, obj);
       }
+    } else {
     }
 
     free(obj);
@@ -228,9 +232,6 @@ static void _cc_on_resolve(struct node_resolve *r) {
   }
 
   if (slist != &ctx->sources) {
-    if (ctx->fail) {
-      akfatal2(0);
-    }
     for (int i = 0; i < ctx->sources.num; ++i) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
@@ -248,8 +249,11 @@ static void _cc_on_resolve(struct node_resolve *r) {
       p[1] = 'o';
       p[2] = '\0';
 
-      deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
-      _cc_deps_MMD_add(ctx->n, &deps, src, obj);
+      bool failed = map_get(fmap, src) != 0;
+      deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
+      if (!failed) {
+        _cc_deps_MMD_add(ctx->n, &deps, src, obj);
+      }
 
       free(obj);
       free(src);
@@ -260,6 +264,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
   deps_close(&deps);
 
   ulist_destroy_keep(&rlist);
+  map_destroy(fmap);
 }
 
 static void _cc_on_consumed_resolved(const char *path_, void *d) {
@@ -313,8 +318,8 @@ static void _cc_build(struct node *n) {
 
   node_resolve(&r);
 
-  if (ctx->fail) {
-    akfatal2(0);
+  if (ctx->num_failed) {
+    akfatal2("Compilation terminated with errors!");
   }
 }
 
