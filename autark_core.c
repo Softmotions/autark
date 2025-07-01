@@ -288,7 +288,9 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -D<option>[=<val>]          Set project build option.\n");
   fprintf(stderr,
-          "    -I, --prefix<>              Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
+          "    -I, --install               Install all built artifacts\n");
+  fprintf(stderr,
+          "    -R, --prefix=<>             Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
@@ -667,7 +669,8 @@ void autark_run(int argc, const char **argv) {
     { "verbose", 0, 0, 'V' },
     { "version", 0, 0, 'v' },
     { "options", 0, 0, 'l' },
-    { "prefix", 1, 0, 'I' },
+    { "install", 0, 0, 'I' },
+    { "prefix", 1, 0, 'R' },
     { "dir", 1, 0, 'C' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
@@ -680,7 +683,7 @@ void autark_run(int argc, const char **argv) {
   const char *cdir = 0;
   struct ulist options = { .usize = sizeof(char*) };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlI:C:D:", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:I", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'H':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -704,8 +707,11 @@ void autark_run(int argc, const char **argv) {
         ulist_push(&options, &p);
         break;
       }
-      case 'I':
+      case 'R':
         g_env.install.prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
+        break;
+      case 'I':
+        g_env.install.enabled = true;
         break;
       case 'C':
         cdir = pool_strdup(g_env.pool, optarg);

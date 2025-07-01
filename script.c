@@ -99,6 +99,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_ERROR;
   } else if (strcmp(key, "echo") == 0) {
     return NODE_TYPE_ECHO;
+  } else if (strcmp(key, "install") == 0) {
+    return NODE_TYPE_INSTALL;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -485,6 +487,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_ECHO:
         rc = node_echo_setup(n);
+        break;
+      case NODE_TYPE_INSTALL:
+        rc = node_install_setup(n);
         break;
     }
 

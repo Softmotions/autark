@@ -89,6 +89,7 @@ cat ./node_dir.c >> ${F}
 cat ./node_option.c >> ${F}
 cat ./node_error.c >> ${F}
 cat ./node_echo.c >> ${F}
+cat ./node_install.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

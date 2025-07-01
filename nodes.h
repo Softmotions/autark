@@ -24,5 +24,6 @@ int node_dir_setup(struct node *n);
 int node_option_setup(struct node *n);
 int node_error_setup(struct node *n);
 int node_echo_setup(struct node *n);
+int node_install_setup(struct node *n);
 
 #endif
