@@ -115,7 +115,7 @@ cd "$(cd "$(dirname "$0")"; pwd -P)"
 export AUTARK_HOME=${AUTARK_HOME:-${HOME}/.autark}
 AUTARK=${AUTARK_HOME}/autark
 
-if [ "${META_VERSION}" = "$(${AUTARK} -v)" ]; then
+if [ "${META_VERSION}.${META_REVISION}" = "$(${AUTARK} -v)" ]; then
   ${AUTARK} "$@"
   exit $?
 fi

@@ -724,7 +724,7 @@ void autark_run(int argc, const char **argv) {
   }
 
   if (version) {
-    printf(META_VERSION);
+    printf(META_VERSION "." META_REVISION);
     if (g_env.verbose) {
       puts("\nRevision: " META_REVISION);
     }
