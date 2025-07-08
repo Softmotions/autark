@@ -29,3 +29,13 @@ run {
 configure {
   hello.h.in
 }
+
+install {
+  ${INSTALL_LIB_DIR}
+  libhello.a
+}
+
+install {
+  ^{${INSTALL_INCLUDE_DIR} /libhello}
+  hello.h
+}

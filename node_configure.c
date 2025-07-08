@@ -185,6 +185,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
+  node_add_unit_deps(&deps);
 
   if (r->resolve_outdated.num) {
     for (int i = 0; i < r->resolve_outdated.num; ++i) {
@@ -228,7 +229,6 @@ static void _on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
   }
 
-  node_add_unit_deps(&deps);
   deps_close(&deps);
 
   ulist_destroy_keep(&rlist);

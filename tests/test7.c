@@ -1,10 +1,14 @@
 #include "test_utils.h"
 #include "script.h"
+#include "pool.h"
 
 int main(void) {
   unsetenv("CC");
   unsetenv("CFLAGS");
   unsetenv("LDFLAGS");
+
+  const char *install_dir = 0;
+  struct pool *pool = pool_create_empty();
 
   test_init(true);
   struct xstr *xlog = g_env.check.log = xstr_create_empty();
@@ -14,6 +18,8 @@ int main(void) {
   struct sctx *sctx;
   int rc = script_open("../../tests/data/test7/Autark", &sctx);
   akassert(rc == 0);
+  install_dir = pool_printf(pool, "%s/install", g_env.project.cache_dir);
+
   script_build(sctx);
   script_close(&sctx);
 
@@ -55,6 +61,24 @@ int main(void) {
   script_close(&sctx);
   akassert(xstr_size(xlog) == 0);
 
+  //----
+  chdir(cwd_prev);
+  test_reinit(true);
+  g_env.install.enabled = true;
+  g_env.install.prefix_dir = install_dir;
+  g_env.install.bin_dir = "bin";
+  g_env.install.lib_dir = "lib";
+  g_env.install.include_dir = "include";
+  g_env.install.pkgconf_dir = "pkgconf";
+
+  rc = script_open("../../tests/data/test7/Autark", &sctx);
+  akassert(rc == 0);
+  script_build(sctx);
+  akassert(path_is_exist(pool_printf(pool, "%s/install/lib/libhello.a", g_env.project.cache_dir)));
+  akassert(path_is_exist(pool_printf(pool, "%s/install/include/libhello/hello.h", g_env.project.cache_dir)));
+  script_close(&sctx);
+
 
   xstr_destroy(xlog);
+  pool_destroy(pool);
 }

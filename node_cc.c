@@ -181,11 +181,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
-
-  for (int i = 0; i < ctx->consumes.num; ++i) {
-    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
-  }
+  node_add_unit_deps(&deps);
 
   for (int i = 0; i < r->node_val_deps.num; ++i) {
     struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
@@ -193,6 +189,11 @@ static void _cc_on_resolve(struct node_resolve *r) {
     if (val) {
       deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
     }
+  }
+
+  for (int i = 0; i < ctx->consumes.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   }
 
   for (int i = 0; i < slist->num; ++i) {
@@ -260,9 +261,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
     }
   }
 
-  node_add_unit_deps(&deps);
   deps_close(&deps);
-
   ulist_destroy_keep(&rlist);
   map_destroy(fmap);
 }

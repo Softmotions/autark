@@ -201,6 +201,7 @@ static void _run_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
+  node_add_unit_deps(&deps);
 
   for (int i = 0; i < r->node_val_deps.num; ++i) {
     struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
@@ -220,7 +221,6 @@ static void _run_on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 'f', path, 0);
   }
 
-  node_add_unit_deps(&deps);
   deps_close(&deps);
 }
 
@@ -341,7 +341,6 @@ static void _run_build(struct node *n) {
   }
 
   node_resolve(&r);
-
   ulist_destroy_keep(&ctx.consumes);
   ulist_destroy_keep(&ctx.consumes_foreach);
 }

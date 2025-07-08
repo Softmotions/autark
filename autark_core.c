@@ -290,7 +290,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -I, --install               Install all built artifacts\n");
   fprintf(stderr,
-          "    -R, --prefix=<>             Install prefix. Default: " INSTALL_PREFIX_DEFAULT "\n");
+          "    -R, --prefix=<>             Install prefix. Default: $HOME/.local\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
@@ -552,18 +552,6 @@ void _build(struct ulist *options) {
     akfatal(rc, "Failed to open script: %s", AUTARK_SCRIPT);
   }
   struct unit *root = unit_root();
-  unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
-  unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
-  unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
-  unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
-  unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
-  if (g_env.verbose) {
-    akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
-    akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
-    akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
-    akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
-    akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
-  }
   for (int i = 0; i < options->num; ++i) {
     const char *opt = *(char**) ulist_get(options, i);
     char *p = strchr(opt, '=');
@@ -708,6 +696,7 @@ void autark_run(int argc, const char **argv) {
         break;
       }
       case 'R':
+        g_env.install.enabled = true;
         g_env.install.prefix_dir = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
         break;
       case 'I':
@@ -756,7 +745,12 @@ void autark_run(int argc, const char **argv) {
   }
 
   if (!g_env.install.prefix_dir) {
-    g_env.install.prefix_dir = "/usr/local";
+    char *home = getenv("HOME");
+    if (home) {
+      g_env.install.prefix_dir = pool_printf(g_env.pool, "%s/.local", home);
+    } else {
+      g_env.install.prefix_dir = "/usr/local";
+    }
   }
   if (!g_env.install.bin_dir) {
     g_env.install.bin_dir = "bin";

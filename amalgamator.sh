@@ -17,11 +17,13 @@ else
   META_REVISION="$(git rev-parse --short HEAD)"
   echo "#define META_VERSION \"${META_VERSION}\"" > ${F}
   echo "#define META_REVISION \"${META_REVISION}\"" >> ${F}
+  echo "#define _POSIX_C_SOURCE 200809L" >> ${F}
 fi
 
 cat <<'EOF' >> ${F}
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
+#define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
 
 #include <errno.h>

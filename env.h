@@ -12,7 +12,6 @@
 
 #define AUTARK_CACHE           "autark-cache"
 #define AUTARK_SCRIPT          "Autark"
-#define INSTALL_PREFIX_DEFAULT "/usr/local"
 
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
@@ -63,12 +62,12 @@ struct env {
     struct xstr *options;           // Ask option values
   } project;
   struct {
-    const char *prefix_dir;  // Install prefix dir.
+    const char *prefix_dir;  // Absolute path to install prefix dir.
     const char *bin_dir;     // Path to the bin dir relative to prefix.
     const char *lib_dir;     // Path to lib dir relative to prefix.
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
-    bool enabled;             // True if install operation should be performed
+    bool enabled;            // True if install operation should be performed
   } install;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn

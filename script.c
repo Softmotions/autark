@@ -672,8 +672,23 @@ int script_open(const char *file, struct sctx **out) {
   }
   struct node *n = 0;
   int rc = _script_open(0, file, &n);
-  if (out && n) {
-    *out = n->ctx;
+  if (!rc) {
+    struct unit *root = unit_root();
+    unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
+    unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
+    unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
+    unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
+    unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
+    if (g_env.verbose) {
+      akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
+      akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
+      akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
+      akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
+      akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
+    }
+    if (out && n) {
+      *out = n->ctx;
+    }
   }
   return rc;
 }
@@ -894,8 +909,9 @@ bool node_is_value_may_be_dep_saved(struct node *n) {
         return false;
       }
     }
+    return true;
   }
-  return true;
+  return false;
 }
 
 struct node* node_consumes_resolve(
