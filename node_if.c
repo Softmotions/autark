@@ -9,7 +9,7 @@
 static bool _if_defined_eval(struct node *mn) {
   struct node *n = mn->parent;
   const char *val = node_value(mn->child);
-  if (val && node_env_get(n, val)) {
+  if (val && *val != '\0' && node_env_get(n, val)) {
     return true;
   } else {
     return false;
@@ -35,10 +35,11 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
   }
   bool eq = false;
   bool neg = false;
-
+  if (mn->flags & NODE_FLG_NEGATE) {
+    neg = true;
+  }
   if (mn->type == NODE_TYPE_BAG) {
     if (*op == '!') {
-      neg = true;
       ++op;
     }
     if (strcmp(op, "eq") == 0) {

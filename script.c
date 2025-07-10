@@ -61,9 +61,14 @@ static void _xnode_destroy(struct xnode *x) {
   x->xp = 0;
 }
 
-static unsigned _rule_type(const char *key) {
+static unsigned _rule_type(const char *key, unsigned *flags) {
+  *flags = 0;
   if (key[0] == '.' && key[1] == '.') {
     key += 2;
+  }
+  if (key[0] == '!') {
+    *flags = NODE_FLG_NEGATE;
+    key += 1;
   }
   if (strcmp(key, "$") == 0 || strcmp(key, "@") == 0) {
     return NODE_TYPE_SUBST;
@@ -243,7 +248,9 @@ static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char 
 static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
   struct xparse *xp = yy->x->xp;
   struct ulist *s = &xp->stack;
-  key->base.type = _rule_type(key->base.value);
+  unsigned flags = 0;
+  key->base.type = _rule_type(key->base.value, &flags);
+  key->base.flags |= flags;
   while (s->num) {
     struct xnode *x = XNODE_PEEK(s);
     if (x != key) {

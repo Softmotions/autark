@@ -90,11 +90,6 @@ static const char* _find_value_get(struct node *n) {
 
   n->impl = (void*) (intptr_t) -1;
 
-  const char *key = node_value(n->child);
-  if (!key || *key == '\0') {
-    node_warn(n, "No env key specified as first argument");
-    return "";
-  }
 
   if (strcmp("library", n->value) == 0) {
     _library_find(n);
@@ -106,9 +101,33 @@ static const char* _find_value_get(struct node *n) {
   if ((uintptr_t) n->impl == (uintptr_t) -1) {
     return "";
   } else {
-    node_env_set(n, key, n->impl);
     return n->impl;
   }
+}
+
+static struct unit* _unit_for_find(struct node *nn, const char **keyp) {
+  if (nn->type == NODE_TYPE_BAG) {
+    if (strcmp(nn->value, "root") == 0) {
+      *keyp = node_value(nn->child);
+      return unit_root();
+    } else if (strcmp(nn->value, "parent") == 0) {
+      *keyp = node_value(nn->child);
+      return unit_parent();
+    }
+  } else {
+    *keyp = node_value(nn);
+  }
+  return unit_peek();
+}
+
+static void _find_init(struct node *n) {
+  const char *key = 0;
+  struct unit *unit = n->child ? _unit_for_find(n->child, &key) : 0;
+  if (!key) {
+    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No name specified for '%s' directive", n->value);
+    return;
+  }
+  unit_env_set_node(unit, key, n);
 }
 
 static void _find_dispose(struct node *n) {
@@ -120,7 +139,8 @@ static void _find_dispose(struct node *n) {
 
 int node_find_setup(struct node *n) {
   n->flags |= NODE_FLG_NO_CWD;
-  n->dispose = _find_dispose;
+  n->init = _find_init;
   n->value_get = _find_value_get;
+  n->dispose = _find_dispose;
   return 0;
 }

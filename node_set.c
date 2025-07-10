@@ -6,7 +6,7 @@
 #include "env.h"
 #endif
 
-static struct unit* unit_for_set(struct node *nn, const char **keyp) {
+static struct unit* _unit_for_set(struct node *nn, const char **keyp) {
   if (nn->type == NODE_TYPE_BAG) {
     if (strcmp(nn->value, "root") == 0) {
       *keyp = node_value(nn->child);
@@ -23,7 +23,7 @@ static struct unit* unit_for_set(struct node *nn, const char **keyp) {
 
 static void _set_init(struct node *n) {
   const char *key = 0;
-  struct unit *unit = n->child ? unit_for_set(n->child, &key) : 0;
+  struct unit *unit = n->child ? _unit_for_set(n->child, &key) : 0;
   if (!key) {
     node_warn(n, "No name specified for 'set' directive");
     return;
