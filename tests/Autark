@@ -21,9 +21,6 @@ foreach {
   ${CC_OBJS}
   run {
     exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }
-    if { defined { RUN_TESTS }
-      shell { %{${OBJ}} }
-    }
     produces {
       %{${OBJ}}
     }
