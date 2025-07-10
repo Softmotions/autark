@@ -3,12 +3,9 @@
 #include "xstr.h"
 #include "env.h"
 #include "paths.h"
-#include "log.h"
 #include "utils.h"
-
-#include <string.h>
+#include "alloc.h"
 #include <unistd.h>
-#include <errno.h>
 #endif
 
 static const char* _dir_value(struct node *n) {
@@ -21,9 +18,7 @@ static const char* _dir_value(struct node *n) {
     return n->impl;
   }
 
-  char cwd[PATH_MAX];
   char buf[PATH_MAX];
-
   struct unit *root = unit_root();
   struct unit *unit = unit_peek();
   struct xstr *xstr = xstr_create_empty();
@@ -41,10 +36,6 @@ static const char* _dir_value(struct node *n) {
     } else {
       dir = root->cache_dir;
     }
-  }
-
-  if (!getcwd(cwd, PATH_MAX)) {
-    akfatal(errno, "Cannot get CWD", 0);
   }
 
   for (struct node *nn = n->child; nn; nn = nn->next) {
@@ -69,10 +60,8 @@ static const char* _dir_value(struct node *n) {
   }
 
   char *path = path_normalize_cwd(xstr_ptr(xstr), dir, buf);
-  path = path_relativize_cwd(cwd, path, cwd);
-
   xstr_destroy(xstr);
-  n->impl = path;
+  n->impl = xstrdup(path);
   return n->impl;
 }
 
