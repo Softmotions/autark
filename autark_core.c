@@ -545,7 +545,7 @@ void on_command_dep_env(int argc, const char **argv) {
 
 #endif
 
-void _build(struct ulist *options) {
+static void _build(struct ulist *options) {
   struct sctx *x;
   int rc = script_open(AUTARK_SCRIPT, &x);
   if (rc) {
@@ -613,7 +613,7 @@ AK_DESTRUCTOR void autark_dispose(void) {
   }
 }
 
-static const char* _libdir(void) {
+const char* env_libdir(void) {
  #if defined(__linux__)
   #if defined(__x86_64__)
   // RPM-style or Debian-style
@@ -756,7 +756,7 @@ void autark_run(int argc, const char **argv) {
     g_env.install.bin_dir = "bin";
   }
   if (!g_env.install.lib_dir) {
-    g_env.install.lib_dir = _libdir();
+    g_env.install.lib_dir = env_libdir();
   }
   if (!g_env.install.include_dir) {
     g_env.install.include_dir = "include";

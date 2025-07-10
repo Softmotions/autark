@@ -8,6 +8,12 @@ meta {
   version { 0.9.0 }
 }
 
+if { defined { RUN_TESTS }
+  set {
+    BUILD_TESTS 1
+  }
+}
+
 check {
   checks.sh
 }
@@ -69,6 +75,7 @@ set {
   node_error.c
   node_echo.c
   node_install.c
+  node_find.c
   paths.c
   pool.c
   script.c
@@ -144,6 +151,7 @@ in-sources {
     }
   }
 }
+
 
 if { defined { BUILD_TESTS }
   include { ./tests/Autark }

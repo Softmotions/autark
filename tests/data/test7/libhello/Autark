@@ -39,3 +39,23 @@ install {
   ^{${INSTALL_INCLUDE_DIR} /libhello}
   hello.h
 }
+
+if { library { LIB_M libm.a }
+  echo { ${LIB_M} }
+} else {
+  error { Library libm not found }
+}
+
+if { defined { LIB_M }
+  echo { ${LIB_M} }
+} else {
+  error { Library libm not found }
+}
+
+if { library { LIB_N a0d36fdd87bc.a }
+  error { Library should't be found }
+}
+
+if { defined { LIB_N }
+  error { Library should't be found }
+}

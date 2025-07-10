@@ -118,4 +118,6 @@ const char* unit_env_get_raw(struct unit *u, const char *key);
 
 void unit_env_remove(struct unit*, const char *key);
 
+const char* env_libdir(void);
+
 #endif

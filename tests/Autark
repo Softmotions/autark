@@ -21,13 +21,28 @@ foreach {
   ${CC_OBJS}
   run {
     exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }
-    shell { %{${OBJ}} }
+    if { defined { RUN_TESTS }
+      shell { %{${OBJ}} }
+    }
     produces {
       %{${OBJ}}
     }
     consumes {
       ${LIBAUTARK}
       ${OBJ}
+    }
+  }
+}
+
+# Run test cases
+if { defined { RUN_TESTS }
+  foreach {
+    OBJ
+    ${CC_OBJS}
+    run {
+      always
+      shell { %{${OBJ}} }
+      consumes { %{${OBJ}} }
     }
   }
 }

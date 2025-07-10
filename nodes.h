@@ -14,16 +14,17 @@ int node_if_setup(struct node*);
 int node_subst_setup(struct node*);
 int node_run_setup(struct node*);
 int node_echo_setup(struct node*);
-int node_join_setup(struct node *n);
-int node_cc_setup(struct node *n);
-int node_configure_setup(struct node *n);
-int node_basename_setup(struct node *n);
-int node_foreach_setup(struct node *n);
-int node_in_sources_setup(struct node *n);
-int node_dir_setup(struct node *n);
-int node_option_setup(struct node *n);
-int node_error_setup(struct node *n);
-int node_echo_setup(struct node *n);
-int node_install_setup(struct node *n);
+int node_join_setup(struct node*);
+int node_cc_setup(struct node*);
+int node_configure_setup(struct node*);
+int node_basename_setup(struct node*);
+int node_foreach_setup(struct node*);
+int node_in_sources_setup(struct node*);
+int node_dir_setup(struct node*);
+int node_option_setup(struct node*);
+int node_error_setup(struct node*);
+int node_echo_setup(struct node*);
+int node_install_setup(struct node*);
+int node_find_setup(struct node*);
 
 #endif

@@ -101,6 +101,8 @@ static unsigned _rule_type(const char *key) {
     return NODE_TYPE_ECHO;
   } else if (strcmp(key, "install") == 0) {
     return NODE_TYPE_INSTALL;
+  } else if (strcmp(key, "library") == 0) {
+    return NODE_TYPE_FIND;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -491,6 +493,9 @@ static int _node_bind(struct node *n) {
       case NODE_TYPE_INSTALL:
         rc = node_install_setup(n);
         break;
+      case NODE_TYPE_FIND:
+        rc = node_find_setup(n);
+        break;
     }
 
     switch (n->type) {
@@ -674,6 +679,9 @@ int script_open(const char *file, struct sctx **out) {
   int rc = _script_open(0, file, &n);
   if (!rc) {
     struct unit *root = unit_root();
+    if (g_env.install.enabled) {
+      unit_env_set_val(root, "INSTALL_ENABLED", "1");
+    }
     unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
     unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
     unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
@@ -1028,7 +1036,7 @@ void node_resolve(struct node_resolve *r) {
     r->on_init(r);
   }
 
-  if (!deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
+  if (!r->force_outdated && !deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     char *prev_outdated = 0;
     while (deps_cur_next(&deps)) {
       ++r->num_deps;

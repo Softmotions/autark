@@ -18,7 +18,7 @@ int main(void) {
   struct sctx *sctx;
   int rc = script_open("../../tests/data/test7/Autark", &sctx);
   akassert(rc == 0);
-  install_dir = pool_printf(pool, "%s/install", g_env.project.cache_dir);
+  install_dir = pool_printf(pool, "%s", g_env.project.cache_dir);
 
   script_build(sctx);
   script_close(&sctx);
@@ -74,8 +74,8 @@ int main(void) {
   rc = script_open("../../tests/data/test7/Autark", &sctx);
   akassert(rc == 0);
   script_build(sctx);
-  akassert(path_is_exist(pool_printf(pool, "%s/install/lib/libhello.a", g_env.project.cache_dir)));
-  akassert(path_is_exist(pool_printf(pool, "%s/install/include/libhello/hello.h", g_env.project.cache_dir)));
+  akassert(path_is_exist(pool_printf(pool, "%s/lib/libhello.a", g_env.project.cache_dir)));
+  akassert(path_is_exist(pool_printf(pool, "%s/include/libhello/hello.h", g_env.project.cache_dir)));
   script_close(&sctx);
 
 

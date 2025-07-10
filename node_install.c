@@ -56,14 +56,28 @@ static void _install_file(struct _install_on_resolve_ctx *ctx, const char *src, 
   }
 
   char buf[8192];
-  ssize_t r;
-  while ((r = read(in_fd, buf, sizeof(buf))) > 0) {
-    if (write(out_fd, buf, r) != r) {
-      node_fatal(errno, n, "Error writing file: %s", dst);
+  for (ssize_t r; ; ) {
+    r = read(in_fd, buf, sizeof(buf));
+    if (r < 0) {
+      if (errno == EAGAIN) {
+        continue;
+      } else {
+        node_fatal(errno, n, "Error reading file: %s", src);
+      }
+    } else if (r == 0) {
+      break;
     }
-  }
-  if (r == -1) {
-    node_fatal(errno, n, "Error reading file: %s", src);
+    for (ssize_t w, tow = r; tow > 0; ) {
+      w = write(out_fd, buf + r - tow, tow);
+      if (w >= 0) {
+        tow -= w;
+      } else if (w < 0) {
+        if (errno == EAGAIN) {
+          continue;
+        }
+        node_fatal(errno, n, "Error writing file: %s", dst);
+      }
+    }
   }
 
   fchmod(out_fd, st->st_mode);

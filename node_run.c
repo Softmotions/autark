@@ -321,13 +321,15 @@ static void _run_build(struct node *n) {
     .fe = node_find_parent_foreach(n),
   };
 
+
   struct node_resolve r = {
     .n = n,
     .path = n->vfile,
     .user_data = &ctx,
     .on_init = _run_on_resolve_init,
     .on_resolve = _run_on_resolve,
-    .node_val_deps = { .usize = sizeof(struct node*) }
+    .node_val_deps = { .usize = sizeof(struct node*) },
+    .force_outdated = node_find_direct_child(n, NODE_TYPE_VALUE, "always") != 0,
   };
 
   for (struct node *nn = n->child; nn; nn = nn->next) {

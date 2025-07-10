@@ -10,27 +10,30 @@
 #include <stdbool.h>
 #endif
 
-#define NODE_TYPE_VALUE      0x01U
-#define NODE_TYPE_SCRIPT     0x02U
-#define NODE_TYPE_BAG        0x04U
-#define NODE_TYPE_META       0x08U
-#define NODE_TYPE_CHECK      0x10U
-#define NODE_TYPE_SET        0x20U
-#define NODE_TYPE_INCLUDE    0x40U
-#define NODE_TYPE_IF         0x80U
-#define NODE_TYPE_SUBST      0x100U
-#define NODE_TYPE_RUN        0x200U
-#define NODE_TYPE_JOIN       0x400U
-#define NODE_TYPE_CC         0x800U
-#define NODE_TYPE_CONFIGURE  0x1000U
-#define NODE_TYPE_BASENAME   0x2000U
-#define NODE_TYPE_FOREACH    0x4000U
-#define NODE_TYPE_IN_SOURCES 0x8000U
-#define NODE_TYPE_DIR        0x10000U
-#define NODE_TYPE_OPTION     0x20000U
-#define NODE_TYPE_ERROR      0x40000U
-#define NODE_TYPE_ECHO       0x80000U
-#define NODE_TYPE_INSTALL    0x100000U
+// value types
+#define NODE_TYPE_VALUE    0x01U
+#define NODE_TYPE_SUBST    0x02U
+#define NODE_TYPE_SET      0x04U
+#define NODE_TYPE_JOIN     0x08U
+#define NODE_TYPE_BASENAME 0x10U
+#define NODE_TYPE_DIR      0x20U
+#define NODE_TYPE_FIND     0x40U
+// eof value types
+#define NODE_TYPE_SCRIPT     0x100U
+#define NODE_TYPE_BAG        0x200U
+#define NODE_TYPE_META       0x400U
+#define NODE_TYPE_CHECK      0x800U
+#define NODE_TYPE_INCLUDE    0x1000U
+#define NODE_TYPE_IF         0x2000U
+#define NODE_TYPE_RUN        0x4000U
+#define NODE_TYPE_CC         0x8000U
+#define NODE_TYPE_CONFIGURE  0x10000U
+#define NODE_TYPE_FOREACH    0x20000U
+#define NODE_TYPE_IN_SOURCES 0x40000U
+#define NODE_TYPE_OPTION     0x80000U
+#define NODE_TYPE_ERROR      0x100000U
+#define NODE_TYPE_ECHO       0x200000U
+#define NODE_TYPE_INSTALL    0x400000U
 
 #define NODE_FLG_BOUND    0x01U
 #define NODE_FLG_INIT     0x02U
@@ -43,17 +46,11 @@
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
-#define node_is_init(n__)  (((n__)->flags & NODE_FLG_INIT) != 0)
-#define node_is_setup(n__) (((n__)->flags & NODE_FLG_SETUP) != 0)
-#define node_is_built(n__) (((n__)->flags & NODE_FLG_BUILT) != 0)
-#define node_is_value(n__) ((n__)->type == NODE_TYPE_VALUE)
-#define node_is_can_be_value(n__)            \
-        (  (n__)->type == NODE_TYPE_VALUE    \
-        || (n__)->type == NODE_TYPE_SUBST    \
-        || (n__)->type == NODE_TYPE_SET      \
-        || (n__)->type == NODE_TYPE_JOIN     \
-        || (n__)->type == NODE_TYPE_BASENAME \
-        || (n__)->type == NODE_TYPE_DIR)
+#define node_is_init(n__)         (((n__)->flags & NODE_FLG_INIT) != 0)
+#define node_is_setup(n__)        (((n__)->flags & NODE_FLG_SETUP) != 0)
+#define node_is_built(n__)        (((n__)->flags & NODE_FLG_BUILT) != 0)
+#define node_is_value(n__)        ((n__)->type == NODE_TYPE_VALUE)
+#define node_is_can_be_value(n__) ((n__)->type >= NODE_TYPE_VALUE && (n__)->type <= NODE_TYPE_FIND)
 
 #define node_is_rule(n__) !node_is_value(n__)
 
@@ -173,7 +170,8 @@ struct node_resolve {
   struct ulist node_val_deps;    // struct node*
   struct pool *pool;
   unsigned     mode;
-  int num_deps;     // Number of dependencies
+  int  num_deps;    // Number of dependencies
+  bool force_outdated;
 };
 
 struct resolve_outdated {

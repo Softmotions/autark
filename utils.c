@@ -2,7 +2,6 @@
 #include "utils.h"
 #include "xstr.h"
 #include "log.h"
-#include "env.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -45,6 +44,34 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
   ret.len = xstr_size(xstr);
   ret.buf = xstr_destroy_keep_ptr(xstr);
   return ret;
+}
+
+int utils_file_write_buf(const char *path, const char *buf, size_t len, bool append) {
+  int flags = O_WRONLY | O_CREAT;
+  if (append) {
+    flags |= O_APPEND;
+  } else {
+    flags |= O_TRUNC;
+  }
+  int fd = open(path, flags);
+  if (fd == -1) {
+    return errno;
+  }
+  for (ssize_t w, tow = len; tow > 0; ) {
+    w = write(fd, buf + len - tow, tow);
+    if (w >= 0) {
+      tow -= w;
+    } else if (w < 0) {
+      if (errno == EAGAIN) {
+        continue;
+      }
+      int ret = errno;
+      close(fd);
+      return ret;
+    }
+  }
+  close(fd);
+  return 0;
 }
 
 int utils_copy_file(const char *src, const char *dst) {

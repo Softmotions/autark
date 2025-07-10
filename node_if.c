@@ -35,14 +35,21 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
   }
   bool eq = false;
   bool neg = false;
-  if (*op == '!') {
-    neg = true;
-    ++op;
-  }
-  if (strcmp(op, "eq") == 0) {
-    eq = _if_matched_eval(mn);
-  } else if (strcmp(op, "defined") == 0) {
-    eq = _if_defined_eval(mn);
+
+  if (mn->type == NODE_TYPE_BAG) {
+    if (*op == '!') {
+      neg = true;
+      ++op;
+    }
+    if (strcmp(op, "eq") == 0) {
+      eq = _if_matched_eval(mn);
+    } else if (strcmp(op, "defined") == 0) {
+      eq = _if_defined_eval(mn);
+    } else {
+      node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
+    }
+  } else if (node_is_can_be_value(mn)) {
+    eq = (op && *op != '\0');
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
   }
