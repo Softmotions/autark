@@ -81,7 +81,7 @@ const char* unit_env_get_raw(struct unit *u, const char *key) {
 
 const char* unit_env_get(struct unit *u, const char *key) {
   struct unit *prev = 0;
-  for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
+  for (int i = (int) g_env.stack_units.num - 1; i >= 0; --i) {
     struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
     if (prev != c->unit) {
       const char *ret = unit_env_get_raw(c->unit, key);
@@ -217,7 +217,7 @@ struct unit* unit_root(void) {
 
 struct unit* unit_parent(void) {
   struct unit *u = unit_peek();
-  for (int i = g_env.stack_units.num - 2; i >= 0; --i) {
+  for (int i = (int) g_env.stack_units.num - 2; i >= 0; --i) {
     struct unit_ctx uu = *(struct unit_ctx*) ulist_get(&g_env.stack_units, i);
     if (uu.unit != u) {
       return uu.unit;

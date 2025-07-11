@@ -717,17 +717,19 @@ int script_open(const char *file, struct sctx **out) {
     if (g_env.install.enabled) {
       unit_env_set_val(root, "INSTALL_ENABLED", "1");
     }
-    unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
-    unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
-    unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
-    unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
-    unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
-    if (g_env.verbose) {
-      akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
-      akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
-      akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
-      akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
-      akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
+    if (g_env.install.prefix_dir || g_env.install.bin_dir) {
+      unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
+      unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
+      unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
+      unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
+      unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
+      if (g_env.verbose) {
+        akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
+        akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
+        akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
+        akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
+        akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
+      }
     }
     if (out && n) {
       *out = n->ctx;

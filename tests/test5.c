@@ -13,8 +13,8 @@ int main(void) {
   script_build(sctx);
   script_close(&sctx);
 
-  akassert(access("autark-cache/.autark/check1.sh.deps", F_OK) == 0);
-  akassert(access("autark-cache/.autark/check1.sh.env", F_OK) == 0);
+  akassert(access("autark-cache/.autark/.2.deps", F_OK) == 0);
+  akassert(access("autark-cache/.autark/.2.env", F_OK) == 0);
   akassert(access("autark-cache/.autark/test-file.txt", F_OK) == 0);
 
   struct akpath_stat st[6];

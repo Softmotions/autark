@@ -3,6 +3,7 @@
 #include "env.h"
 #include "log.h"
 #include "pool.h"
+#include "paths.h"
 #include "spawn.h"
 #include "deps.h"
 
@@ -31,7 +32,9 @@ static void _check_on_env_value(struct node_resolve *nr, const char *key, const 
 static void _check_on_resolve(struct node_resolve *r) {
   struct unit *unit = r->user_data;
   struct node *n = unit->n;
-  struct spawn *s = spawn_create(unit->source_path, unit);
+  const char *path = unit->impl;
+
+  struct spawn *s = spawn_create(path, unit);
   spawn_set_stdout_handler(s, _check_stdout_handler);
   spawn_set_stderr_handler(s, _check_stderr_handler);
   for (struct node *nn = n->child; nn; nn = nn->next) {
@@ -61,27 +64,47 @@ static void _check_on_resolve(struct node_resolve *r) {
   deps_close(&deps);
 }
 
+static char* _resolve_check_path(struct pool *pool, struct node *n, const char *script, struct unit **out_u) {
+  *out_u = 0;
+  char buf[PATH_MAX];
+  for (int i = (int) g_env.stack_units.num - 1; i >= 0; --i) {
+    struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
+    struct unit *u = c->unit;
+    snprintf(buf, sizeof(buf), "%s/.autark/%s", u->dir, script);
+    if (path_is_exist(buf)) {
+      *out_u = u;
+      return pool_strdup(pool, buf);
+    }
+  }
+  node_fatal(AK_ERROR_FAIL, n, "Check script is not found: %s", script);
+  return 0;
+}
+
 static void _check_script(struct node *n) {
-  struct unit *parent = unit_peek();
   const char *script = node_value(n);
   if (g_env.verbose) {
     node_info(n->parent, "%s", script);
   }
-
+  struct unit *parent = 0;
   struct pool *pool = pool_create(on_unit_pool_destroy);
-  const char *path = pool_printf(pool, "%s/.autark/%s", parent->dir, script);
-  struct unit *unit = unit_create(path, 0, pool);
+
+  char *path = _resolve_check_path(pool, n, script, &parent);
+  const char *vpath = pool_printf(pool, "%s/.autark/%s", parent->dir, n->vfile);
+
+  struct unit *unit = unit_create(vpath, 0, pool);
   unit->n = n;
+  unit->impl = path;
   unit_push(unit, n);
 
   struct node_resolve nr = {
     .n = n,
     .mode = NODE_RESOLVE_ENV_ALWAYS,
-    .path = script,
+    .path = n->vfile,
     .user_data = unit,
     .on_env_value = _check_on_env_value,
     .on_resolve = _check_on_resolve,
   };
+
   node_resolve(&nr);
 
   unit_pop();
