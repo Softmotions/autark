@@ -76,7 +76,7 @@ static char* _resolve_check_path(struct pool *pool, struct node *n, const char *
       return pool_strdup(pool, buf);
     }
   }
-  node_fatal(AK_ERROR_FAIL, n, "Check script is not found: %s", script);
+  node_fatal(AK_ERROR_FAIL, n, "Check script not found: %s", script);
   return 0;
 }
 
