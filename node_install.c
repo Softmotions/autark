@@ -7,7 +7,6 @@
 #include "pool.h"
 #include "utils.h"
 
-#include "config.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -203,7 +202,7 @@ static void _install_on_resolve_init(struct node_resolve *r) {
   }
 }
 
-static void _install_build(struct node *n) {
+static void _install_post_build(struct node *n) {
   struct _install_on_resolve_ctx ctx = {
     .n = n,
     .n_target = n->child,
@@ -238,6 +237,6 @@ int node_install_setup(struct node *n) {
   if (!g_env.install.enabled || !g_env.install.prefix_dir) {
     return 0;
   }
-  n->build = _install_build;
+  n->post_build = _install_post_build;
   return 0;
 }

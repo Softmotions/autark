@@ -35,21 +35,23 @@
 #define NODE_TYPE_ECHO       0x200000U
 #define NODE_TYPE_INSTALL    0x400000U
 
-#define NODE_FLG_BOUND    0x01U
-#define NODE_FLG_INIT     0x02U
-#define NODE_FLG_SETUP    0x04U
-#define NODE_FLG_UPDATED  0x08U // Node product updated as result of build
-#define NODE_FLG_BUILT    0x10U // Node built
-#define NODE_FLG_IN_CACHE 0x40U
-#define NODE_FLG_IN_SRC   0x80U
-#define NODE_FLG_NO_CWD   0x100U
-#define NODE_FLG_NEGATE   0x200U
+#define NODE_FLG_BOUND      0x01U
+#define NODE_FLG_INIT       0x02U
+#define NODE_FLG_SETUP      0x04U
+#define NODE_FLG_UPDATED    0x08U // Node product updated as result of build
+#define NODE_FLG_BUILT      0x10U // Node built
+#define NODE_FLG_POST_BUILT 0x20U // Node post-built
+#define NODE_FLG_IN_CACHE   0x40U
+#define NODE_FLG_IN_SRC     0x80U
+#define NODE_FLG_NO_CWD     0x100U
+#define NODE_FLG_NEGATE     0x200U
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
 #define node_is_init(n__)         (((n__)->flags & NODE_FLG_INIT) != 0)
 #define node_is_setup(n__)        (((n__)->flags & NODE_FLG_SETUP) != 0)
 #define node_is_built(n__)        (((n__)->flags & NODE_FLG_BUILT) != 0)
+#define node_is_post_built(n__)   (((n__)->flags & NODE_FLG_POST_BUILT) != 0)
 #define node_is_value(n__)        ((n__)->type == NODE_TYPE_VALUE)
 #define node_is_can_be_value(n__) ((n__)->type >= NODE_TYPE_VALUE && (n__)->type <= NODE_TYPE_FIND)
 
@@ -92,6 +94,7 @@ struct node {
   void (*init)(struct node*);
   void (*setup)(struct node*);
   void (*build)(struct node*);
+  void (*post_build)(struct node*);
   void (*dispose)(struct node*);
 
   void *impl;
@@ -138,6 +141,8 @@ void node_init(struct node *n);
 void node_setup(struct node *n);
 
 void node_build(struct node *n);
+
+void node_post_build(struct node *n);
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val);
 

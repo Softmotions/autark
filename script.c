@@ -585,6 +585,12 @@ static void _build_subnodes(struct node *n) {
   }
 }
 
+static void _post_build_subnodes(struct node *n) {
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    node_post_build(nn);
+  }
+}
+
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
@@ -653,6 +659,27 @@ void node_build(struct node *n) {
   }
 }
 
+void node_post_build(struct node *n) {
+  if (!node_is_post_built(n)) {
+    _post_build_subnodes(n);
+    if (n->post_build) {
+      if (g_env.verbose) {
+        node_info(n, "Post-build");
+      }
+      struct xnode *x = (void*) n;
+      x->bld_calls++;
+      if (x->bld_calls > 1) {
+        node_fatal(AK_ERROR_CYCLIC_BUILD_DEPS, n, 0);
+      }
+      _node_context_push(n);
+      n->post_build(n);
+      _node_context_pop(n);
+      x->bld_calls--;
+    }
+    n->flags |= NODE_FLG_POST_BUILT;
+  }
+}
+
 static int _script_bind(struct sctx *s) {
   int rc = 0;
   for (int i = 0; i < s->nodes.num; ++i) {
@@ -718,6 +745,7 @@ void script_build(struct sctx *s) {
   node_init(s->root);
   node_setup(s->root);
   node_build(s->root);
+  node_post_build(s->root);
 }
 
 void script_close(struct sctx **sp) {
