@@ -34,7 +34,14 @@ static void _install_symlink(struct _install_on_resolve_ctx *ctx, const char *sr
   buf[len] = '\0';
 
   if (symlink(buf, dst) == -1) {
-    node_fatal(errno, n, "Error creating symlink: %s", dst);
+    if (errno == EEXIST) {
+      unlink(dst);
+      if (symlink(buf, dst) == -1) {
+        node_fatal(errno, n, "Error creating symlink: %s", dst);
+      }
+    } else {
+      node_fatal(errno, n, "Error creating symlink: %s", dst);
+    }
   }
 
   struct timespec times[2] = { st->st_atim, st->st_mtim };
