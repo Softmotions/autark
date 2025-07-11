@@ -153,7 +153,6 @@ in-sources {
 }
 
 
-if { ${BUILD_TESTS}
-  echo { "!!!!!!!!!=" ${BUILD_TESTS} }
+if { defined {BUILD_TESTS}
   include { ./tests/Autark }
 }
