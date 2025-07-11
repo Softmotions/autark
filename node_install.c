@@ -237,6 +237,7 @@ int node_install_setup(struct node *n) {
   if (!g_env.install.enabled || !g_env.install.prefix_dir) {
     return 0;
   }
+  n->flags |= NODE_FLG_IN_CACHE;
   n->post_build = _install_post_build;
   return 0;
 }

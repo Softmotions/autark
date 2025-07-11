@@ -1,8 +1,6 @@
-#cd ./autark-cache/tests
-#set environment BUILD_TESTS=1
-#file /home/adam/.autark/autark
 file ./autark-cache/autark
-#set args -V
+#set environment BUILD_SHARED_LIBS=1
+#set args
 
 set confirm off
 set follow-fork-mode parent

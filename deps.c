@@ -6,6 +6,7 @@
 #include "env.h"
 
 #include <errno.h>
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -135,6 +136,7 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
       serial = st.mtime;
     }
   } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE) {
+    assert(resource);
     utils_strncpy(buf[0], resource, PATH_MAX);
     utils_chars_replace(buf[0], '\n', '\2');
     resource = buf[0];

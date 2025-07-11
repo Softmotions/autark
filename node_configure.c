@@ -84,7 +84,9 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
         const char *key = xstr_ptr(kstr);
         const char *val = node_env_get(n, key);
 
-        deps_add_env(deps, 0, key, val);
+        if (val) {
+          deps_add_env(deps, 0, key, val);
+        }
 
         if (!val || *val == '\0') {
           xstr_cat2(xstr, "@", 1);

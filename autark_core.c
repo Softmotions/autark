@@ -739,10 +739,17 @@ void autark_run(int argc, const char **argv) {
     }
   }
 
-  const char *home = getenv("AUTARK_HOME");
-  if (home) {
-    g_env.spawn.extra_env_paths = path_normalize_pool(pool_strdup(g_env.pool, home), g_env.pool);
+  char buf[PATH_MAX];
+  const char *autark_home = getenv("AUTARK_HOME");
+  if (!autark_home) {
+    utils_strncpy(buf, argv[0], sizeof(buf));
+    autark_home = path_dirname(buf);
   }
+  autark_home = path_normalize_pool(autark_home, g_env.pool);
+  if (g_env.verbose) {
+    akinfo("AUTARK_HOME=%s", autark_home);
+  }
+  g_env.spawn.extra_env_paths =  autark_home;
 
   if (!g_env.install.prefix_dir) {
     char *home = getenv("HOME");

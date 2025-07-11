@@ -1000,14 +1000,12 @@ struct node* node_consumes_resolve(
       struct node *pn = node_by_product(n, cv, pathbuf);
       if (pn) {
         node_build(pn);
-        if (path_is_exist(pathbuf)) {
-          if (on_resolved) {
-            on_resolved(pathbuf, opq);
-          }
-          ulist_remove(&rlist, i--);
-        } else {
-          node_fatal(AK_ERROR_DEPENDENCY_UNRESOLVED, n, "'%s' by %s", cv, pn->name);
+      }
+      if (path_is_exist(pathbuf)) {
+        if (on_resolved) {
+          on_resolved(pathbuf, opq);
         }
+        ulist_remove(&rlist, i--);
       }
     }
     akcheck(chdir(prevcwd));
@@ -1049,7 +1047,7 @@ void node_resolve(struct node_resolve *r) {
   akassert(r && r->path);
 
   int rc;
-  struct deps deps;
+  struct deps deps = { 0 };
   struct pool *pool = pool_create_empty();
   struct unit *unit = unit_peek();
 
