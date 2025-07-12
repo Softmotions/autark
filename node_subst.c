@@ -89,8 +89,8 @@ static const char* _subst_value_proc(struct node *n) {
   spawn_set_stdout_handler(s, _subst_stdout_handler);
   spawn_set_stderr_handler(s, _subst_stderr_handler);
   for (struct node *nn = n->child->next; nn; nn = nn->next) {
-    if (nn->type == NODE_TYPE_VALUE) {
-      spawn_arg_add(s, nn->value);
+    if (node_is_can_be_value(nn)) {
+      spawn_arg_add(s, node_value(nn));
     }
   }
   int rc = spawn_do(s);
