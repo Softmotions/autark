@@ -332,7 +332,7 @@ static void _run_build(struct node *n) {
     .force_outdated = node_find_direct_child(n, NODE_TYPE_VALUE, "always") != 0,
   };
 
-  /*for (struct node *nn = n->child; nn; nn = nn->next) {
+  for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "exec") == 0 || strcmp(nn->value, "shell") == 0) {
       for (struct node *cn = nn->child; cn; cn = cn->next) {
         if (node_is_value_may_be_dep_saved(cn)) {
@@ -340,7 +340,7 @@ static void _run_build(struct node *n) {
         }
       }
     }
-  }*/
+  }
 
   node_resolve(&r);
   ulist_destroy_keep(&ctx.consumes);
