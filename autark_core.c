@@ -199,6 +199,9 @@ struct unit* unit_pop(void) {
   struct unit_ctx peek = unit_peek_ctx();
   if (peek.unit) {
     unit_ch_dir(&peek, 0);
+    setenv(AUTARK_UNIT, peek.unit->rel_path, 1);
+  } else {
+    unsetenv(AUTARK_UNIT);
   }
   return ctx->unit;
 }
