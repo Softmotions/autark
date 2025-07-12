@@ -75,7 +75,7 @@ static const char* _subst_value_proc(struct node *n) {
     return n->impl;
   }
   const char *cmd = node_value(n->child);
-  if (cmd == 0) {
+  if (cmd == 0 || *cmd == '\0') {
     return 0;
   }
 
