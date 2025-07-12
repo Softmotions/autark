@@ -378,11 +378,14 @@ int spawn_do(struct spawn *s) {
     while (c > 0) {
       int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
       if (ret == -1) {
-        rc = ret;
-        goto finish;
+        break;
       }
       for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
-        if ((fds[i].events & POLLIN) && fds[i].fd != -1) {
+        if (fds[i].fd == -1) {
+          continue;
+        }
+        short revents = fds[i].revents;
+        if (revents & POLLIN) {
           ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
           if (n > 0) {
             buf[n] = '\0';
@@ -391,11 +394,16 @@ int spawn_do(struct spawn *s) {
             } else {
               s->stderr_handler(buf, n, s);
             }
-          } else {
+          } else if (n == -1) {
             close(fds[i].fd);
             fds[i].fd = -1;
             --c;
           }
+        }
+        if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
+          close(fds[i].fd);
+          fds[i].fd = -1;
+          --c;
         }
       }
     }
@@ -405,7 +413,6 @@ int spawn_do(struct spawn *s) {
     }
   }
 
-finish:
   if (rc) {
     akerror(rc, "Failed to spawn: %s", file);
   }
