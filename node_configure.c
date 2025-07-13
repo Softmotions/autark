@@ -34,6 +34,7 @@ static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
   if (*np == '\"') {
     utils_strnncpy(key, sp, ep - sp, sizeof(key));
     const char *val = node_env_get(n, key);
+    deps_add_env(deps, 0, key, val ? val : "");
     if (val) {
       struct xstr *xstr = xstr_create_empty();
       xstr_printf(xstr, "#define %s \"%s\"\n", key, val);
@@ -42,6 +43,7 @@ static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
   } else if (*np >= '0' && *np <= '9') {
     utils_strnncpy(key, sp, ep - sp, sizeof(key));
     const char *val = node_env_get(n, key);
+    deps_add_env(deps, 0, key, val ? val : "");
     if (val) {
       struct xstr *xstr = xstr_create_empty();
       xstr_printf(xstr, "#define %s %s", key, np);
@@ -54,6 +56,7 @@ static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
   } else {
     utils_strnncpy(key, sp, ep - sp, sizeof(key));
     const char *val = node_env_get(n, key);
+    deps_add_env(deps, 0, key, val ? val : "");
     if (val) {
       struct xstr *xstr = xstr_create_empty();
       xstr_printf(xstr, "#define %s\n", key);
@@ -84,9 +87,7 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
         const char *key = xstr_ptr(kstr);
         const char *val = node_env_get(n, key);
 
-        if (val) {
-          deps_add_env(deps, 0, key, val);
-        }
+        deps_add_env(deps, 0, key, val ? val : "");
 
         if (!val || *val == '\0') {
           xstr_cat2(xstr, "@", 1);
@@ -192,7 +193,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (r->resolve_outdated.num) {
     for (int i = 0; i < r->resolve_outdated.num; ++i) {
       struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
-      if (u->flags != 's') { // Rebuild all on any outdated non source dependency (DEPS_TYPE_ENV)
+      if (u->flags != 's') {
         slist = &ctx->sources;
         break;
       } else {

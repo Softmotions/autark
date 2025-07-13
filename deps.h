@@ -12,6 +12,7 @@
 #define DEPS_TYPE_FILE_OUTDATED 111 // x
 #define DEPS_TYPE_NODE_VALUE    118 // v
 #define DEPS_TYPE_ENV           101 // e
+#define DEPS_TYPE_SYS_ENV       115 // s
 #define DEPS_TYPE_ALIAS         97  // a
 #define DEPS_TYPE_OUTDATED      120 // o
 

@@ -39,11 +39,11 @@ bool deps_cur_next(struct deps *d) {
     d->type = *rp++;
     d->flags = *rp++;
 
-    if (d->type == DEPS_TYPE_NODE_VALUE || d->type == DEPS_TYPE_ENV) {
+    if (d->type == DEPS_TYPE_NODE_VALUE || d->type == DEPS_TYPE_ENV || d->type == DEPS_TYPE_SYS_ENV) {
       utils_chars_replace(d->buf, '\2', '\n');
     }
 
-    if (d->type == DEPS_TYPE_ALIAS || d->type == DEPS_TYPE_ENV) {
+    if (d->type == DEPS_TYPE_ALIAS || d->type == DEPS_TYPE_ENV || d->type == DEPS_TYPE_SYS_ENV) {
       d->alias = rp;
       d->resource = 0;
     } else {
@@ -105,6 +105,13 @@ bool deps_cur_is_outdated(struct deps *d) {
         }
         return strcmp(val, d->resource) != 0;
       }
+      case DEPS_TYPE_SYS_ENV: {
+        const char *val = getenv(d->alias);
+        if (!val) {
+          val = "";
+        }
+        return strcmp(val, d->resource) != 0;
+      }
       case DEPS_TYPE_OUTDATED:
         return true;
     }
@@ -136,7 +143,7 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     if (!path_stat(alias, &st) && st.ftype != AKPATH_NOT_EXISTS) {
       serial = st.mtime;
     }
-  } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE) {
+  } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE || type == DEPS_TYPE_SYS_ENV) {
     assert(resource);
     utils_strncpy(dbuf, resource, sizeof(dbuf));
     utils_chars_replace(buf[0], '\n', '\2');
@@ -154,7 +161,7 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
   }
   fseek(d->file, 0, SEEK_END);
 
-  if (type != DEPS_TYPE_ALIAS && type != DEPS_TYPE_ENV) {
+  if (type != DEPS_TYPE_ALIAS && type != DEPS_TYPE_ENV && type != DEPS_TYPE_SYS_ENV) {
     if (fprintf(d->file, "%c%c%s\1%" PRId64 "\n", type, flags, resource, serial) < 0) {
       rc = errno;
     }
@@ -181,6 +188,10 @@ int deps_add_alias(struct deps *d, char flags, const char *resource, const char 
 
 int deps_add_env(struct deps *d, char flags, const char *key, const char *value) {
   return _deps_add(d, DEPS_TYPE_ENV, flags, value, key, 0);
+}
+
+int deps_add_sys_env(struct deps *d, char flags, const char *key, const char *value) {
+  return _deps_add(d, DEPS_TYPE_SYS_ENV, flags, value, key, 0);
 }
 
 void deps_close(struct deps *d) {

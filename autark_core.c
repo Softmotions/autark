@@ -503,7 +503,7 @@ static void _on_command_dep_env(int argc, const char **argv) {
   if (rc) {
     akfatal(rc, "Failed to open deps file: %s", deps_path);
   }
-  rc = deps_add_env(&deps, 0, key, val);
+  rc = deps_add_sys_env(&deps, 0, key, val);
   if (rc) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }
