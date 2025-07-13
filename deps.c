@@ -115,6 +115,7 @@ bool deps_cur_is_outdated(struct deps *d) {
 static int _deps_add(struct deps *d, char type, char flags, const char *resource, const char *alias, int64_t serial) {
   int rc = 0;
   char buf[2][PATH_MAX];
+  char dbuf[DEPS_BUF_SZ];
 
   if (flags == 0) {
     flags = ' ';
@@ -137,9 +138,9 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     }
   } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE) {
     assert(resource);
-    utils_strncpy(buf[0], resource, PATH_MAX);
+    utils_strncpy(dbuf, resource, sizeof(dbuf));
     utils_chars_replace(buf[0], '\n', '\2');
-    resource = buf[0];
+    resource = dbuf;
   } else if (type == DEPS_TYPE_FILE_OUTDATED) {
     type = DEPS_TYPE_FILE;
     path_normalize(resource, buf[0]);
