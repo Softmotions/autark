@@ -111,7 +111,6 @@ struct _cc_task {
 
 static void _cc_task_destroy(struct _cc_task *t) {
   spawn_destroy(t->s);
-  ;
   free(t->src);
   free(t->obj);
 }
