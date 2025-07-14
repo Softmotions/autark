@@ -161,7 +161,7 @@ struct node* node_consumes_resolve(
   void (*on_resolved)(const char *path, void *opq),
   void *opq);
 
-void node_add_unit_deps(struct deps*);
+void node_add_unit_deps(struct node *n, struct deps*);
 
 struct node_resolve {
   struct node *n;

@@ -80,7 +80,7 @@ bool deps_cur_next(struct deps *d) {
   return false;
 }
 
-bool deps_cur_is_outdated(struct deps *d) {
+bool deps_cur_is_outdated(struct node *n, struct deps *d) {
   if (d) {
     switch (d->type) {
       case DEPS_TYPE_FILE: {
@@ -98,8 +98,7 @@ bool deps_cur_is_outdated(struct deps *d) {
         break;
       }
       case DEPS_TYPE_ENV: {
-        struct unit *unit = unit_peek();
-        const char *val = unit_env_get(unit, d->alias);
+        const char *val = unit_env_get(n, d->alias);
         if (!val) {
           val = "";
         }

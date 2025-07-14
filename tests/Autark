@@ -32,7 +32,7 @@ foreach {
 }
 
 # Run test cases
-if { defined { RUN_TESTS }
+if { ${RUN_TESTS}
   foreach {
     OBJ
     ${CC_OBJS}

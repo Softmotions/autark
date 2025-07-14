@@ -188,7 +188,7 @@ static void _on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
-  node_add_unit_deps(&deps);
+  node_add_unit_deps(n, &deps);
 
   if (r->resolve_outdated.num) {
     for (int i = 0; i < r->resolve_outdated.num; ++i) {

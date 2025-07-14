@@ -50,7 +50,7 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
       node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
     }
   } else if (node_is_can_be_value(mn)) {
-    eq = (op && *op != '\0');
+    eq = (op && *op != '\0' && !(op[0] == '0' && op[1] == '\0'));
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
   }

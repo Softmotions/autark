@@ -181,7 +181,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
-  node_add_unit_deps(&deps);
+  node_add_unit_deps(ctx->n, &deps);
 
   for (int i = 0; i < r->node_val_deps.num; ++i) {
     struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);

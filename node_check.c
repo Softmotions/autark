@@ -60,7 +60,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
   }
-  node_add_unit_deps(&deps);
+  node_add_unit_deps(n, &deps);
   deps_close(&deps);
 }
 

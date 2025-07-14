@@ -1034,19 +1034,18 @@ struct node* node_consumes_resolve(
   return nn;
 }
 
-void node_add_unit_deps(struct deps *deps) {
+void node_add_unit_deps(struct node *n, struct deps *deps) {
   struct unit *prev = 0;
-  for (int i = g_env.stack_units.num - 1; i >= 0; --i) {
-    struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
-    if (prev != c->unit && path_is_exist(c->unit->source_path)) {
-      deps_add(deps, DEPS_TYPE_FILE, 0, c->unit->source_path, 0);
+  for (struct node *nn = n; nn; nn = nn->parent) {
+    if (nn->unit && nn->unit != prev) {
+      prev = nn->unit;
+      deps_add(deps, DEPS_TYPE_FILE, 0, nn->unit->source_path, 0);
     }
-    prev = c->unit;
   }
 }
 
 void node_resolve(struct node_resolve *r) {
-  akassert(r && r->path);
+  akassert(r && r->path && r->n);
 
   int rc;
   struct deps deps = { 0 };
@@ -1089,7 +1088,7 @@ void node_resolve(struct node_resolve *r) {
           outdated = true;
         }
       } else {
-        outdated = deps_cur_is_outdated(&deps);
+        outdated = deps_cur_is_outdated(r->n, &deps);
       }
 
       if (outdated) {

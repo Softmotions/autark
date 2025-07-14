@@ -1,6 +1,9 @@
-file ./autark-cache/autark
-#set environment BUILD_SHARED_LIBS=1
-#set args
+cd ./autark-cache/tests
+file ./test9
+#file ./autark-cache/autark
+#set environment CC=clang
+#set environment IWNET_RUN_TESTS=1
+#set args /home/adam/Projects/softmotions/iwnet
 
 set confirm off
 set follow-fork-mode parent

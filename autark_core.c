@@ -79,17 +79,16 @@ const char* unit_env_get_raw(struct unit *u, const char *key) {
   return 0;
 }
 
-const char* unit_env_get(struct unit *u, const char *key) {
+const char* unit_env_get(struct node *n, const char *key) {
   struct unit *prev = 0;
-  for (int i = (int) g_env.stack_units.num - 1; i >= 0; --i) {
-    struct unit_ctx *c = (struct unit_ctx*) ulist_get(&g_env.stack_units, i);
-    if (prev != c->unit) {
-      const char *ret = unit_env_get_raw(c->unit, key);
+  for (struct node *nn = n; nn; nn = nn->parent) {
+    if (nn->unit && nn->unit != prev) {
+      prev = nn->unit;
+      const char *ret = unit_env_get_raw(nn->unit, key);
       if (ret) {
         return ret;
       }
     }
-    prev = c->unit;
   }
   return getenv(key);
 }
@@ -97,8 +96,6 @@ const char* unit_env_get(struct unit *u, const char *key) {
 void unit_env_remove(struct unit *u, const char *key) {
   map_remove(u->env, key);
 }
-
-const char* unit_env_get(struct unit*, const char *key);
 
 void on_unit_pool_destroy(struct pool *pool) {
   for (int i = 0; i < g_env.units.num; ++i) {
@@ -218,15 +215,16 @@ struct unit* unit_root(void) {
   return uc.unit;
 }
 
-struct unit* unit_parent(void) {
-  struct unit *u = unit_peek();
-  for (int i = (int) g_env.stack_units.num - 2; i >= 0; --i) {
-    struct unit_ctx uu = *(struct unit_ctx*) ulist_get(&g_env.stack_units, i);
-    if (uu.unit != u) {
-      return uu.unit;
+struct unit* unit_parent(struct node *n) {
+  struct unit *u = n->unit;
+  for (struct node *nn = n->parent; nn; nn = nn->parent) {
+    if (!u) {
+      u = nn->unit;
+    } else if (nn->unit && n->unit != nn->unit) {
+      return nn->unit;
     }
   }
-  return u;
+  return unit_root();
 }
 
 struct unit_ctx unit_peek_ctx(void) {
@@ -752,7 +750,7 @@ void autark_run(int argc, const char **argv) {
   if (g_env.verbose) {
     akinfo("AUTARK_HOME=%s", autark_home);
   }
-  g_env.spawn.extra_env_paths =  autark_home;
+  g_env.spawn.extra_env_paths = autark_home;
 
   if (!g_env.install.prefix_dir) {
     char *home = getenv("HOME");

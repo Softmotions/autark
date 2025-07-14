@@ -2,6 +2,7 @@
 #define DEPS_H
 
 #ifndef _AMALGAMATE_
+#include "env.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
@@ -36,7 +37,7 @@ int deps_open(const char *path, int omode, struct deps *init);
 
 bool deps_cur_next(struct deps*);
 
-bool deps_cur_is_outdated(struct deps*);
+bool deps_cur_is_outdated(struct node *n, struct deps*);
 
 int deps_add(struct deps*, char type, char flags, const char *resource, int64_t serial);
 
