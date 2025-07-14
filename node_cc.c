@@ -11,6 +11,8 @@
 #include "alloc.h"
 #include "map.h"
 #include <string.h>
+#include <errno.h>
+#include <sys/wait.h>
 #endif
 
 struct _cc_ctx {
@@ -27,14 +29,6 @@ struct _cc_ctx {
   struct ulist consumes;    // sizeof(char*)
   int num_failed;
 };
-
-static void _cc_stdout_handler(char *buf, size_t buflen, struct spawn *s) {
-  fprintf(stdout, "%s", buf);
-}
-
-static void _cc_stderr_handler(char *buf, size_t buflen, struct spawn *s) {
-  fprintf(stderr, "%s", buf);
-}
 
 static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   char buf[127];
@@ -108,15 +102,36 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
   fclose(f);
 }
 
-static bool _cc_on_build_source(struct node *n, struct deps *deps, const char *src, const char *obj) {
-  int ret = true;
+struct _cc_task {
+  struct spawn *s;
+  char *src;
+  char *obj;
+  pid_t pid;
+};
+
+static void _cc_task_destroy(struct _cc_task *t) {
+  spawn_destroy(t->s);
+  ;
+  free(t->src);
+  free(t->obj);
+}
+
+static void _cc_on_build_source(
+  struct node     *n,
+  struct deps     *deps,
+  const char      *src,
+  const char      *obj,
+  struct _cc_task *task) {
   if (g_env.check.log) {
     xstr_printf(g_env.check.log, "%s: build src=%s obj=%s\n", n->name, src, obj);
   }
+
   struct _cc_ctx *ctx = n->impl;
   struct spawn *s = spawn_create(ctx->cc, ctx);
-  spawn_set_stdout_handler(s, _cc_stdout_handler);
-  spawn_set_stderr_handler(s, _cc_stderr_handler);
+  task->s = s;
+
+  spawn_set_nowait(s, true);
+
   if (ctx->n_cflags) {
     struct xstr *xstr = 0;
     const char *cflags = node_value(ctx->n_cflags);
@@ -142,17 +157,12 @@ static bool _cc_on_build_source(struct node *n, struct deps *deps, const char *s
 
   int rc = spawn_do(s);
   if (rc) {
+    spawn_destroy(s);
     node_error(rc, ctx->n, "%s", ctx->cc);
-    ret = false;
-  } else {
-    int code = spawn_exit_code(s);
-    if (code != 0) {
-      node_error(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", ctx->cc, code);
-      ret = false;
-    }
+    return;
   }
-  spawn_destroy(s);
-  return ret;
+
+  task->pid = spawn_pid(s);
 }
 
 static void _cc_on_resolve(struct node_resolve *r) {
@@ -161,7 +171,13 @@ static void _cc_on_resolve(struct node_resolve *r) {
   struct unit *unit = unit_peek();
   struct ulist *slist = &ctx->sources;
   struct ulist rlist = { .usize = sizeof(char*) };
+  struct ulist tasks = { .usize = sizeof(struct _cc_task) };
   struct map *fmap = map_create_str(map_k_free);
+
+  int max_jobs = g_env.max_parallel_jobs;
+  if (max_jobs <= 0) {
+    max_jobs = 1;
+  }
 
   if (r->resolve_outdated.num) {
     for (int i = 0; i < r->resolve_outdated.num; ++i) {
@@ -196,40 +212,67 @@ static void _cc_on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   }
 
-  for (int i = 0; i < slist->num; ++i) {
-    char buf[PATH_MAX];
-    char *obj, *src = *(char**) ulist_get(slist, i);
-    src = path_normalize_cwd(src, unit->cache_dir, buf);
-    bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
-    if (!incache) {
-      obj = path_relativize_cwd(unit->dir, src, unit->dir);
-      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-    } else {
-      obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      src = xstrdup(obj);
-    }
-
-    char *p = strrchr(obj, '.');
-    akassert(p && p[1] != '\0');
-    p[1] = 'o';
-    p[2] = '\0';
-
-    bool failed = !_cc_on_build_source(ctx->n, &deps, src, obj);
-    if (failed) {
-      ++ctx->num_failed;
-      map_put_str(fmap, src, (void*) (intptr_t) 1);
-    }
-
-    if (slist == &ctx->sources) {
-      deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
-      if (!failed) {
-        _cc_deps_MMD_add(ctx->n, &deps, src, obj);
+  for (int i = 0; i < slist->num || tasks.num > 0; ) {
+    while (tasks.num < max_jobs && i < slist->num) {
+      char buf[PATH_MAX];
+      char *obj, *src = *(char**) ulist_get(slist, i);
+      src = path_normalize_cwd(src, unit->cache_dir, buf);
+      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
+      if (!incache) {
+        obj = path_relativize_cwd(unit->dir, src, unit->dir);
+        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+      } else {
+        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+        src = xstrdup(obj);
       }
-    } else {
+
+      char *p = strrchr(obj, '.');
+      akassert(p && p[1] != '\0');
+      p[1] = 'o';
+      p[2] = '\0';
+
+      struct _cc_task task = { .src = src, .obj = obj, .pid = -1 };
+      _cc_on_build_source(ctx->n, &deps, src, obj, &task);
+
+      if (task.pid == -1) {
+        ++ctx->num_failed;
+        map_put_str(fmap, src, (void*) (intptr_t) 1);
+        if (slist == &ctx->sources) {
+          deps_add(&deps, DEPS_TYPE_FILE_OUTDATED, 's', src, 0);
+        }
+        _cc_task_destroy(&task);
+      } else {
+        ulist_push(&tasks, &task);
+      }
+      ++i;
     }
 
-    free(obj);
-    free(src);
+    int wstatus = 0;
+    pid_t pid = wait(&wstatus);
+    if (pid == -1) {
+      akfatal(errno, "wait() syscall failed", 0);
+    }
+
+    for (int j = 0; j < tasks.num; ++j) {
+      struct _cc_task *t = (struct _cc_task*) ulist_get(&tasks, j);
+      if (t->pid == pid) {
+        spawn_set_wstatus(t->s, wstatus);
+        int code = spawn_exit_code(t->s);
+        if (code != 0) {
+          ++ctx->num_failed;
+          map_put_str(fmap, t->src, (void*) (intptr_t) 1);
+        }
+        if (slist == &ctx->sources) {
+          deps_add(&deps, code != 0 ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', t->src, 0);
+          if (code == 0) {
+            _cc_deps_MMD_add(ctx->n, &deps, t->src, t->obj);
+          }
+        }
+        _cc_task_destroy(t);
+        ulist_remove(&tasks, j);
+        break;
+      }
+    }
   }
 
   if (slist != &ctx->sources) {
@@ -255,7 +298,6 @@ static void _cc_on_resolve(struct node_resolve *r) {
       if (!failed) {
         _cc_deps_MMD_add(ctx->n, &deps, src, obj);
       }
-
       free(obj);
       free(src);
     }
@@ -263,6 +305,7 @@ static void _cc_on_resolve(struct node_resolve *r) {
 
   deps_close(&deps);
   ulist_destroy_keep(&rlist);
+  ulist_destroy_keep(&tasks);
   map_destroy(fmap);
 }
 

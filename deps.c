@@ -145,7 +145,7 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
   } else if (type == DEPS_TYPE_ENV || type == DEPS_TYPE_NODE_VALUE || type == DEPS_TYPE_SYS_ENV) {
     assert(resource);
     utils_strncpy(dbuf, resource, sizeof(dbuf));
-    utils_chars_replace(buf[0], '\n', '\2');
+    utils_chars_replace(dbuf, '\n', '\2');
     resource = dbuf;
   } else if (type == DEPS_TYPE_FILE_OUTDATED) {
     type = DEPS_TYPE_FILE;

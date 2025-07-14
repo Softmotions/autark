@@ -27,6 +27,7 @@ struct spawn {
   struct ulist env;
   const char  *exec;
   char *path_overriden;
+  bool  nowait;
 
   size_t (*stdin_provider)(char *buf, size_t buflen, struct spawn*);
   void   (*stdout_handler)(char *buf, size_t buflen, struct spawn*);
@@ -255,8 +256,17 @@ void spawn_set_stderr_handler(
   s->stderr_handler = handler;
 }
 
+void spawn_set_nowait(struct spawn *s, bool nowait) {
+  s->nowait = nowait;
+}
+
+void spawn_set_wstatus(struct spawn *s, int wstatus) {
+  s->wstatus = wstatus;
+}
+
 int spawn_do(struct spawn *s) {
   int rc = 0;
+  bool nowait = s->nowait;
 
   if (!s->stderr_handler) {
     s->stderr_handler = _default_stderr_handler;
@@ -300,12 +310,15 @@ int spawn_do(struct spawn *s) {
     file = rfile;
   }
 
-  if (pipe(pipe_stdout) == -1) {
-    return errno;
+  if (!nowait) {
+    if (pipe(pipe_stdout) == -1) {
+      return errno;
+    }
+    if (pipe(pipe_stderr) == -1) {
+      return errno;
+    }
   }
-  if (pipe(pipe_stderr) == -1) {
-    return errno;
-  }
+
   if (s->stdin_provider) {
     if (pipe(pipe_stdin) == -1) {
       return errno;
@@ -327,27 +340,31 @@ int spawn_do(struct spawn *s) {
       close(pipe_stdin[0]);
     }
 
-    close(pipe_stdout[0]);
-    if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1) {
-      perror("dup2");
-      _exit(EXIT_FAILURE);
-    }
-    close(pipe_stdout[1]);
+    if (!nowait) {
+      close(pipe_stdout[0]);
+      if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1) {
+        perror("dup2");
+        _exit(EXIT_FAILURE);
+      }
+      close(pipe_stdout[1]);
 
-    close(pipe_stderr[0]);
-    if (dup2(pipe_stderr[1], STDERR_FILENO) == -1) {
-      perror("dup2");
-      _exit(EXIT_FAILURE);
+      close(pipe_stderr[0]);
+      if (dup2(pipe_stderr[1], STDERR_FILENO) == -1) {
+        perror("dup2");
+        _exit(EXIT_FAILURE);
+      }
+      close(pipe_stderr[1]);
     }
-    close(pipe_stderr[1]);
 
     execve(file, args, envp);
 
     perror("execve");
     _exit(EXIT_FAILURE);
   } else {
-    close(pipe_stdout[1]);
-    close(pipe_stderr[1]);
+    if (!nowait) {
+      close(pipe_stdout[1]);
+      close(pipe_stderr[1]);
+    }
 
     if (s->stdin_provider) {
       close(pipe_stdin[0]);
@@ -368,48 +385,50 @@ int spawn_do(struct spawn *s) {
       close(pipe_stdin[1]);
     }
 
-    // Now read both stdout & stderr
-    struct pollfd fds[] = {
-      { .fd = pipe_stdout[0], .events = POLLIN },
-      { .fd = pipe_stderr[0], .events = POLLIN }
-    };
+    if (!nowait) {
+      // Now read both stdout & stderr
+      struct pollfd fds[] = {
+        { .fd = pipe_stdout[0], .events = POLLIN },
+        { .fd = pipe_stderr[0], .events = POLLIN }
+      };
 
-    int c = sizeof(fds) / sizeof(fds[0]);
-    while (c > 0) {
-      int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
-      if (ret == -1) {
-        break;
-      }
-      for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
-        if (fds[i].fd == -1) {
-          continue;
+      int c = sizeof(fds) / sizeof(fds[0]);
+      while (c > 0) {
+        int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
+        if (ret == -1) {
+          break;
         }
-        short revents = fds[i].revents;
-        if (revents & POLLIN) {
-          ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
-          if (n > 0) {
-            buf[n] = '\0';
-            if (fds[i].fd == pipe_stdout[0]) {
-              s->stdout_handler(buf, n, s);
-            } else {
-              s->stderr_handler(buf, n, s);
+        for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
+          if (fds[i].fd == -1) {
+            continue;
+          }
+          short revents = fds[i].revents;
+          if (revents & POLLIN) {
+            ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
+            if (n > 0) {
+              buf[n] = '\0';
+              if (fds[i].fd == pipe_stdout[0]) {
+                s->stdout_handler(buf, n, s);
+              } else {
+                s->stderr_handler(buf, n, s);
+              }
+            } else if (n == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+              close(fds[i].fd);
+              fds[i].fd = -1;
+              --c;
             }
-          } else if (n == -1) {
+          }
+          if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
             close(fds[i].fd);
             fds[i].fd = -1;
             --c;
           }
         }
-        if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
-          close(fds[i].fd);
-          fds[i].fd = -1;
-          --c;
-        }
       }
-    }
 
-    if (waitpid(s->pid, &s->wstatus, 0) == -1) {
-      perror("waitpid");
+      if (waitpid(s->pid, &s->wstatus, 0) == -1) {
+        perror("waitpid");
+      }
     }
   }
 
@@ -420,8 +439,10 @@ int spawn_do(struct spawn *s) {
 }
 
 void spawn_destroy(struct spawn *s) {
-  free(s->path_overriden);
-  ulist_destroy_keep(&s->args);
-  ulist_destroy_keep(&s->env);
-  pool_destroy(s->pool);
+  if (s) {
+    free(s->path_overriden);
+    ulist_destroy_keep(&s->args);
+    ulist_destroy_keep(&s->env);
+    pool_destroy(s->pool);
+  }
 }

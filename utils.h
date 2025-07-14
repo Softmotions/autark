@@ -104,6 +104,7 @@ int utils_rename_file(const char *src, const char *dst);
 
 void utils_split_values_add(const char *v, struct xstr *xstr);
 
+int utils_fd_make_non_blocking(int fd);
 
 //----------------------- Vlist
 

@@ -33,6 +33,10 @@ void spawn_set_stdout_handler(struct spawn*, void (*handler)(char *buf, size_t b
 
 void spawn_set_stderr_handler(struct spawn*, void (*handler)(char *buf, size_t buflen, struct spawn*));
 
+void spawn_set_nowait(struct spawn*, bool nowait);
+
+void spawn_set_wstatus(struct spawn*, int wstatus);
+
 int spawn_do(struct spawn*);
 
 void spawn_destroy(struct spawn*);

@@ -10,8 +10,8 @@
 #include <stdbool.h>
 #endif
 
-#define AUTARK_CACHE           "autark-cache"
-#define AUTARK_SCRIPT          "Autark"
+#define AUTARK_CACHE  "autark-cache"
+#define AUTARK_SCRIPT "Autark"
 
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
 #define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
@@ -54,6 +54,7 @@ struct env {
   const char  *cwd;
   struct pool *pool;
   int verbose;
+  int max_parallel_jobs;            // Max number of allowed parallel jobs.
   struct {
     const char *root_dir;           // Project root source dir.
     const char *cache_dir;          // Project artifacts cache dir.

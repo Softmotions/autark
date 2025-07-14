@@ -185,3 +185,16 @@ void utils_split_values_add(const char *v, struct xstr *xstr) {
     xstr_cat(xstr, buf);
   }
 }
+
+int utils_fd_make_non_blocking(int fd) {
+  int rci, flags;
+  while ((flags = fcntl(fd, F_GETFL, 0)) == -1 && errno == EINTR) ;
+  if (flags == -1) {
+    return errno;
+  }
+  while ((rci = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) == -1 && errno == EINTR) ;
+  if (rci == -1) {
+    return errno;
+  }
+  return 0;
+}

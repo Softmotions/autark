@@ -287,6 +287,8 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -l, --options               List of all available project options and their description.\n");
   fprintf(stderr,
+          "    -J  --jobs=<>               Number of jobs used in c/cxx compilation tasks. Default: 4\n");
+  fprintf(stderr,
           "    -D<option>[=<val>]          Set project build option.\n");
   fprintf(stderr,
           "    -I, --install               Install all built artifacts\n");
@@ -665,6 +667,7 @@ void autark_run(int argc, const char **argv) {
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
     { "pkgconfdir", 1, 0, -4 },
+    { "jobs", 1, 0, 'J' },
     { 0 }
   };
 
@@ -672,7 +675,7 @@ void autark_run(int argc, const char **argv) {
   const char *cdir = 0;
   struct ulist options = { .usize = sizeof(char*) };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:I", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:J:I", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'H':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -718,6 +721,14 @@ void autark_run(int argc, const char **argv) {
       case -4:
         g_env.install.pkgconf_dir = pool_strdup(g_env.pool, optarg);
         break;
+      case 'J': {
+        int rc = 0;
+        g_env.max_parallel_jobs = utils_strtol(optarg, 10, &rc);
+        if (rc) {
+          akfatal(AK_ERROR_FAIL, "Command line option -J,--jobs value: %s should be non negative number", optarg);
+        }
+        break;
+      }
       case 'h':
       default:
         _usage(0);
@@ -775,6 +786,12 @@ void autark_run(int argc, const char **argv) {
 #else
     g_env.install.pkgconf_dir = "lib/pkgconfig";
 #endif
+  }
+  if (g_env.max_parallel_jobs <= 0) {
+    g_env.max_parallel_jobs = 4;
+  }
+  if (g_env.max_parallel_jobs > 16) {
+    g_env.max_parallel_jobs = 16;
   }
 
   if (optind < argc) {
