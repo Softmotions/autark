@@ -2,7 +2,7 @@
 #include "script.h"
 #include "log.h"
 #include "env.h"
-
+#include "utils.h"
 #include <string.h>
 #endif
 
@@ -28,6 +28,18 @@ static bool _if_matched_eval(struct node *mn) {
   }
 }
 
+static bool _if_prefix_eval(struct node *mn) {
+  const char *val1 = node_value(mn->child);
+  const char *val2 = mn->child ? node_value(mn->child->next) : 0;
+  if (val1 && val2) {
+    return utils_startswith(val1, val2);
+  } else if (val1 == 0 && val2 == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 static bool _if_cond_eval(struct node *n, struct node *mn) {
   const char *op = node_value(mn);
   if (!op) {
@@ -46,6 +58,8 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
       eq = _if_matched_eval(mn);
     } else if (strcmp(op, "defined") == 0) {
       eq = _if_defined_eval(mn);
+    } else if (strcmp(op, "prefix")) {
+      eq = _if_prefix_eval(mn);
     } else {
       node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
     }
