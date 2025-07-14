@@ -58,7 +58,7 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
       eq = _if_matched_eval(mn);
     } else if (strcmp(op, "defined") == 0) {
       eq = _if_defined_eval(mn);
-    } else if (strcmp(op, "prefix")) {
+    } else if (strcmp(op, "prefix") == 0) {
       eq = _if_prefix_eval(mn);
     } else {
       node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
