@@ -105,7 +105,7 @@ cat ./script.c >> ${F}
 
 cat<<EOF > ${B}
 #!/bin/sh
-# Autark build system script wrapper.
+# Autark (https://autark.dev) build system script wrapper.
 
 META_VERSION=${META_VERSION}
 META_REVISION=${META_REVISION}
