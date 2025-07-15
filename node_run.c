@@ -55,11 +55,7 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
     }
   }
 
-  const char *shell = node_env_get(n, "SHELL");
-  if (!shell || *shell == '\0') {
-    node_fatal(AK_ERROR_FAIL, n, "Required $SHELL variable/env is not set");
-  }
-
+  const char *shell = "/bin/sh";
   struct unit *unit = unit_peek();
   struct spawn *s = spawn_create(shell, &(struct _run_spawn_data) {
     .cmd = shell,

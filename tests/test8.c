@@ -15,23 +15,22 @@ int main(void) {
   akassert(script_open("../../tests/data/test8/Autark", &sctx) == 0);
   script_build(sctx);
   script_close(&sctx);
-
   akassert(
     strcmp(
-      "Autark:19     cc: resolved outdated outdated=0\n"
-      "Autark:19     cc: build src=../test8_1.c obj=test8_1.o\n"
-      "Autark:19     cc: build src=../test8_2.c obj=test8_2.o\n"
-      "Autark:19     cc: build src=../test8_3.c obj=test8_3.o\n"
-      "Autark:19     cc: build src=../test8_4.c obj=test8_4.o\n"
-      "Autark:28    run: resolved outdated outdated=0\n"
-      "Autark:28    run: cc\n"
-      "Autark:28    run: sh\n"
-      "Autark:28    run: cc\n"
-      "Autark:28    run: sh\n"
-      "Autark:28    run: cc\n"
-      "Autark:28    run: sh\n"
-      "Autark:28    run: cc\n"
-      "Autark:28    run: sh\n",
+      "Autark:14     cc: resolved outdated outdated=0\n"
+      "Autark:14     cc: build src=../test8_1.c obj=test8_1.o\n"
+      "Autark:14     cc: build src=../test8_2.c obj=test8_2.o\n"
+      "Autark:14     cc: build src=../test8_3.c obj=test8_3.o\n"
+      "Autark:14     cc: build src=../test8_4.c obj=test8_4.o\n"
+      "Autark:23    run: resolved outdated outdated=0\n"
+      "Autark:23    run: cc\n"
+      "Autark:23    run: /bin/sh\n"
+      "Autark:23    run: cc\n"
+      "Autark:23    run: /bin/sh\n"
+      "Autark:23    run: cc\n"
+      "Autark:23    run: /bin/sh\n"
+      "Autark:23    run: cc\n"
+      "Autark:23    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -70,13 +69,13 @@ int main(void) {
   script_close(&sctx);
   akassert(
     strcmp(
-      "Autark:19     cc: outdated test8_2.c t=f f=s\n"
-      "Autark:19     cc: resolved outdated outdated=1\n"
-      "Autark:19     cc: build src=../test8_2.c obj=test8_2.o\n"
-      "Autark:28    run: outdated test8_2.o t=f f=f\n"
-      "Autark:28    run: resolved outdated outdated=1\n"
-      "Autark:28    run: cc\n"
-      "Autark:28    run: sh\n",
+      "Autark:14     cc: outdated test8_2.c t=f f=s\n"
+      "Autark:14     cc: resolved outdated outdated=1\n"
+      "Autark:14     cc: build src=../test8_2.c obj=test8_2.o\n"
+      "Autark:23    run: outdated test8_2.o t=f f=f\n"
+      "Autark:23    run: resolved outdated outdated=1\n"
+      "Autark:23    run: cc\n"
+      "Autark:23    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 

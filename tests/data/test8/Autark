@@ -1,10 +1,5 @@
 
 set {
-  SHELL
-  sh
-}
-
-set {
   SOURCES
   in-sources {
     ..@{autark glob '*.c'}

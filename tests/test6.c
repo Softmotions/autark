@@ -22,6 +22,7 @@ int main(void) {
   akassert(access("autark-cache/hello", X_OK) == 0);
   akassert(path_stat("autark-cache/hello", &st[0]) == 0);
 
+  fprintf(stderr, "!!!=%s\n", xstr_ptr(xlog));
   akassert(
     strcmp(
       "Autark:2   env.sh: resolved outdated outdated=0\n"
@@ -30,7 +31,7 @@ int main(void) {
       "Autark:36     cc: build src=../hello.c obj=hello.o\n"
       "Autark:42    run: resolved outdated outdated=0\n"
       "Autark:42    run: cc\n"
-      "Autark:42    run: sh\n",
+      "Autark:42    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -69,7 +70,7 @@ int main(void) {
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=1\n"
       "Autark:42    run: cc\n"
-      "Autark:42    run: sh\n",
+      "Autark:42    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -96,7 +97,7 @@ int main(void) {
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=2\n"
       "Autark:42    run: cc\n"
-      "Autark:42    run: sh\n",
+      "Autark:42    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 
@@ -123,7 +124,7 @@ int main(void) {
       "Autark:42    run: outdated hello.o t=f f= \n"
       "Autark:42    run: resolved outdated outdated=2\n"
       "Autark:42    run: cc\n"
-      "Autark:42    run: sh\n",
+      "Autark:42    run: /bin/sh\n",
       xstr_ptr(xlog)) == 0
     );
 
