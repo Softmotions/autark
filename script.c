@@ -303,7 +303,11 @@ static void _preprocess_script(struct value *v) {
       eol = true;
       comment = false;
     } else if (eol) {
-      if (*p == '#') {
+      const char *sp = p;
+      while (utils_char_is_space(*sp)) {
+        ++sp;
+      }
+      if (*sp == '#') {
         comment = true;
       }
       eol = false;

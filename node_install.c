@@ -173,6 +173,7 @@ static void _install_on_resolve(struct node_resolve *r) {
     node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
   }
   node_add_unit_deps(n, &deps);
+  deps_add_env(&deps, 0, "INSTALL_PREFIX", g_env.install.prefix_dir);
 
   for (int i = 0; i < r->node_val_deps.num; ++i) {
     struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);

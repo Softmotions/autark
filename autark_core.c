@@ -571,7 +571,7 @@ static void _build(struct ulist *options) {
   }
   script_build(x);
   script_close(&x);
-  akinfo("Build successful");
+  akinfo("[%s] Build successful", g_env.project.root_dir);
 }
 
 static void _options(void) {
