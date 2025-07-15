@@ -317,7 +317,6 @@ static void _run_build(struct node *n) {
     .fe = node_find_parent_foreach(n),
   };
 
-
   struct node_resolve r = {
     .n = n,
     .path = n->vfile,
@@ -325,8 +324,10 @@ static void _run_build(struct node *n) {
     .on_init = _run_on_resolve_init,
     .on_resolve = _run_on_resolve,
     .node_val_deps = { .usize = sizeof(struct node*) },
-    .force_outdated = node_find_direct_child(n, NODE_TYPE_VALUE, "always") != 0,
   };
+
+  r.force_outdated = n->post_build != 0
+                     || node_find_direct_child(n, NODE_TYPE_VALUE, "always") != 0;
 
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (strcmp(nn->value, "exec") == 0 || strcmp(nn->value, "shell") == 0) {
@@ -344,8 +345,16 @@ static void _run_build(struct node *n) {
 }
 
 int node_run_setup(struct node *n) {
-  n->flags |= NODE_FLG_IN_CACHE;
-  n->setup = _run_setup;
-  n->build = _run_build;
+  if (strcmp("run-on-install", n->value) == 0) {
+    if (g_env.install.enabled) {
+      n->flags |= NODE_FLG_IN_CACHE;
+      n->setup = _run_setup;
+      n->post_build = _run_build;
+    }
+  } else {
+    n->flags |= NODE_FLG_IN_CACHE;
+    n->setup = _run_setup;
+    n->build = _run_build;
+  }
   return 0;
 }

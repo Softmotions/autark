@@ -56,7 +56,7 @@ int path_mkdirs(const char *path);
 
 int path_mkdirs_for(const char *path);
 
-int path_rmdir(const char *path);
+int path_rm_cache(const char *path);
 
 int path_stat(const char *path, struct akpath_stat *stat);
 

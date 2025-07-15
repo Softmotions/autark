@@ -17,7 +17,7 @@ int main(void) {
   setenv(AUTARK_ROOT_DIR, path, 1);
 
   snprintf(path2, sizeof(path2), "%s/%s", path, AUTARK_CACHE);
-  ASSERT(assert, path_rmdir(path2) == 0);
+  ASSERT(assert, path_rm_cache(path2) == 0);
 
   setenv(AUTARK_CACHE_DIR, path2, 1);
   setenv(AUTARK_UNIT, "test3", 1);

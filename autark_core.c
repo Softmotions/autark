@@ -380,7 +380,7 @@ void autark_build_prepare(const char *script_path) {
 
   if (g_env.project.cleanup) {
     if (path_is_dir(g_env.project.cache_dir)) {
-      int rc = path_rmdir(g_env.project.cache_dir);
+      int rc = path_rm_cache(g_env.project.cache_dir);
       if (rc) {
         akfatal(rc, "Failed to remove cache directory: %s", g_env.project.cache_dir);
       }

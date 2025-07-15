@@ -29,7 +29,7 @@ cat <<'EOF' >> ${F}
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <ftw.h>
+#include <dirent.h>
 #include <getopt.h>
 #include <glob.h>
 #include <inttypes.h>

@@ -11,8 +11,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <libgen.h>
-#include <ftw.h>
 #include <stdio.h>
+#include <dirent.h>
 #endif
 
 #ifdef __APPLE__
@@ -206,17 +206,74 @@ int path_mkdirs_for(const char *path) {
   return path_mkdirs(dir);
 }
 
-static int _rmfile(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
-  if (remove(pathname) < 0) {
-    perror(pathname);
-  }
-  return 0;
+static inline bool _is_autark_dist_root(const char *path) {
+  return utils_endswith(path, "/.autark-dist");
 }
 
-int path_rmdir(const char *path) {
-  if (nftw(path, _rmfile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
-    return errno != ENOENT ? errno : 0;
+static void _rm_dir_recursive(const char *path) {
+  struct stat st;
+  if (lstat(path, &st)) {
+    perror(path);
+    return;
   }
+
+  if (!S_ISDIR(st.st_mode)) {
+    if (unlink(path) != 0) {
+      perror(path);
+      return;
+    }
+    return;
+  }
+
+  DIR *dir = opendir(path);
+  if (!dir) {
+    perror(path);
+    return;
+  }
+
+  // Use dynamic allocation to avoid stack overflow early
+  char *child = xmalloc(PATH_MAX);
+  for (struct dirent *entry; (entry = readdir(dir)) != 0; ) {
+    const char *name = entry->d_name;
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+      continue;
+    }
+    snprintf(child, PATH_MAX, "%s/%s", path, name);
+    _rm_dir_recursive(child);
+  }
+  closedir(dir);
+  free(child);
+
+  if (rmdir(path)) {
+    perror(path);
+  }
+}
+
+int path_rm_cache(const char *path) {
+  char resolved[PATH_MAX];
+  char child[PATH_MAX];
+
+  if (!path_is_exist(path)) {
+    return 0;
+  }
+  if (!realpath(path, resolved)) {
+    return errno;
+  }
+  DIR *dir = opendir(resolved);
+  if (!dir) {
+    return errno;
+  }
+  for (struct dirent *entry; (entry = readdir(dir)) != 0; ) {
+    const char *name = entry->d_name;
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+      continue;
+    }
+    snprintf(child, sizeof(child), "%s/%s", path, name);
+    if (!_is_autark_dist_root(child)) {
+      _rm_dir_recursive(child);
+    }
+  }
+  closedir(dir);
   return 0;
 }
 

@@ -82,7 +82,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_INCLUDE;
   } else if (strcmp(key, "if") == 0) {
     return NODE_TYPE_IF;
-  } else if (strcmp(key, "run") == 0) {
+  } else if (strcmp(key, "run") == 0 || strcmp(key, "run-on-install") == 0) {
     return NODE_TYPE_RUN;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
