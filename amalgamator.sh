@@ -114,7 +114,33 @@ EOF
 cat <<'EOF' >> ${B}
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
-export AUTARK_HOME=${AUTARK_HOME:-${HOME}/.autark}
+prev_arg=""
+for arg in "$@"; do
+  case "$prev_arg" in
+    -H)
+      AUTARK_HOME="${arg}/.autark-dist"
+      prev_arg="" # сброс
+      continue
+      ;;
+  esac
+
+  case "$arg" in
+    -H)
+      prev_arg="-H"
+      ;;
+    -H*)
+      AUTARK_HOME="${arg#-H}/.autark-dist"
+      ;;
+    --cache=*)
+      AUTARK_HOME="${arg#--cache=}/.autark-dist"
+      ;;
+    *)
+      prev_arg=""
+      ;;
+  esac
+done
+
+export AUTARK_HOME=${AUTARK_HOME:-autark-cache/.autark-dist}
 AUTARK=${AUTARK_HOME}/autark
 
 if [ "${META_VERSION}.${META_REVISION}" = "$(${AUTARK} -v)" ]; then
