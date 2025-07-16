@@ -89,11 +89,7 @@ static char* _line_replace_subs(struct node *n, struct deps *deps, char *line) {
 
         deps_add_env(deps, 0, key, val ? val : "");
 
-        if (!val || *val == '\0') {
-          xstr_cat2(xstr, "@", 1);
-          xstr_cat(xstr, key);
-          xstr_cat2(xstr, "@", 1);
-        } else {
+        if (val && *val != '\0') {
           if (is_vlist(val)) {
             ++val;
             size_t len = strlen(val);
