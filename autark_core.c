@@ -300,6 +300,8 @@ static int _usage_va(const char *err, va_list ap) {
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
   fprintf(stderr,
           "        --includedir=<>         Path to 'include' dir relative to `prefix` dir. Default: include\n");
+ fprintf(stderr,
+          "        --mandir=<>             Path to 'man' dir relative to `prefix` dir. Default: share/man\n");
 #ifdef __FreeBSD__
   fprintf(stderr,
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: libdata/pkgconfig");
@@ -667,6 +669,7 @@ void autark_run(int argc, const char **argv) {
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
     { "pkgconfdir", 1, 0, -4 },
+    { "mandir", 1, 0, -5 },
     { "jobs", 1, 0, 'J' },
     { 0 }
   };
@@ -720,6 +723,9 @@ void autark_run(int argc, const char **argv) {
         break;
       case -4:
         g_env.install.pkgconf_dir = pool_strdup(g_env.pool, optarg);
+        break;
+      case -5:
+        g_env.install.man_dir = pool_strdup(g_env.pool, optarg);
         break;
       case 'J': {
         int rc = 0;
@@ -779,6 +785,9 @@ void autark_run(int argc, const char **argv) {
   }
   if (!g_env.install.include_dir) {
     g_env.install.include_dir = "include";
+  }
+  if (!g_env.install.man_dir) {
+    g_env.install.man_dir = "share/man";
   }
   if (!g_env.install.pkgconf_dir) {
 #ifdef __FreeBSD__

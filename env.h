@@ -68,6 +68,7 @@ struct env {
     const char *lib_dir;     // Path to lib dir relative to prefix.
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
+    const char *man_dir;     // Path to man pages dir.
     bool enabled;            // True if install operation should be performed
   } install;
   struct {

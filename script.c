@@ -727,12 +727,14 @@ int script_open(const char *file, struct sctx **out) {
       unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
       unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
       unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
+      unit_env_set_val(root, "INSTALL_MAN_DIR", g_env.install.man_dir);
       if (g_env.verbose) {
         akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
         akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
         akinfo("%s: INSTALL_LIB_DIR=%s", root->rel_path, g_env.install.lib_dir);
         akinfo("%s: INSTALL_INCLUDE_DIR=%s", root->rel_path, g_env.install.include_dir);
         akinfo("%s: INSTALL_PKGCONFIG_DIR=%s", root->rel_path, g_env.install.pkgconf_dir);
+        akinfo("%s: INSTALL_MAN_DIR=%s", root->rel_path, g_env.install.man_dir);
       }
     }
     if (out && n) {
