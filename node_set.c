@@ -35,9 +35,9 @@ static void _set_init(struct node *n) {
   unit_env_set_node(unit, key, n);
 }
 
-static const char* _set_value_get(struct node *n) {
+static const char* _set_value_get_impl(struct node *n) {
   if (n->recur_next.active && n->recur_next.n) {
-    return _set_value_get(n->recur_next.n);
+    return _set_value_get_impl(n->recur_next.n);
   }
   n->recur_next.active = true;
 
@@ -92,6 +92,24 @@ static const char* _set_value_get(struct node *n) {
   n->impl = xstr_destroy_keep_ptr(xstr);
   n->recur_next.active = false;
   return n->impl;
+}
+
+static const char* _set_value_get(struct node *n) {
+  const char *p = n->impl;
+  const char *v = _set_value_get_impl(n);
+  if (  n->child && p != v
+     && ((uintptr_t) n->impl != (uintptr_t) -1)
+     && strcmp(n->value, "env") == 0) {
+    const char *key = 0;
+    _unit_for_set(n, n->child, &key);
+    if (key) {
+      if (g_env.verbose) {
+        node_info(n, "%s=%s", key, v);
+      }
+      setenv(key, v, 1);
+    }
+  }
+  return v;
 }
 
 static void _set_dispose(struct node *n) {
