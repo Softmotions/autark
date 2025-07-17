@@ -40,8 +40,43 @@ static bool _if_prefix_eval(struct node *mn) {
   }
 }
 
+static bool _if_contains_eval(struct node *mn) {
+  const char *val1 = node_value(mn->child);
+  const char *val2 = mn->child ? node_value(mn->child->next) : 0;
+  if (val1 && val2) {
+    return strstr(val1, val2);
+  } else if (val1 == 0 && val2 == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+static bool _if_cond_eval(struct node *n, struct node *mn);
+
+static bool _if_OR_eval(struct node *n, struct node *mn) {
+  for (struct node *nn = mn->child; nn; nn = nn->next) {
+    if (_if_cond_eval(n, nn)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool _if_AND_eval(struct node *n, struct node *mn) {
+  for (struct node *nn = mn->child; nn; nn = nn->child) {
+    if (!_if_cond_eval(n, nn)) {
+      return false;
+    }
+  }
+  return mn->child != 0;
+}
+
 static bool _if_cond_eval(struct node *n, struct node *mn) {
-  const char *op = node_value(mn);
+  if (node_is_value(mn)) {
+    return true;
+  }
+  const char *op = mn->value;
   if (!op) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Matching condition is not set");
   }
@@ -58,12 +93,19 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
       eq = _if_matched_eval(mn);
     } else if (strcmp(op, "defined") == 0) {
       eq = _if_defined_eval(mn);
+    } else if (strcmp(op, "or") == 0) {
+      eq = _if_OR_eval(n, mn);
+    } else if (strcmp(op, "and") == 0) {
+      eq = _if_AND_eval(n, mn);
     } else if (strcmp(op, "prefix") == 0) {
       eq = _if_prefix_eval(mn);
+    } else if (strcmp(op, "contains") == 0) {
+      eq = _if_contains_eval(mn);
     } else {
       node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
     }
   } else if (node_is_can_be_value(mn)) {
+    op = node_value(mn);
     eq = (op && *op != '\0' && !(op[0] == '0' && op[1] == '\0'));
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
