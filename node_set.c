@@ -6,6 +6,8 @@
 #include "env.h"
 #endif
 
+static const char* _set_value_get(struct node *n);
+
 static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **keyp) {
   if (nn->type == NODE_TYPE_BAG) {
     if (strcmp(nn->value, "root") == 0) {
@@ -19,6 +21,22 @@ static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **
     *keyp = node_value(nn);
   }
   return unit_peek();
+}
+
+static void _set_setup(struct node *n) {
+  if (n->child && strcmp(n->value, "env") == 0) {
+    const char *v = _set_value_get(n);
+    if (v) {
+      const char *key = 0;
+      _unit_for_set(n, n->child, &key);
+      if (key) {
+        if (g_env.verbose) {
+          node_info(n, "%s=%s", key, v);
+        }
+        setenv(key, v, 1);
+      }
+    }
+  }
 }
 
 static void _set_init(struct node *n) {
@@ -35,9 +53,9 @@ static void _set_init(struct node *n) {
   unit_env_set_node(unit, key, n);
 }
 
-static const char* _set_value_get_impl(struct node *n) {
+static const char* _set_value_get(struct node *n) {
   if (n->recur_next.active && n->recur_next.n) {
-    return _set_value_get_impl(n->recur_next.n);
+    return _set_value_get(n->recur_next.n);
   }
   n->recur_next.active = true;
 
@@ -94,24 +112,6 @@ static const char* _set_value_get_impl(struct node *n) {
   return n->impl;
 }
 
-static const char* _set_value_get(struct node *n) {
-  const char *p = n->impl;
-  const char *v = _set_value_get_impl(n);
-  if (  n->child && p != v
-     && ((uintptr_t) n->impl != (uintptr_t) -1)
-     && strcmp(n->value, "env") == 0) {
-    const char *key = 0;
-    _unit_for_set(n, n->child, &key);
-    if (key) {
-      if (g_env.verbose) {
-        node_info(n, "%s=%s", key, v);
-      }
-      setenv(key, v, 1);
-    }
-  }
-  return v;
-}
-
 static void _set_dispose(struct node *n) {
   if ((uintptr_t) n->impl != (uintptr_t) -1) {
     free(n->impl);
@@ -122,6 +122,7 @@ static void _set_dispose(struct node *n) {
 int node_set_setup(struct node *n) {
   n->flags |= NODE_FLG_NO_CWD;
   n->init = _set_init;
+  n->setup = _set_setup;
   n->value_get = _set_value_get;
   n->dispose = _set_dispose;
   return 0;
