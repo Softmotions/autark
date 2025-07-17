@@ -8,12 +8,13 @@
 
 static bool _if_defined_eval(struct node *mn) {
   struct node *n = mn->parent;
-  const char *val = node_value(mn->child);
-  if (val && *val != '\0' && node_env_get(n, val)) {
-    return true;
-  } else {
-    return false;
+  for (struct node *nn = mn->child; nn; nn = nn->next) {
+    const char *val = node_value(mn->child);
+    if (val && *val != '\0' && node_env_get(n, val)) {
+      return true;
+    }
   }
+  return false;
 }
 
 static bool _if_matched_eval(struct node *mn) {
