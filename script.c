@@ -976,8 +976,8 @@ struct node* node_consumes_resolve(
   char pathbuf[PATH_MAX];
   struct unit *unit = unit_peek();
   struct ulist rlist = { .usize = sizeof(char*) };
-
   struct pool *pool = pool_create_empty();
+
   if (nn || paths) {
     for ( ; nn; nn = nn->next) {
       const char *cv = node_value(nn);

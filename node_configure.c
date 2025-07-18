@@ -183,7 +183,7 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
   }
 }
 
-static void _on_resolve(struct node_resolve *r) {
+static void _configure_on_resolve(struct node_resolve *r) {
   struct node *n = r->n;
   struct _configure_ctx *ctx = n->impl;
   struct ulist *slist = &ctx->sources;
@@ -244,12 +244,20 @@ static void _on_resolve(struct node_resolve *r) {
   ulist_destroy_keep(&rlist);
 }
 
+static void _configure_on_resolve_init(struct node_resolve *r) {
+  struct node *n = r->n;
+  struct _configure_ctx *ctx = n->impl;
+  node_consumes_resolve(n, 0, &ctx->sources, 0, 0);
+}
+
 static void _configure_build(struct node *n) {
-  node_resolve(&(struct node_resolve) {
+  struct node_resolve r = {
     .n = n,
     .path = n->vfile,
-    .on_resolve = _on_resolve,
-  });
+    .on_init = _configure_on_resolve_init,
+    .on_resolve = _configure_on_resolve,
+  };
+  node_resolve(&r);
 }
 
 static void _configure_init(struct node *n) {
