@@ -107,7 +107,17 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
     }
   } else if (node_is_can_be_value(mn)) {
     op = node_value(mn);
-    eq = (op && *op != '\0' && !(op[0] == '0' && op[1] == '\0'));
+    if (is_vlist(op)) {
+      struct vlist_iter iter;
+      vlist_iter_init(op, &iter);
+      if (vlist_iter_next(&iter)) {
+        if (!(iter.len == 1 && iter.item[0] == '0')) {
+          eq = iter.len > 0;
+        }
+      }
+    } else {
+      eq = (op && *op != '\0' && !(op[0] == '0' && op[1] == '\0'));
+    }
   } else {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Unknown matching condition: %s", op);
   }
