@@ -66,6 +66,7 @@ struct env {
     const char *prefix_dir;  // Absolute path to install prefix dir.
     const char *bin_dir;     // Path to the bin dir relative to prefix.
     const char *lib_dir;     // Path to lib dir relative to prefix.
+    const char *data_dir; // Path to lib data dir relative to prefix.
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.

@@ -299,8 +299,10 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
   fprintf(stderr,
+          "        --datadir=<>             Path to 'data' dir relative to a `prefix` dir. Default: share\n");
+  fprintf(stderr,
           "        --includedir=<>         Path to 'include' dir relative to `prefix` dir. Default: include\n");
- fprintf(stderr,
+  fprintf(stderr,
           "        --mandir=<>             Path to 'man' dir relative to `prefix` dir. Default: share/man\n");
 #ifdef __FreeBSD__
   fprintf(stderr,
@@ -665,12 +667,13 @@ void autark_run(int argc, const char **argv) {
     { "install", 0, 0, 'I' },
     { "prefix", 1, 0, 'R' },
     { "dir", 1, 0, 'C' },
+    { "jobs", 1, 0, 'J' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
     { "pkgconfdir", 1, 0, -4 },
     { "mandir", 1, 0, -5 },
-    { "jobs", 1, 0, 'J' },
+    { "datadir", 1, 0, -6 },
     { 0 }
   };
 
@@ -727,6 +730,9 @@ void autark_run(int argc, const char **argv) {
       case -5:
         g_env.install.man_dir = pool_strdup(g_env.pool, optarg);
         break;
+      case -6:
+        g_env.install.data_dir = pool_strdup(g_env.pool, optarg);
+        break;
       case 'J': {
         int rc = 0;
         g_env.max_parallel_jobs = utils_strtol(optarg, 10, &rc);
@@ -782,6 +788,9 @@ void autark_run(int argc, const char **argv) {
   }
   if (!g_env.install.lib_dir) {
     g_env.install.lib_dir = env_libdir();
+  }
+  if (!g_env.install.data_dir) {
+    g_env.install.data_dir = "share";
   }
   if (!g_env.install.include_dir) {
     g_env.install.include_dir = "include";
