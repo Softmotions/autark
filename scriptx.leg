@@ -2,7 +2,7 @@ RULES = _ (RULE _)* _ EOF                             { _finish(yy); }
 
 RULE = k:STRP _ '{' _ (VALR (__ VALR)*)? _ '}'        { _rule(yy, k); }
 
-VALR = RULE | STRQ | STRQQ | STRP
+VALR =  STRQ | STRQQ | RULE | STRP
 
 STRP = <CHP+>                                         { $$ = _node_text_escaped_push(yy, yytext); }
 
@@ -10,8 +10,11 @@ STRQ = ['] < ( !['] . )* > [']                        { $$ = _node_text_push(yy,
 
 STRQQ = ["] < ( !["] . )* > ["]                       { $$ = _node_text_push(yy, yytext); }
 
-CHP = '\\' [{}\\nrt]
-      | !([{}\\] | SPACE) .
+CHP = CHP1 | CHP2
+
+CHP1 = '\\' [{}\\nrt]
+
+CHP2 = !([{}\\] | SPACE) .
 
 _ = SPACE*
 
