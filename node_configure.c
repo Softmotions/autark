@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/stat.h>
 #endif
 
 struct _configure_ctx {
@@ -158,6 +159,16 @@ static void _process_file(struct node *n, const char *src, const char *tgt, stru
     if (rl != line) {
       free(rl);
     }
+  }
+
+  // Transfer file permissions
+  struct stat st;
+  if (stat(src, &st) == -1) {
+    node_fatal(errno, n, "Failed to stat source file: %s", src);
+  }
+
+  if (fchmod(fileno(t), st.st_mode & 07777) == -1) {
+    node_fatal(errno, n, "Failed to set permissions on target file: %s", tgt);
   }
 
   fclose(f);
