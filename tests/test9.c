@@ -9,7 +9,7 @@ int main(void) {
   akassert(script_open("../../tests/data/test9/Autark", &sctx) == 0);
   script_build(sctx);
 
-  akassert(g_env.units.num == 3);
+  akassert(g_env.units.num == 4);
 
   for (int i = 0; i < g_env.units.num; ++i) {
     struct unit *unit = *(struct unit**) ulist_get(&g_env.units, i);

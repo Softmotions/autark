@@ -1,0 +1,10 @@
+if {!eq {${ZZZ} BBB}
+  error {
+    ZZZ != BBB
+  }
+}
+
+set {
+  CCC
+  LLL
+}

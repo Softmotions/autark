@@ -18,11 +18,16 @@ set {
 }
 
 set {
+  ZZZ
+  BBB
+}
+
+set {
   COMPOSITE
   one
   two
 }
 
-echo { V= ${COMPOSITE} }
-
 include { l2/Autark }
+
+include { ./Autark2 }
