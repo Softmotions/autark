@@ -110,10 +110,8 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
     if (is_vlist(op)) {
       struct vlist_iter iter;
       vlist_iter_init(op, &iter);
-      if (vlist_iter_next(&iter)) {
-        if (!(iter.len == 1 && iter.item[0] == '0')) {
-          eq = iter.len > 0;
-        }
+      if (vlist_iter_next(&iter) && !(iter.len == 1 && iter.item[0] == '0')) {
+        eq = iter.len > 0 || vlist_iter_next(&iter);
       }
     } else {
       eq = (op && *op != '\0' && !(op[0] == '0' && op[1] == '\0'));
