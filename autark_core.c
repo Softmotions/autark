@@ -518,22 +518,24 @@ static void _on_command_glob(int argc, const char **argv, const char *cdir) {
   if (cdir) {
     akcheck(chdir(cdir));
   }
-  const char *pattern = "*";
-  if (optind < argc) {
-    pattern = argv[optind];
-  }
-  glob_t g;
-  int rc = glob(pattern, 0, 0, &g);
-  if (rc == 0) {
-    for (int i = 0; i < g.gl_pathc; ++i) {
-      puts(g.gl_pathv[i]);
+  do {
+    const char *pattern = "*";
+    if (optind < argc) {
+      pattern = argv[optind];
     }
-  }
-  ;
-  globfree(&g);
-  if (rc && rc != GLOB_NOMATCH) {
-    exit(1);
-  }
+    glob_t g;
+    int rc = glob(pattern, 0, 0, &g);
+    if (rc == 0) {
+      for (int i = 0; i < g.gl_pathc; ++i) {
+        puts(g.gl_pathv[i]);
+      }
+    }
+    ;
+    globfree(&g);
+    if (rc && rc != GLOB_NOMATCH) {
+      exit(1);
+    }
+  } while (++optind < argc);
 }
 
 #ifdef TESTS
