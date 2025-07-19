@@ -108,6 +108,8 @@ cat<<EOF > ${B}
 # MIT License
 # Autark (https://autark.dev) build system script wrapper.
 # Copyright (c) 2012-2025 Softmotions Ltd <info@softmotions.com>
+#
+# https://github.com/Softmotions/autark
 
 META_VERSION=${META_VERSION}
 META_REVISION=${META_REVISION}

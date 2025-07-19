@@ -1,6 +1,5 @@
 scriptx.h
 
-dist/
 .cache/
 autark
 /build.sh
