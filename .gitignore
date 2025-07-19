@@ -2,7 +2,6 @@ scriptx.h
 
 .cache/
 autark
-/build.sh
 Scratch
 compile_commands.json
 autark-cache/
