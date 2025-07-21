@@ -6667,7 +6667,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
   fprintf(stderr,
-          "        --datadir=<>             Path to 'data' dir relative to a `prefix` dir. Default: share\n");
+          "        --datadir=<>            Path to 'data' dir relative to a `prefix` dir. Default: share\n");
   fprintf(stderr,
           "        --includedir=<>         Path to 'include' dir relative to `prefix` dir. Default: include\n");
   fprintf(stderr,
