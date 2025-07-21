@@ -20,7 +20,8 @@ To use Autark in your project, simply copy the latest version of Autark:
 
 ```sh
 cd <root project folder>
-wget -O ./build.sh https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
+wget -O ./build.sh \
+  https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
 chmod u+x ./build.sh
 ```
 
