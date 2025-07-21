@@ -23,7 +23,7 @@ The syntax is simple and can be informally described as follows:
 - A script consists of a set of rules.
 - A rule follows this syntax:
 
-```conf
+```
 
 RULE:
 
