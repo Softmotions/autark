@@ -51,7 +51,7 @@ You can also explore the following real-life C projects that use Autark:
 - https://github.com/Softmotions/iwnet
 - https://github.com/Softmotions/ejdb
 
-```config
+```cfg
 # https://github.com/Softmotions/autark-sample-project
 #
 # This is a sample project demonstrating the Autark build system.
