@@ -14,6 +14,18 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - The system provides extensive capabilities for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files is supported.
 
+## Installation
+
+To use Autark in your project, simply copy the latest version of Autark:
+
+```sh
+cd <root project folder>
+wget -O ./build.sh https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
+chmod u+x ./build.sh
+```
+
+Then, write your Autark build script. The best way to get started is to look at the [Autark sample project](https://github.com/Softmotions/autark-sample-project)
+or explore real-life projects that use Autark.
 
 ## Brief Overview of Autark
 
