@@ -26,10 +26,12 @@ The syntax is simple and can be informally described as follows:
 ```conf
 
 RULE:
-rule_name { RULE | LITERAL }
+
+  rule_name { RULE | LITERAL }
 
 LITERAL:
-text | 'single quoted text' | "double quoted text"
+
+  text | 'single quoted text' | "double quoted text"
 
 ```
 
