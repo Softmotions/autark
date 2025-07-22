@@ -68,7 +68,7 @@ RULE:
 
 LITERAL:
 
-  word | 'single quoted text' | "double quoted text"
+  word | 'single quoted words' | "double quoted words"
 
 ```
 
