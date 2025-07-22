@@ -244,5 +244,50 @@ install {
 
 https://github.com/Softmotions/autark-sample-project
 
+## Autark Build Concept and Project Build Lifecycle
 
-## Autark reference
+Autark executes rules defined in Autark script files.
+The build process goes through the following stages: `init`, `setup`, `build`, and `post_build`.
+
+For each stage, the rules specified in the scripts are executed sequentially, from top to bottom.
+However, during the `build` stage, some rules may depend on the results of other rules.
+In such cases, the execution order is adjusted to ensure that dependencies are resolved correctly.
+
+The project build process goes through the following phases:
+
+### init
+
+Initialization of the build process.
+
+During the `init` phase, the following steps occur:
+
+- Autark build script files are parsed.
+- Initialization logic for rules is executed in sequence.
+  The rules `if`, `include`, `foreach`, and `in-sources` are executed first, followed by all other rules.
+- Based on the current state of variables, **tree shaking** is applied to the syntax tree
+  of the overall Autark build script.
+  As a result, all conditional `if` rules and certain helper rules such as `in-source` and `foreach`
+  are removed from the syntax tree completely.
+
+### setup
+
+At this stage, the hierarchical structure of rules (the syntax tree) is finalized and will no longer change.
+This phase prepares the rules for the main `build` stage of the process.
+You could think of this phase as a pre-build step of main build phase.
+
+### build
+
+This is the main phase of the project build process, where the actual work of the build rules is performed.
+During this phase, dependencies between rules are tracked and established, as well as dependencies on
+filesystem objects, project source files, environment variables, and more.
+
+The execution order of rules is determined by their dependencies.
+A rule typically will not perform its main function if all of its dependencies have already been satisfied
+and the rule has been previously executed.
+
+### post-build
+
+This phase is executed after the `build` phase has completed successfully.
+It is primarily used for rules that install the built project artifacts.
+
+
