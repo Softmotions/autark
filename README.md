@@ -390,7 +390,7 @@ Check script example:
 
 https://github.com/Softmotions/autark/blob/master/check_scripts/test_symbol.sh
 
-```
+```sh
 #!/bin/sh
 
 SYMBOL=$1
