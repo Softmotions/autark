@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=4db68cc
+META_REVISION=330ef83
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "4db68cc"
+#define META_REVISION "330ef83"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
@@ -5831,7 +5831,7 @@ static int _usage_va(const char *err, va_list ap) {
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
 #endif
   fprintf(stderr, "\nautark <cmd> [options]\n");
-  fprintf(stderr, "  Execute a given command from checker script.\n");
+  fprintf(stderr, "  Execute a given command from check script.\n");
   fprintf(stderr,
           "\nautark set <key>=<value>\n"
           "  Sets key/value pair as output for check script.\n");

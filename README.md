@@ -192,8 +192,8 @@ set {
 #   SOURCES
 #   [FLAGS]
 #   [COMPILER]
-#   [consumes { ... }]  Outputs of other rules this one depends on
-#   [objects { NAME }]  Defines the variable name where the list of compiled object files is stored. Defaults to CC_OBJS.
+#   [CONSUMES { ... }]  Outputs of other rules this one depends on
+#   [OBJECTS { NAME }]  Defines the variable name where the list of compiled object files is stored. Defaults to CC_OBJS.
 # }
 #
 # This rule compiles the given source files and produces a set of object (.o) files.
@@ -306,8 +306,8 @@ These meta-variables are especially convenient to use in `configure` rules.
 
 ```cfg
 meta {
-  [<varname suffix> { ... }] ...
-  let { <varname> ... }
+  [<VARNAME SUFFIX> { ... }] ...
+  let { <VARNAME> ... }
 }
 ```
 
@@ -318,7 +318,7 @@ the `META_` prefix is not added to its name.
 ### option
 
 ```cfg
-option { <option name> [option description] }
+option { <OPTION NAME> [OPTION DESCRIPTION] }
 ```
 
 This rule declares a build option.
@@ -361,7 +361,7 @@ Feel free to copy any scripts that are relevant to your project.
 
 ```cfg
 check {
-  [script.sh] ...
+  [SCRIPT] ...
 }
 ````
 
@@ -461,5 +461,68 @@ set {
 }
 ```
 
-Next sections show more details about `configure`
+### set
+
+The `set` rule assigns a value to a variable in the build script.
+
+```cfg
+set {
+   | NAME
+   | _
+   | parent { NAME }
+   | root { NAME }
+
+   [VALUES] ...
+}
+```
+
+`set` is a lazily evaluated rule - the value of set is only computed if the variable or expression is actually used.
+
+The most common form is `set { NAME [VALUES]... }`
+
+Note that in Autark, all variables are either strings or lists. A list is just a string internally,
+encoded in a special form: `\1VAL_ONE\1VAL_TWO\1...`, where list values are separated by the `\1` character.
+
+If there is only one value, e.g. `set { foo bar }`, then the variable foo is evaluated as `"bar"` string.
+If you write `set { foo bar baz }`, the value of `foo` becomes a list, encoded as `\1bar\1baz`.
+
+`Set` is an expression actually and can be used inline in other constructs. For example:
+
+```cfg
+cc {
+  ${SOURCES}
+  set { _ ${CFLAGS} -I./libhello }
+  ...
+}
+```
+
+Here, `CFLAGS` is extended with an additional flag `-I./libhello` directly in-place using an anonymous set
+where `_` used in place of variable name.
+
+By default, variables defined with set are visible only in the current Autark script
+and any child scripts included by `include` directive.
+
+To define or modify a variable in the parent's script context, use:
+
+```cfg
+set {
+  parent {
+    NAME
+  }
+}
+```
+
+To define a variable in the root script context:
+
+```cfg
+set {
+  root {
+    NAME
+  }
+}
+```
+
+
+
+
 
