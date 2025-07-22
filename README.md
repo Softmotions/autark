@@ -631,8 +631,8 @@ Exclamation mark `!` means expression result negation, when trufly evaluated exp
  - The result is a list with more than one element, regardless of content.
 
 
-`[!]defined { VARIABLE }`
-<br/>Truthy if the specified variable is defined in the current script context.
+`[!]defined { VARIABLE [VARIABLE2 ...] }`
+<br/>Truthy if any of specified variables is defined in the current script context.
 
 
 `[!]eq { EXPR1 EXPR2 }`
