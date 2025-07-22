@@ -2,14 +2,14 @@
 
 **Autark is a self-contained build system for C/C++ projects that requires only the `dash` shell and a `cc` compiler to work!**
 
-The project build initialization script `build.sh` automatically setups the Autark build system, then your project is built using Autark.
+Project build start script `build.sh` automatically setups the Autark build system, then your project is built using Autark.
 Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Make or CMake.
 Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
 
 ## Key Features of Autark
 
 - To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
-- The build process does not modify the project's source tree in any way.
+- The build process does not modify the project's source tree.
 - Build rules are described using a simple and clear declarative DSL, which is not a programming language.
 - The system provides extensive capabilities for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files is supported.
@@ -28,9 +28,33 @@ chmod u+x ./build.sh
 Then, write your Autark build script. The best way to get started is to look at the [Autark sample project](https://github.com/Softmotions/autark-sample-project)
 or explore real-life projects that use Autark.
 
+Built artifacts are placed in `./autark-cache` dir by default.
+
+```sh
+./build.sh -h                                                                                                                                                                                                                ✘ 1 main
+Usage
+
+Common options:
+    -V, --verbose               Outputs verbose execution info.
+    -v, --version               Prints version info.
+    -h, --help                  Prints usage help.
+
+autark [sources_dir/command] [options]
+  Build project in given sources dir.
+    -H, --cache=<>              Project cache/build dir. Default: ./autark-cache
+    -c, --clean                 Clean build cache dir.
+    -l, --options               List of all available project options and their description.
+    -J  --jobs=<>               Number of jobs used in c/cxx compilation tasks. Default: 4
+    -D<option>[=<val>]          Set project build option.
+    -I, --install               Install all built artifacts
+    -R, --prefix=<>             Install prefix. Default: $HOME/.local
+        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin
+    ...
+```
+
 ## Brief Overview of Autark
 
-An Autark script is a specialized DSL with modest capabilities, yet sufficient for writing concise and elegant build scripts.
+Autark script is a specialized DSL with modest capabilities, yet sufficient for writing concise and elegant build scripts.
 The syntax is simple and can be informally described as follows:
 
 - A script consists of a set of rules.
