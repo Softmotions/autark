@@ -443,9 +443,22 @@ configure {
 Autark will replace `//autarkdef` lines with the appropriate #define or comment them out,
 depending on whether the variable is defined or not.
 
+config.h.in:
 ```c
 //autarkdef IW_HAVE_CLOCK_MONOTONIC 1
 ...
+```
+
+Or you may use variable directly in CFLAGS
+
+```cfg
+set {
+ CFLAGS
+ if { ${IW_HAVE_CLOCK_MONOTONIC}
+   -DIW_HAVE_CLOCK_MONOTONIC=1
+ }
+ ...
+}
 ```
 
 Next sections show more details about `configure`
