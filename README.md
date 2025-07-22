@@ -522,7 +522,7 @@ set {
 }
 ```
 
-## Variable Evaluation
+## ${..} Variable Evaluation
 
 ```cfg
 ${VARIABLE [DEFAULT]}`
@@ -533,10 +533,10 @@ as an argument to another rule.
 If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
 
 
-## Program Output Evaluation
+## @{..} Program Output Evaluation
 
 ```cfg
-@{PROGRAM [ARG_EXPR1 ARG_EXPR2 ...]}
+@{PROGRAM [ARG1 ARG2 ...]}
 ```
 
 Invokes the specified program `PROGRAM` and returns its standard output as a string.
@@ -553,10 +553,10 @@ set {
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
 
 
-## Expressions Concatenation
+## ^{..} Expressions Concatenation
 
 ```cfg
-^{EXP1 [EXP2]...}
+^{EXPR1 [EXPR2]...}
 ```
 
 Concatenates expressions output.
