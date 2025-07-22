@@ -291,9 +291,9 @@ This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
 
-# Autark reference
+# Autark script rules
 
-## meta
+## meta{..}
 
 Sets script variables using a simple convention:
 each variable name is automatically prefixed with `META_`.
@@ -315,7 +315,7 @@ If variable is defined using the `let` clause inside `meta`,
 the `META_` prefix is not added to its name.
 
 
-## option
+## option{..}
 
 ```cfg
 option { <OPTION NAME> [OPTION DESCRIPTION] }
@@ -345,7 +345,7 @@ To list all documented build options, use:
 ./build.sh -l
 ```
 
-## check
+## check{..}
 
 This construct is the workhorse for checking system configuration and capabilities
 before compiling the project. Checks are performed using `dash` shell scripts.
@@ -461,7 +461,7 @@ set {
 }
 ```
 
-## set
+## set{..}
 
 The `set` rule assigns a value to a variable in the build script.
 
