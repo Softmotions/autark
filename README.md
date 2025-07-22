@@ -522,6 +522,68 @@ set {
 }
 ```
 
+## Variable Evaluation
+
+```cfg
+${VARIABLE [DEFAULT]}`
+```
+
+The expression `${VARIABLE [DEFAULT]}` is used when the value of a variable needs to be passed
+as an argument to another rule.
+If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
+
+
+## Program Output Evaluation
+
+```cfg
+@{PROGRAM [ARG_EXPR1 ARG_EXPR2 ...]}
+```
+
+Invokes the specified program `PROGRAM` and returns its standard output as a string.
+
+### Example:
+
+```cfg
+set {
+  LDFLAGS
+  ..@{${PKGCONF pkgconf} --libs --static libcurl}
+  ..${LDFLAGS}
+}
+```
+In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
+
+
+## Expressions Concatenation
+
+```cfg
+^{EXP1 [EXP2]...}
+```
+
+Concatenates expressions output.
+Here we encounter an important syntactic rule in Autark scripts: all rules must be separated by whitespace.
+Because of this, the following code is invalid:
+
+```cfg
+set {
+ CFLAGS
+ -DBUILD_TYPE=${BUILD_TYPE} # Wrong!
+}
+```
+
+In this case, the Autark interpreter treats `-DBUILD_TYPE=$` as a rule name,
+which is not what we intend.
+
+To correctly construct the string `-DBUILD_TYPE=${BUILD_TYPE}` using the variable value from the script context,
+you must use the string concatenation rule:
+
+```cfg
+set {
+  CFLAGS
+  ^{-DBUILD_TYPE= ${BUILD_TYPE}}
+```
+
+Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
+
 ## if condition
 
 Conditional directive.
