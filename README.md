@@ -422,6 +422,7 @@ if ${CC:-cc} -Werror ./test_symbol.c; then
   autark set "$DEFINE_VAR=1"
 fi
 
+# Re-run script if CC system environment changed
 autark env CC
 ```
 
