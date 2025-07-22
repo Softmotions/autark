@@ -72,7 +72,7 @@ LITERAL:
 
 ```
 
-- Rules and literals are separated by whitespace.
+- Rules and literals are separated by `whitespaces`.
 - Every rule has a body enclosed in curly braces `{}`.
 - Rules form lists, similar to syntactic structures in Scheme or Lisp.
 
@@ -291,9 +291,9 @@ This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
 
-## Autark reference
+# Autark reference
 
-### meta
+## meta
 
 Sets script variables using a simple convention:
 each variable name is automatically prefixed with `META_`.
@@ -315,7 +315,7 @@ If variable is defined using the `let` clause inside `meta`,
 the `META_` prefix is not added to its name.
 
 
-### option
+## option
 
 ```cfg
 option { <OPTION NAME> [OPTION DESCRIPTION] }
@@ -345,7 +345,7 @@ To list all documented build options, use:
 ./build.sh -l
 ```
 
-### check
+## check
 
 This construct is the workhorse for checking system configuration and capabilities
 before compiling the project. Checks are performed using `dash` shell scripts.
@@ -461,7 +461,7 @@ set {
 }
 ```
 
-### set
+## set
 
 The `set` rule assigns a value to a variable in the build script.
 
@@ -522,7 +522,76 @@ set {
 }
 ```
 
+## if condition
+
+Conditional directive.
+
+```cfg
+  if {
+    CONDITION_RULE
+    EXPR1
+  } [  else { EXPR2 } ]
+```
+
+Examples:
+
+```cfg
+if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} }
+  include { bindings/Autark }
+}
+
+...
+
+if { ${EJDB_BUILD_SHARED_LIBS}
+  if {!defined {SYSTEM_DARWIN}
+    set {
+      LIBEJDB_SO_BASE
+      libejdb2.so
+    }
+  }
+  ...
+}
+```
+
+If the condition `CONDITION_RULE` evaluates to a `truthy` value,
+the entire `if` expression is replaced by `EXPR1` in the Autark script’s instruction tree.
+Otherwise, if an `else` block is provided, it will be replaced by `EXPR2`.
+
+### Condition Forms
+
+Exclamation mark `!` means expression result negation, when trufly evaluated expressions became false.
+
+`[!]${EXPR}`
+<br/>Evaluates as truthy in any of the following cases:
+
+- The result of `EXPR` is a non-empty string and not equal to `"0"`.
+- The result is a list with a single element that is not empty and not `"0"`.
+ - The result is a list with more than one element, regardless of content.
 
 
+`[!]defined { VARIABLE }`
+<br/>Truthy if the specified variable is defined in the current script context.
 
 
+`[!]eq { EXPR1 EXPR2 }`
+<br/>Truthy if the string value of `EXPR1` is equal to `EXPR2`.
+
+
+`[!]prefix { EXPR1 EXPR2 }`
+<br/>Truthy if the string value of EXPR2 is a prefix of EXPR1.
+
+
+`[!]contains { EXPR1 EXPR2 }`
+<br/>Truthy if EXPR1 contains EXPR2 as a substring.
+
+
+`[!]or { EXPR1 ... EXPRN }`
+<br/>Truthy if any of the expressions inside the directive is truthy
+(according to the rules defined above).
+
+
+`[!]and { EXPR1 ... EXPRN }`
+<br/>Truthy if all expressions inside the directive are truthy.
+
+
+Please Note: Autark syntax does not support `else if` constructs.
