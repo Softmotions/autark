@@ -584,7 +584,7 @@ set {
 
 Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
 
-## if condition
+## if{..} condition
 
 Conditional directive.
 
