@@ -262,8 +262,8 @@ Initialization of the build process.
 During the `init` phase, the following steps occur:
 
 - Autark build script files are parsed.
-- Initialization logic for rules is executed in sequence.
-  The rules `if`, `include`, `foreach`, and `in-sources` are executed first, followed by all other rules.
+- Initialization logic for rules is executed in sequence so it makes sence order of `set`, `check`, `if`
+  rules build script.
 - Based on the current state of variables, **tree shaking** is applied to the syntax tree
   of the overall Autark build script.
   As a result, all conditional `if` rules and certain helper rules such as `in-source` and `foreach`
@@ -340,8 +340,110 @@ the second method is preferred - it avoids polluting the environment
 and prevents these variables from leaking into subprocesses where they might be unnecessary
 or accidentally override something.
 
-To list all available build options, use:
+To list all documented build options, use:
 ```sh
 ./build.sh -l
 ```
+
+### check
+
+This construct is the workhorse for checking system configuration and capabilities
+before compiling the project. Checks are performed using `dash` shell scripts.
+
+The main purpose of a check script is to set variables used in Autark scripts.
+Additionally, check scripts can declare dependencies on files and environment variables,
+and are automatically re-executed when some of dependencies are changed.
+(This is handled by invoking the `autark` command from within the check script.)
+
+You can find a collection of useful check scripts at:
+https://github.com/Softmotions/autark/tree/master/check_scripts
+Feel free to copy any scripts that are relevant to your project.
+
+```cfg
+check {
+  [script.sh] ...
+}
+````
+
+Check scripts must be located in the `./autark` directory relative to the script that references them,
+or in similar directories of parent scripts.
+
+For small projects, it is convenient to place all check scripts in the `.autark` directory
+at the root of your project.
+
+Within the context of a check script, the `autark` command is available.
+It allows the script to define variables or register dependencies - so that if any of those dependencies change,
+the check script will be automatically re-executed.
+
+```sh
+autark set <key>=<value>
+  Sets key/value pair as output for check script.
+
+autark dep <file>
+  Registers a given file as dependency for check script.
+
+autark env <env>
+  Registers a given environment variable as dependency for check script.
+```
+
+[Check script example:](https://github.com/Softmotions/autark/blob/master/check_scripts/test_symbol.sh):
+
+```
+#!/bin/sh
+
+SYMBOL=$1
+HEADER=$2
+DEFINE_VAR=$3
+
+usage() {
+  echo "Usage test_symbol.sh <SYMBOL> <HEADER> <DEFINE_VAR>"
+  exit 1
+}
+
+[ -n "$SYMBOL" ] || usage
+[ -n "$HEADER" ] || usage
+[ -n "$DEFINE_VAR" ] || usage
+
+cat > "test_symbol.c" <<EOF
+#include <$HEADER>
+int main() {
+#ifdef $SYMBOL
+  return 0; // Symbol is a macro
+#else
+  (void)$SYMBOL; // Symbol might be a function or variable
+  return 0;
+#endif
+}
+EOF
+
+if ${CC:-cc} -Werror ./test_symbol.c; then
+  autark set "$DEFINE_VAR=1"
+fi
+
+autark env CC
+```
+
+The results of check script execution can also be used not only in variables but in project header templates,
+such as `config.h.in`. This is typically done via `configure` rules in the Autark script:
+
+```cfg
+check {
+  test_symbol.sh { CLOCK_MONOTONIC time.h IW_HAVE_CLOCK_MONOTONIC }
+}
+...
+
+configure {
+  config.h.in
+}
+```
+
+Autark will replace `//autarkdef` lines with the appropriate #define or comment them out,
+depending on whether the variable is defined or not.
+
+```c
+//autarkdef IW_HAVE_CLOCK_MONOTONIC 1
+...
+```
+
+Next sections show more details about `configure`
 

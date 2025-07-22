@@ -312,7 +312,7 @@ static int _usage_va(const char *err, va_list ap) {
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
 #endif
   fprintf(stderr, "\nautark <cmd> [options]\n");
-  fprintf(stderr, "  Execute a given command from checker script.\n");
+  fprintf(stderr, "  Execute a given command from check script.\n");
   fprintf(stderr,
           "\nautark set <key>=<value>\n"
           "  Sets key/value pair as output for check script.\n");
