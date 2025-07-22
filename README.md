@@ -386,7 +386,9 @@ autark env <env>
   Registers a given environment variable as dependency for check script.
 ```
 
-[Check script example:](https://github.com/Softmotions/autark/blob/master/check_scripts/test_symbol.sh):
+Check script example:
+
+https://github.com/Softmotions/autark/blob/master/check_scripts/test_symbol.sh
 
 ```
 #!/bin/sh
