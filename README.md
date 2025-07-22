@@ -112,7 +112,7 @@ meta {
 option { ENABLE_DEBINFO           Generate debuginfo even in release mode }
 option { HELLO_MSG                Hello message provided by libhello }
 
-# The `check` rule takes a list of script files that must be located in the `.autark/` directory relative to
+# The `check` rule takes a list of script files that should be located in the `.autark/` directory relative to
 # the current Autark script file. A check script is a dash shell (`sh`) script that runs during the early stage
 # of the build process (`init` phase). It verifies system requirements, locates required software or libraries,
 # and sets variables that will be available in the Autark script. Check scripts typically use `autark set` to
@@ -244,7 +244,7 @@ install {
 
 https://github.com/Softmotions/autark-sample-project
 
-## Autark Build Concept and Project Build Lifecycle
+## Autark concepts and Project Build Lifecycle
 
 Autark executes rules defined in Autark script files.
 The build process goes through the following stages: `init`, `setup`, `build`, and `post_build`.
@@ -290,4 +290,58 @@ and the rule has been previously executed.
 This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
+
+## Autark reference
+
+### meta
+
+Sets script variables using a simple convention:
+each variable name is automatically prefixed with `META_`.
+These variables are evaluated during the `init` phase of the build.
+
+The `meta` rule is recommended for defining global variables such as
+project version, name, description, maintainer contact information, etc.
+
+These meta-variables are especially convenient to use in `configure` rules.
+
+```cfg
+meta {
+  [<varname suffix> { ... }] ...
+  let { <varname> ... }
+}
+```
+
+If variable is defined using the `let` clause inside `meta`,
+the `META_` prefix is not added to its name.
+
+
+### option
+
+```cfg
+option { <option name> [option description] }
+```
+
+This rule declares a build option.
+Build options are variables set at the start of the build to configure the desired output.
+These variables can be defined either as environment variables:
+
+```sh
+BUILD_TYPE=Release BUILD_SHARED_LIBS=1 ./build.sh
+```
+
+or as command-line arguments:
+
+```sh
+./build.sh -DBUILD_TYPE=Release -DBUILD_SHARED_LIBS=1
+```
+
+If you don't use the variable values in shell scripts during the build,
+the second method is preferred - it avoids polluting the environment
+and prevents these variables from leaking into subprocesses where they might be unnecessary
+or accidentally override something.
+
+To list all available build options, use:
+```sh
+./build.sh -l
+```
 
