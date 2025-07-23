@@ -65,12 +65,12 @@ autark [sources_dir/command] [options]
 ## Brief overview of Autark
 
 Autark build artifacts, as well as rules dependency metadata, are stored in a separate directory
-called the *Autark Cache*. By default, this is the `./autark-cache` directory at the root of your project,
+called the *autark-cache*. By default, this is the `./autark-cache` directory at the root of your project,
 but it can be changed using the `-H` or `--cache` option.
 
-The directory structure within the Autark Cache mirrors the structure of your project source tree.
+The directory structure within the autark-cache mirrors the structure of your project source tree.
 For all programs executed during the build process, the current working directory is set
-to a corresponding location inside the Autark Cache. This behavior can be overridden using the `in-source` directive.
+to a corresponding location inside the autark-cache. This behavior can be overridden using the `in-source` directive.
 This approach reduces the risk of modifying original source files
 and makes it easier to access intermediate build artifacts during the various stages of the build pipeline.
 
