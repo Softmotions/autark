@@ -35,13 +35,13 @@ chmod u+x ./build.sh
 ./build.sh
 ```
 
-Then, write your Autark build script. The best way to get started is to look at the [Autark sample project](https://github.com/Softmotions/autark-sample-project)
+The best way to get started is to look at the [Autark sample project](https://github.com/Softmotions/autark-sample-project)
 or explore real-life projects that use Autark.
 
 Built artifacts are placed in `./autark-cache` dir by default.
 
 ```sh
-./build.sh -h                                                                                                                                                                                                                ✘ 1 main
+./build.sh -h
 Usage
 
 Common options:
@@ -283,7 +283,7 @@ During the `init` phase, the following steps occur:
 
 - Autark build script files are parsed.
 - Initialization logic for rules is executed in sequence so it makes sence order of `set`, `check`, `if`
-  rules build script.
+  in build script.
 - Based on the current state of variables, *tree shaking* is applied to the syntax tree
   of the overall Autark build script.
   As a result, all conditional `if` rules and certain helper rules such as `in-source` and `foreach`
