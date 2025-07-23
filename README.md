@@ -939,8 +939,101 @@ set {
 This example populates `JAVA_SOURCES` with the full paths of all `.java` files under `src/main/java`,
 resolved from the script's source directory.
 
+## run-on-install {...}
 
-### `cc { ... }` / `cxx { ... }`
+`run-on-install` is a special form of the `run` rule that is executed during the `post-build` phase.
+
+A typical use case for this rule is to **install artifacts from dependent projects**
+that the current project relies on.
+
+```cfg
+run-on-install {
+  shell {
+    autark --prefix ${INSTALL_PREFIX}
+    set { _
+      if { ${IWNET_BUILD_SHARED_LIBS}
+        -DIOWOW_BUILD_SHARED_LIBS=1
+      }
+    }
+    ${IOWOW_SRC_DIR}
+  }
+}
+```
+
+In this example, the project invokes Autark to install the dependent `iowow` project
+with the proper build flags and installation prefix.
+
+Reference:
+https://github.com/Softmotions/iwnet/blob/master/Autark
+
+## foreach {...}
+
+When you need to perform many similar actions for a list of files or objects,
+`foreach` provides a concise and powerful solution.
+
+Currently, `foreach` supports only the `run` rule as its body.
+
+```cfg
+foreach {
+  VAR_NAME
+  LIST_EXPR
+  run {
+    ...
+  }
+}
+```
+
+`foreach` iterates over all elements in `LIST_EXPR`,
+and for each element, it sets the variable `VAR_NAME` to the current item and evaluates the run rule.
+
+---
+A common use case for `foreach` is generating and running per-file executables,
+such as test cases. Here's an example:
+```cfg
+cc {
+  ${TESTS}
+  set { _ ${CFLAGS} -I S{} }
+  ${CC}
+}
+
+foreach {
+  OBJ
+  ${CC_OBJS}
+  run {
+    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }
+    produces {
+      %{${OBJ}}
+    }
+    consumes {
+      ${LIBAUTARK}
+      ${OBJ}
+    }
+  }
+}
+
+# Run test cases
+if { ${RUN_TESTS}
+  foreach {
+    OBJ
+    ${CC_OBJS}
+    run {
+      always
+      shell { %{${OBJ}} }
+      consumes { %{${OBJ}} }
+    }
+  }
+}
+```
+
+In this example:
+
+- `foreach` is used to build a separate binary for each object file in `${CC_OBJS}`.
+- Then, conditionally (`if ${RUN_TESTS}` is truthy), each test binary is executed.
+- `%{${OBJ}}` is used to extract the base name from the object file path (e.g., `main.o => main`).
+
+This approach enables clean, scalable test orchestration without hardcoding individual test names.
+
+## `cc { ... }` / `cxx { ... }`
 
 This rule compiles C or C++ source files into object files,
 while automatically tracking all required dependencies including header files.
@@ -1014,3 +1107,87 @@ You can change this using the `-J` option on the command line. For example:
 ./build.sh -J8
 ```
 This will run up to 8 compilation jobs in parallel.
+
+
+## library {...}
+
+Search for a library file by name.
+
+This simple rule looks for the specified `LIB_FILES` (e.g., `libm.a`, `libfoo.so`)
+in standard library locations commonly used across Unix-like systems:
+
+- `$HOME/.local/<lib>`
+- `/usr/local/<lib>`
+- `/usr/<lib>`
+- `/<lib>`
+
+Here, `<lib>` refers to platform-specific subdirectories where shared or static libraries may be located
+(such as `lib`, `lib64`, etc., depending on the system).
+
+```cfg
+library {
+  | VAR_NAME
+  | parent { VAR_NAME }
+  | root { VAR_NAME }
+  LIB_FILES...
+}
+```
+
+- The resulting absolute path to the first matched file will be stored in the specified variable.
+- You can store it in the current scope (`VAR_NAME`), parent script (`parent { VAR_NAME }`),
+  or root script (`root { VAR_NAME }`).
+
+Example:
+
+```cfg
+if { library { LIB_M libm.a }
+  echo { ${LIB_M} }
+} else {
+  error { Library libm not found }
+}
+```
+
+This will search for `libm.a`, and if found, store its absolute path in `LIB_M` and print it.
+If the library is not found, the script will terminate with an error.
+
+
+## install {..}
+
+If `build.sh` is run with the `-I` or `--install` option (to install all built artifacts),
+or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
+then all `install` rules will be executed after the `build` phase completes.
+
+### Available variables when install is enabled
+
+- `INSTALL_PREFIX` – Absolute path to the installation prefix.
+  **Default:** `$HOME/.local`
+- `INSTALL_BIN_DIR` – Path relative to `INSTALL_PREFIX` for installing executables.
+  **Default:** `bin`
+- `INSTALL_LIB_DIR` – Path relative to `INSTALL_PREFIX` for installing libraries.
+  **Default:** platform-dependent (e.g., `lib` or `lib64`)
+- `INSTALL_DATA_DIR` – Path relative to `INSTALL_PREFIX` for shared data.
+  **Default:** `share`
+- `INSTALL_INCLUDE_DIR` – Path relative to `INSTALL_PREFIX` for headers.
+  **Default:** `include`
+- `INSTALL_PKGCONFIG_DIR` – Path relative to `INSTALL_PREFIX` for `.pc` files.
+  **Default:** platform-dependent (e.g., `lib/pkgconfig`)
+- `INSTALL_MAN_DIR` – Path relative to `INSTALL_PREFIX` for man pages.
+  **Default:** `share/man`
+
+```cfg
+install { INSTAL_DIR_EXPR FILES... }
+```
+
+The install rule copies the specified files into the target directory
+`${INSTALL_PREFIX}/${INSTALL_DIR_EXPR}` (creating it if necessary).
+File permissions from the original files are preserved during the copy.
+
+Example:
+
+```cfg
+install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }
+install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }
+```
+
+This will install `libiwnet.pc` into the appropriate pkgconfig directory,
+and public headers into the include directory under the chosen prefix.
