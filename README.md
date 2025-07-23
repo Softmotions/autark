@@ -54,10 +54,20 @@ autark [sources_dir/command] [options]
 
 ## Brief Overview of Autark
 
+Autark build artifacts, as well as rules dependency metadata, are stored in a separate directory
+called the *Autark Cache*. By default, this is the `./autark-cache` directory at the root of your project,
+but it can be changed using the `-H` or `--cache` option.
+
+The directory structure within the Autark Cache mirrors the structure of your project source tree.
+For all programs executed during the build process, the current working directory is set
+to a corresponding location inside the Autark Cache. This behavior can be overridden using the `in-source` directive.
+This approach reduces the risk of modifying original source files
+and makes it easier to access intermediate build artifacts during the various stages of the build pipeline.
+
 Autark script is a specialized DSL with modest capabilities, yet sufficient for writing concise and elegant build scripts.
 The syntax is simple and can be informally described as follows:
 
-- A script consists of a set of rules.
+- A script consists of a set of rules and literals.
 - A rule follows this syntax:
 
 ```
@@ -264,7 +274,7 @@ During the `init` phase, the following steps occur:
 - Autark build script files are parsed.
 - Initialization logic for rules is executed in sequence so it makes sence order of `set`, `check`, `if`
   rules build script.
-- Based on the current state of variables, **tree shaking** is applied to the syntax tree
+- Based on the current state of variables, *tree shaking* is applied to the syntax tree
   of the overall Autark build script.
   As a result, all conditional `if` rules and certain helper rules such as `in-source` and `foreach`
   are removed from the syntax tree completely.
@@ -293,7 +303,7 @@ It is primarily used for rules that install the built project artifacts.
 
 # Autark script rules
 
-## meta{..}
+## meta {...}
 
 Sets script variables using a simple convention:
 each variable name is automatically prefixed with `META_`.
@@ -315,7 +325,7 @@ If variable is defined using the `let` clause inside `meta`,
 the `META_` prefix is not added to its name.
 
 
-## option{..}
+## option {...}
 
 ```cfg
 option { <OPTION NAME> [OPTION DESCRIPTION] }
@@ -345,7 +355,7 @@ To list all documented build options, use:
 ./build.sh -l
 ```
 
-## check{..}
+## check {...}
 
 This construct is the workhorse for checking system configuration and capabilities
 before compiling the project. Checks are performed using `dash` shell scripts.
@@ -461,7 +471,7 @@ set {
 }
 ```
 
-## set{..}
+## set {...}
 
 The `set` rule assigns a value to a variable in the build script.
 
@@ -522,7 +532,7 @@ set {
 }
 ```
 
-## ${..} Variable Evaluation
+## ${...} Variable Evaluation
 
 ```cfg
 ${VARIABLE [DEFAULT]}`
@@ -533,7 +543,7 @@ as an argument to another rule.
 If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
 
 
-## @{..} Program Output Evaluation
+## @{...} Program Output Evaluation
 
 ```cfg
 @{PROGRAM [ARG1 ARG2 ...]}
@@ -553,7 +563,7 @@ set {
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
 
 
-## ^{..} Expressions Concatenation
+## ^{...} Expressions Concatenation
 
 ```cfg
 ^{EXPR1 [EXPR2]...}
@@ -584,7 +594,7 @@ set {
 
 Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
 
-## if{..} condition
+## if {...} condition
 
 Conditional directive.
 
@@ -656,4 +666,138 @@ Exclamation mark `!` means expression result negation, when trufly evaluated exp
 <br/>Truthy if all expressions inside the directive are truthy.
 
 
-Please Note: Autark syntax does not support `else if` constructs.
+**Please Note:** Autark syntax does not support `else if` constructs.
+
+
+## error {...} Abort build and report error
+
+Typical example `error` directive usage:
+
+```cfg
+if { !defined{ PTHREAD_LFLAG }
+  error { Pthreads implementation is not found! }
+}
+```
+
+## echo {...}
+
+Prints arbitrary information to the console (standard output, `stdout`).
+
+```cfg
+ echo {
+  ...
+  | build { ... }
+  | setup { ... }
+  | init  { ... }
+ }
+```
+
+You can optionally specify the build phase (`init`, `setup`, or `build`)
+during which the output of the echo directive should appear.
+By default, it is printed during the build phase.
+
+*Please note: Variables in Autark defined by `set` rule are lazy evaluated,
+so by using `echo` you may indirectly change behaviour and effectiveness of your build process*
+
+Example:
+```cfg
+echo {
+  CFLAGS= ${CFLAGS}
+  LDFLAGS= ${LDFLAGS}
+}
+```
+This will print the current values of the CFLAGS and LDFLAGS variables.
+
+## configure {...}
+
+The `configure` rule acts as a preprocessor for text files and C/C++ source templates,
+replacing specific sections with values of variables from the current script context.
+
+```cfg
+configure {
+  mylib.pc.in
+}
+```
+
+Autark tracks all variables used during the substitution process.
+If any of those variables change, **the entire** configure rule will be re-executed.
+This is why it's recommended to configure each file in a separate configure rule whenever possible.
+
+Incorrect:
+```cfg
+configure {
+  mylib.pc.in
+  config.h.in
+}
+```
+
+Correct:
+
+```cfg
+configure {
+  mylib.pc.in
+}
+
+configure {
+  config.h.in
+}
+```
+
+
+### @...@ Substitutions
+
+Text fragments enclosed in `@` symbols are interpreted as variable names
+and replaced with their corresponding values.
+If a variable is not defined, the expression is replaced with an empty string.
+
+Example libejdb2.pc.in:
+```pc
+exec_prefix=@INSTALL_PREFIX@/@INSTALL_BIN_DIR@
+libdir=@INSTALL_PREFIX@/@INSTALL_LIB_DIR@
+includedir=@INSTALL_PREFIX@/@EJDB_PUBLIC_HEADERS_DESTINATION@
+artifact=@META_NAME@
+
+Name: @META_NAME@
+Description: @META_DESCRIPTION@
+URL: @META_WEBSITE@
+Version: @META_VERSION@
+Libs: -L${libdir} -l${artifact}
+Requires: libiwnet
+Libs.private: @LDFLAGS_PKGCONF@
+Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir}
+Cflags.private: -DIW_STATIC
+```
+
+### //autarkdef for C/C++ Headers
+
+For C/C++ header files, the `//autarkdef` directive is a convenient way
+to conditionally generate `#define` statements based on variable presence.
+
+**Basic form:**
+```c
+//autarkdef VAR_NAME
+```
+If `VAR_NAME` is defined, this will be replaced with:
+```c
+#define VAR_NAME
+```
+
+**With string value:**
+```c
+//autarkdef VAR_NAME "
+```
+If `VAR_NAME` is defined, this becomes:
+```c
+#define VAR_NAME "VAR_VALUE"
+```
+
+**With num value:**
+```c
+//autarkdef VAR_NAME 1
+```
+If `VAR_NAME` is defined, this becomes:
+```c
+#define VAR_NAME 1
+```
+
+
