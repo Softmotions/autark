@@ -1,6 +1,6 @@
 # Autark – A self-contained build system for C/C++
 
-**Autark is a self-contained build system for C/C++ projects that requires only the `dash` shell and a `cc` compiler to work!**
+**Autark is a self-contained build system for C/C++ projects that requires only the `/bin/sh` and a `cc` compiler to work!**
 
 The goal of this project is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
