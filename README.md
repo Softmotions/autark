@@ -305,8 +305,34 @@ and the rule has been previously executed.
 This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
+# Known Limitations of Autark
+
+* If the syntax of an Autark script is invalid, the resulting error message
+  may be vague or imprecise. This is due to the use of the `leg` PEG parser generator,
+  which can produce generic error reports for malformed input.
 
 # Autark script rules
+
+- [meta](#meta-)
+- [option](#option-)
+- [check](#check-)
+- [set](#set-)
+- [env](#env-)
+- [${}](#-variable-evaluation)
+- [@{}](#-program-output-evaluation)
+- [^{}](#-expressions-concatenation)
+- [if](#if--condition)
+- [echo](#echo-)
+- [configure](#configure-)
+- [path helpers](#s--ss--c--cc---path-helpers)
+- [run](#run-)
+- [in-sources](#in-sources-)
+- [run-on-install](#run-on-install-)
+- [foreach](#foreach-)
+- [cc/cxx](#cc-----cxx---)
+- [library](#library-)
+- [install](#install-)
+
 
 ## meta {...}
 
