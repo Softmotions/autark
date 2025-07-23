@@ -570,7 +570,6 @@ set {
 ```
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
 
-
 ## ^{...} Expressions Concatenation
 
 ```cfg
@@ -751,7 +750,6 @@ configure {
 }
 ```
 
-
 ### @...@ Substitutions
 
 Text fragments enclosed in `@` symbols are interpreted as variable names
@@ -835,10 +833,108 @@ Computes the **absolute path** relative to the **local cache directory** of the 
 This is the default working directory for tools and commands that operate on build artifacts.
 
 ### % {...}
-Returns the basename of the given filename.
+Returns the `basename` of the given filename changing its extension optionally.
 
 ```cfg
-# Returns: main
-%{main.o}
+%{ PATH [ NEW_FILE_EXT ] }
 ```
 
+```cfg
+# Returns 'main'
+%{main.o}
+
+# Returns 'hello.c'
+%{hello.x .c}
+```
+
+## run {...}
+
+The `run` rule is the most powerful construct in the Autark system.
+It allows you to define custom build actions and their dependency chains.
+
+In C/C++ projects, `run` is typically used to build static and dynamic libraries,
+executables, and other artifacts - but it can support virtually any custom pipeline.
+
+```cfg
+run {
+  [always]
+  [exec  { CMD [CMD_ARGS...] }] ...
+  [shell { CMD [CMD_ARGS...] }] ...
+  [consumes{ CONSUMED_FILES... }]
+  [produces{ PRODUCED_FILES... }]
+}
+```
+
+The `consumes` section defines the **input dependencies** that must be satisfied
+before the `run` rule is executed.
+If any of the consumed files or variables change, the rule will be re-executed.
+
+The `produces` section declares the **artifacts** that this `run` rule generates.
+Other rules can then declare dependencies on these outputs.
+
+You can include any number of `exec` or `shell` subsections inside a single `run` rule:
+
+- `exec` executes a command directly using `execve()` (no shell interpretation).
+- `shell` executes the command via the `/bin/sh` shell.
+
+Autark also **implicitly tracks dependencies** on the evaluated arguments passed to `exec` and `shell` commands.
+
+If the special keyword `always` is present inside the `run` rule,
+the command will be executed **unconditionally**, regardless of input state.
+This is useful, for example, when running test cases or side-effectful operations.
+
+```cfg
+run {
+  exec { ${AR} rcs libhello.a ${CC_OBJS} }
+  consumes {
+    ${CC_OBJS}
+  }
+  produces {
+    libhello.a
+  }
+}
+```
+
+## in-sources {...}
+
+By default, most Autark rules are executed inside the **Autark cache directory**
+corresponding to the current build script.
+This is convenient because generated artifacts, logs, and temporary files stay in the cache
+and don't clutter the project source tree.
+
+However, in some cases, it's necessary to run a command in the context of the actual project source directory.
+For this purpose, Autark provides the `in-sources` rule.
+
+```cfg
+in-sources {
+  ...
+}
+```
+
+### Example: Appending Glob-Matched Source Files
+In the example below, the `SOURCES` variable is extended with the output of a glob-matching command
+executed in the source directory. The result is assigned merged with `SOURCES` variable in the parent script:
+```cfg
+set {
+  parent {
+    SOURCES
+  }
+  ..${SOURCES}
+  in-sources {
+    ..@{autark -C .. glob 'json/*.c'}
+  }
+}
+```
+
+### Example: Finding Java Source Files
+```cfg
+set {
+  JAVA_SOURCES
+  in-sources {
+    ..@{ find src/main/java -name '*.java' -exec realpath '{}' ; }
+  }
+}
+```
+
+This example populates `JAVA_SOURCES` with the full paths of all `.java` files under `src/main/java`,
+resolved from the script's source directory.
