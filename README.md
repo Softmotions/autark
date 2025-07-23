@@ -10,7 +10,7 @@ It eliminates version compatibility issues common to traditional build systems,
 making software truly open and self-contained.
 
 The `build.sh` script automatically initializes the Autark build system, and then proceeds with your project build.
-Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles.
+Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
 Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
 
 ## Key Features of Autark
