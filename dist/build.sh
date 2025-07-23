@@ -4814,7 +4814,11 @@ static void _cc_setup(struct node *n) {
     }
   }
   if (!ctx->cc) {
-    ctx->cc = "cc";
+    if (strcmp(n->value, "cc") == 0) {
+      ctx->cc = "cc";
+    } else {
+      ctx->cc = "c++";
+    }
     node_warn(n, "Fallback compiler: %s", ctx->cc);
   } else if (g_env.verbose) {
     node_info(n, "Compiler: %s", ctx->cc);
