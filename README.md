@@ -7,7 +7,7 @@ that has **no external dependencies** and can be distributed **directly with the
 It eliminates version compatibility issues common to traditional build systems,
 making software truly open and self-contained.
 
-Project build start script `build.sh` automatically setups the Autark build system, then your project is built using Autark.
+The `build.sh` script automatically initializes the Autark build system, and then proceeds with your project build.
 Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles.
 Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
 
@@ -28,6 +28,11 @@ cd <root project folder>
 wget -O ./build.sh \
   https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
 chmod u+x ./build.sh
+
+
+# Write Autark script then
+
+./build.sh
 ```
 
 Then, write your Autark build script. The best way to get started is to look at the [Autark sample project](https://github.com/Softmotions/autark-sample-project)
@@ -857,7 +862,7 @@ If multiple arguments are provided, they are concatenated into a single path str
 Same as `S`, but relative to the directory where the current script is located.
 
 ### C {...}
-Computes the **absolute path** to the argument(s) relative to the **project-wide Autark cache directory**.
+Computes the **absolute path** to the argument(s) relative to the **project-wide autark-cache dir**.
 
 ### CC {...}
 Computes the **absolute path** relative to the **local cache directory** of the current script.
@@ -928,7 +933,7 @@ run {
 
 ## in-sources {...}
 
-By default, most Autark rules are executed inside the **Autark cache directory**
+By default, most Autark rules are executed inside the **autark-cache dir**
 corresponding to the current build script.
 This is convenient because generated artifacts, logs, and temporary files stay in the cache
 and don't clutter the project source tree.
