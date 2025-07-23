@@ -532,6 +532,14 @@ set {
 }
 ```
 
+## env {...}
+
+Similar to `set`, but sets an **environment variable** for the build process
+using `setenv(3)` at the operating system level.
+
+Unlike `set`, the value of this rule is evaluated at the time it is executed,
+which happens during the `setup` phase of the build.
+
 ## ${...} Variable Evaluation
 
 ```cfg
@@ -800,4 +808,37 @@ If `VAR_NAME` is defined, this becomes:
 #define VAR_NAME 1
 ```
 
+## `S` / `SS` / `C` / `CC` / `%` Path Helpers
+These small helper rules are useful for computing file paths in build scripts.
+They help avoid hardcoding paths that may depend on the current location of the project's source code.
+
+### S {...}
+Computes the **absolute path** of the given argument(s) relative to the **project root**.
+If multiple arguments are provided, they are concatenated into a single path string.
+
+```cfg
+  # <project root>/foo
+  S{foo}
+
+  #<project root>/foo/bar/baz
+  S{foo bar baz}
+```
+
+### SS {...}
+Same as `S`, but relative to the directory where the current script is located.
+
+### C {...}
+Computes the **absolute path** to the argument(s) relative to the **project-wide Autark cache directory**.
+
+### CC {...}
+Computes the **absolute path** relative to the **local cache directory** of the current script.
+This is the default working directory for tools and commands that operate on build artifacts.
+
+### % {...}
+Returns the basename of the given filename.
+
+```cfg
+# Returns: main
+%{main.o}
+```
 
