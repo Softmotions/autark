@@ -43,6 +43,9 @@ set {
     -ggdb
     -DDEBUG=1
   }
+  if { defined {DEBIAN_MULTIARCH}
+    -DDEBIAN_MULTIARCH=1
+  }
   -Wall -Wextra -Wpedantic
   -Wno-sign-compare
   -Wno-unused-parameter

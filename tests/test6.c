@@ -22,7 +22,6 @@ int main(void) {
   akassert(access("autark-cache/hello", X_OK) == 0);
   akassert(path_stat("autark-cache/hello", &st[0]) == 0);
 
-  fprintf(stderr, "!!!=%s\n", xstr_ptr(xlog));
   akassert(
     strcmp(
       "Autark:2   env.sh: resolved outdated outdated=0\n"
