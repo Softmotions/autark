@@ -3,8 +3,9 @@ set -e
 
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
-rm -rf ./dist
 mkdir -p ./dist
+rm -f ./dist/autark.c
+rm -f ./dist/build.sh
 
 F=./dist/autark.c
 B=./dist/build.sh
