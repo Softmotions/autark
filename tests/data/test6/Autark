@@ -10,7 +10,7 @@ set {
 set {
   CFLAGS
   ^{-DBUILD_TYPE= ${BUILD_TYPE}}
-  ..@{pkgconf --cflags --static libcurl}
+  ..@{pkgconf --cflags --static zlib}
   if { eq { ${BUILD_TYPE} Release }
     -O2
   } else {
@@ -23,7 +23,7 @@ set {
 
 set {
   LDFLAGS
-  ..@{pkgconf --libs --static libcurl}
+  ..@{pkgconf --libs --static zlib}
   ..${LDFLAGS}
 }
 

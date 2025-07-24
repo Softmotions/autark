@@ -114,7 +114,7 @@ int main(void) {
 
   akassert(
     strcmp(
-      "Autark:36     cc: outdated \1-DBUILD_TYPE=Debug\1-DCURL_STATICLIB\1-DDEBUG=1\1-O0\1-g t=v f= \n"
+      "Autark:36     cc: outdated \1-DBUILD_TYPE=Debug\1-DDEBUG=1\1-O0\1-g t=v f= \n"
       "Autark:36     cc: outdated main.c t=a f=s\n"
       "Autark:36     cc: outdated hello.c t=a f=s\n"
       "Autark:36     cc: resolved outdated outdated=3\n"
