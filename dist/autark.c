@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "4a79592"
+#define META_REVISION "08a80fa"
 
 #endif
 #define _AMALGAMATE_
@@ -460,6 +460,7 @@ int map_iter_next(struct map_iter*);
 
 #include <limits.h>
 #include <string.h>
+#include <sys/types.h>
 #endif
 
 static inline bool utils_char_is_space(char c) {

@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=4a79592
+META_REVISION=08a80fa
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "4a79592"
+#define META_REVISION "08a80fa"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -390,6 +390,7 @@ int map_iter_next(struct map_iter*);
 #include "xstr.h"
 #include <limits.h>
 #include <string.h>
+#include <sys/types.h>
 #endif
 static inline bool utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);

@@ -171,7 +171,7 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 EOF
 
-cat ${F} | sed -r '/^\s*$/d' >> ${B}
+cat ${F} | sed -E '/^[[:space:]]*$/d' >> ${B}
 echo 'a292effa503b' >> ${B}
 
 cat <<'EOF' >> ${B}
