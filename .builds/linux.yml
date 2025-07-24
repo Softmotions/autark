@@ -1,0 +1,14 @@
+image: ubuntu/24.10
+secrets:
+  - 7179e7ce-6c56-46b5-9b85-091332eb3684
+sources:
+  - git@git.sr.ht:~adamansky/autark
+packages:
+  - gcc
+  - clang
+  - pkgconf
+  - libcurl4-openssl-dev
+tasks:
+  - test-gcc: |
+      cd ./autark
+      ./build.sh
