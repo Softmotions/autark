@@ -10,9 +10,9 @@ packages:
   - pkgconf
   - zlib1g-dev
 tasks:
-  - test-gcc: |
+  - run-tests-gcc: |
       cd ./autark
       CC=gcc RUN_TESTS=1 ./build.sh
-  - test-clang: |
+  - run-tests-clang: |
       cd ./autark
       CC=clang RUN_TESTS=1 ./build.sh
