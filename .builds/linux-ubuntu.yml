@@ -13,3 +13,6 @@ tasks:
   - test-gcc: |
       cd ./autark
       CC=gcc RUN_TESTS=1 ./build.sh
+    test-clang:
+      cd ./autark
+      CC=clang RUN_TESTS=1 ./build.sh
