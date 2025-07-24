@@ -13,7 +13,7 @@ The `build.sh` script automatically initializes the Autark build system, and the
 Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
 Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
 
-## Key Features of Autark
+## Key features of Autark
 
 - To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
 - The build process does not modify the project's source tree.

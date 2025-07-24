@@ -91,7 +91,7 @@ char* pool_strdup(struct pool *pool, const char *str) {
 
 char* pool_strndup(struct pool *pool, const char *str, size_t len) {
   if (str) {
-    len = strnlen(str, len);
+    len = utils_strnlen(str, len);
     char *ret = pool_alloc(pool, len + 1);
     memcpy(ret, str, len);
     ret[len] = '\0';

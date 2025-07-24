@@ -18,6 +18,10 @@
 #define AK_CONSTRUCTOR __attribute__((constructor))
 #define AK_DESTRUCTOR  __attribute__((destructor))
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 #define LLEN(l__) (sizeof(l__) - 1)
 
 /* Align x_ with v_. v_ must be simple power for 2 value. */

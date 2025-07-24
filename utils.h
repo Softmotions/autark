@@ -42,9 +42,15 @@ static inline int utils_toupper_ascii(int c) {
   return c;
 }
 
+static inline size_t utils_strnlen(const char *s, size_t maxlen) {
+  size_t i;
+  for (i = 0; i < maxlen && s[i]; ++i) ;
+  return i;
+}
+
 static inline char* utils_strncpy(char *dst, const char *src, size_t dst_sz) {
   if (dst_sz > 1) {
-    size_t len = strnlen(src, dst_sz - 1);
+    size_t len = utils_strnlen(src, dst_sz - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
   } else if (dst_sz) {
