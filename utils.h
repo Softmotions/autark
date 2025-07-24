@@ -7,6 +7,7 @@
 
 #include <limits.h>
 #include <string.h>
+#include <sys/types.h>
 #endif
 
 static inline bool utils_char_is_space(char c) {
