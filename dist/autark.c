@@ -2,11 +2,11 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "d0241b5"
+#define META_REVISION "734b1c3"
 
 #endif
 #define _AMALGAMATE_
-#define _XOPEN_SOURCE 600
+#define _XOPEN_SOURCE 700
 #define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
 
