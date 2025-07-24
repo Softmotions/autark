@@ -12,4 +12,4 @@ packages:
 tasks:
   - test-gcc: |
       cd ./autark
-      ./build.sh
+      CC=gcc RUN_TESTS=1 ./build.sh
