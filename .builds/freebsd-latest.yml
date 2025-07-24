@@ -6,7 +6,6 @@ sources:
 packages:
   - libzip
   - pkgconf
-  - clang
   - peg
 tasks:
   - run-tests: |
