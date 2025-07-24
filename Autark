@@ -128,7 +128,7 @@ run {
 }
 
 run {
-  exec { ${LEG} S{scriptx.leg} -o scriptx.h }
+  exec { ${LEG} -o scriptx.h S{scriptx.leg} }
   consumes {
     scriptx.leg
   }
