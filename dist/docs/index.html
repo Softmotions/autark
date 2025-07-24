@@ -557,8 +557,8 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb4-1"><a href="#c
 <span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p><a
 href="https://github.com/Softmotions/autark-sample-project">https://github.com/Softmotions/autark-sample-project</a></p>
-<h2 id="autark-concepts-and-project-build-lifecycle">Autark concepts and
-Project build lifecycle</h2>
+<h2 id="autark-concepts-and-build-lifecycle">Autark concepts and build
+lifecycle</h2>
 <p>Autark executes rules defined in Autark script files. The build
 process goes through the following stages: <code>init</code>,
 <code>setup</code>, <code>build</code>, and <code>post_build</code>.</p>
@@ -822,15 +822,15 @@ the operating system level.</p>
 <p>Unlike <code>set</code>, the value of this rule is evaluated at the
 time it is executed, which happens during the <code>setup</code> phase
 of the build.</p>
-<h2 id="-variable-evaluation">${...} Variable Evaluation</h2>
+<h2 id="-variable-evaluation">${...} Variable evaluation</h2>
 <div class="sourceCode" id="cb20"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="dt">${VARIABLE </span><span class="kw">[DEFAULT]</span><span class="dt">}`</span></span></code></pre></div>
 <p>The expression <code>${VARIABLE [DEFAULT]}</code> is used when the
 value of a variable needs to be passed as an argument to another rule.
 If the variable is not defined in the current script context, the
 <code>DEFAULT</code> value will be used if provided.</p>
-<h2 id="-program-output-evaluation">@{...} Program Output
-Evaluation</h2>
+<h2 id="-program-output-evaluation">@{...} Program output
+evaluation</h2>
 <div class="sourceCode" id="cb21"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="dt">@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span></code></pre></div>
 <p>Invokes the specified program <code>PROGRAM</code> and returns its
@@ -846,7 +846,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#
 <code>pkgconf --libs --static libcurl</code> is appended to the
 <code>LDFLAGS</code> list.</p>
 <h2 id="-expressions-concatenation">^{...} Expressions
-Concatenation</h2>
+concatenation</h2>
 <div class="sourceCode" id="cb23"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{EXPR1 </span><span class="kw">[EXPR2]</span><span class="dt">...}</span></span></code></pre></div>
 <p>Concatenates expressions output. Here we encounter an important
@@ -898,7 +898,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb27-1"><a href="#
 replaced by <code>EXPR1</code> in the Autark script’s instruction tree.
 Otherwise, if an <code>else</code> block is provided, it will be
 replaced by <code>EXPR2</code>.</p>
-<h3 id="condition-forms">Condition Forms</h3>
+<h3 id="conditions">Conditions</h3>
 <p>Exclamation mark <code>!</code> means expression result negation,
 when trufly evaluated expressions became false.</p>
 <p><code>[!]${EXPR}</code> <br/>Evaluates as truthy in any of the
@@ -1120,7 +1120,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb46-1"><a href="#
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h3 id="example-appending-glob-matched-source-files">Example: Appending
-Glob-Matched Source Files</h3>
+glob-matched source Files</h3>
 <p>In the example below, the <code>SOURCES</code> variable is extended
 with the output of a glob-matching command executed in the source
 directory. The result is assigned merged with <code>SOURCES</code>

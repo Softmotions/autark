@@ -266,7 +266,7 @@ install {
 
 https://github.com/Softmotions/autark-sample-project
 
-## Autark concepts and Project build lifecycle
+## Autark concepts and build lifecycle
 
 Autark executes rules defined in Autark script files.
 The build process goes through the following stages: `init`, `setup`, `build`, and `post_build`.
@@ -580,7 +580,7 @@ using `setenv(3)` at the operating system level.
 Unlike `set`, the value of this rule is evaluated at the time it is executed,
 which happens during the `setup` phase of the build.
 
-## ${...} Variable Evaluation
+## ${...} Variable evaluation
 
 ```cfg
 ${VARIABLE [DEFAULT]}`
@@ -591,7 +591,7 @@ as an argument to another rule.
 If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
 
 
-## @{...} Program Output Evaluation
+## @{...} Program output evaluation
 
 ```cfg
 @{PROGRAM [ARG1 ARG2 ...]}
@@ -610,7 +610,7 @@ set {
 ```
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
 
-## ^{...} Expressions Concatenation
+## ^{...} Expressions concatenation
 
 ```cfg
 ^{EXPR1 [EXPR2]...}
@@ -676,7 +676,7 @@ If the condition `CONDITION_RULE` evaluates to a `truthy` value,
 the entire `if` expression is replaced by `EXPR1` in the Autark script’s instruction tree.
 Otherwise, if an `else` block is provided, it will be replaced by `EXPR2`.
 
-### Condition Forms
+### Conditions
 
 Exclamation mark `!` means expression result negation, when trufly evaluated expressions became false.
 
@@ -951,7 +951,7 @@ in-sources {
 }
 ```
 
-### Example: Appending Glob-Matched Source Files
+### Example: Appending glob-matched source Files
 In the example below, the `SOURCES` variable is extended with the output of a glob-matching command
 executed in the source directory. The result is assigned merged with `SOURCES` variable in the parent script:
 ```cfg
