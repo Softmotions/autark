@@ -1,4 +1,6 @@
 image: alpine/latest
+secrets:
+  - 7179e7ce-6c56-46b5-9b85-091332eb3684
 sources:
   - https://github.com/Softmotions/autark-sample-project
 packages:
