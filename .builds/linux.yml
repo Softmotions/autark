@@ -7,6 +7,7 @@ packages:
   - gcc
   - clang
   - pkgconf
+  - peg
   - libcurl4-openssl-dev
 tasks:
   - test-gcc: |
