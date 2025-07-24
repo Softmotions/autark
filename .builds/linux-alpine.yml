@@ -1,0 +1,10 @@
+image: alpine/latest
+sources:
+  - https://github.com/Softmotions/autark-sample-project
+packages:
+  - clang
+  - pkgconf
+tasks:
+  - build-sample-project: |
+      cd ./autark-sample-project
+      ./build.sh
