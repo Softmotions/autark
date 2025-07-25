@@ -1,0 +1,29 @@
+name: Autark CI (macOS)
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  run-tests:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        compiler: [clang]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies using brew
+        run: |
+          brew update
+          brew install ${COMPILER} peg pkgconf zlib
+        env:
+          COMPILER: ${{ matrix.compiler }}
+
+      - name: Run tests with ${{ matrix.compiler }}
+        run: |
+          cd ./autark
+          CC=${{ matrix.compiler }} BUILD_TESTS=1 ./build.sh
