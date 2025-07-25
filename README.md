@@ -609,6 +609,8 @@ set {
 }
 ```
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
+**Note** what `..` in pkgconf instruction means what space separated output of pkgconf programm
+will be converted to list and merged with LDFLAGS list.
 
 ## ^{...} Expressions concatenation
 

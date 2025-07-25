@@ -305,7 +305,7 @@ both internal and external project dependencies much more precisely and
 cleanly than is typically done with Makefiles by hands. Build rules are
 defined using a specialized DSL in Autark files, which is mostly
 declarative in nature.</p>
-<h2 id="key-features-of-autark">Key Features of Autark</h2>
+<h2 id="key-features-of-autark">Key features of Autark</h2>
 <ul>
 <li>To initialize the project build system on the target system, nothing
 is required except a C99-compliant compiler.</li>
@@ -844,7 +844,9 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#
 <span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>In this example, the output of
 <code>pkgconf --libs --static libcurl</code> is appended to the
-<code>LDFLAGS</code> list.</p>
+<code>LDFLAGS</code> list. <strong>Note</strong> what <code>..</code> in
+pkgconf instruction means what space separated output of pkgconf
+programm will be converted to list and merged with LDFLAGS list.</p>
 <h2 id="-expressions-concatenation">^{...} Expressions
 concatenation</h2>
 <div class="sourceCode" id="cb23"><pre
