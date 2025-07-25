@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "08a80fa"
+#define META_REVISION "d874d1f"
 
 #endif
 #define _AMALGAMATE_
@@ -2572,12 +2572,6 @@ int utils_fd_make_non_blocking(int fd) {
 #include <libgen.h>
 #include <stdio.h>
 #include <dirent.h>
-#endif
-
-#ifdef __APPLE__
-#define st_atim st_atimespec
-#define st_ctim st_ctimespec
-#define st_mtim st_mtimespec
 #endif
 
 #define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + utils_lround((ts__).tv_nsec / 1.0e6))
