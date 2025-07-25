@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies using brew
         run: |
           brew update
-          brew install ${COMPILER} peg pkgconf zlib
+          brew install peg pkgconf zlib
         env:
           COMPILER: ${{ matrix.compiler }}
 
