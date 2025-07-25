@@ -44,7 +44,12 @@ static void _install_symlink(struct _install_on_resolve_ctx *ctx, const char *sr
     }
   }
 
+#ifdef __APPLE__
+  struct timespec times[2] = { st->st_atime, st->st_mtime };
+#else
   struct timespec times[2] = { st->st_atim, st->st_mtim };
+#endif
+
   utimensat(AT_FDCWD, dst, times, AT_SYMLINK_NOFOLLOW);
 }
 

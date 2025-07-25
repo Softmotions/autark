@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "b2d6ae5"
+#define META_REVISION "8c42186"
 
 #endif
 #define _AMALGAMATE_
@@ -6034,7 +6034,12 @@ static void _install_symlink(struct _install_on_resolve_ctx *ctx, const char *sr
     }
   }
 
+#ifdef __APPLE__
+  struct timespec times[2] = { st->st_atime, st->st_mtime };
+#else
   struct timespec times[2] = { st->st_atim, st->st_mtim };
+#endif
+
   utimensat(AT_FDCWD, dst, times, AT_SYMLINK_NOFOLLOW);
 }
 
