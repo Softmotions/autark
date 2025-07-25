@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=d874d1f
+META_REVISION=0097f27
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "d874d1f"
+#define META_REVISION "0097f27"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -2183,7 +2183,9 @@ int utils_fd_make_non_blocking(int fd) {
 #include <stdio.h>
 #include <dirent.h>
 #endif
-#define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + utils_lround((ts__).tv_nsec / 1.0e6))
+static inline uint64_t _ts_sec_nsec_to_ms(int64_t sec, int64_t nsec) {
+  return sec * 1000ULL + utils_lround(nsec / 1.0e6);
+}
 bool path_is_absolute(const char *path) {
   if (!path) {
     return 0;
@@ -2431,9 +2433,15 @@ static int _stat(const char *path, int fd, struct akpath_stat *fs) {
       }
     }
   }
-  fs->atime = _TIMESPEC2MS(st.st_atim);
-  fs->mtime = _TIMESPEC2MS(st.st_mtim);
-  fs->ctime = _TIMESPEC2MS(st.st_ctim);
+#if defined(__APPLE__) || defined(__NetBSD__)
+  fs->atime = _ts_sec_nsec_to_ms(st.st_atime, st.st_atimensec);
+  fs->mtime = _ts_sec_nsec_to_ms(st.st_mtime, st.st_mtimensec);
+  fs->ctime = _ts_sec_nsec_to_ms(st.st_ctime, st.st_ctimensec);
+#else
+  fs->atime = _ts_sec_nsec_to_ms(st.st_atim.tv_sec, st.st_atim.tv_nsec);
+  fs->mtime = _ts_sec_nsec_to_ms(st.st_mtim.tv_sec, st.st_mtim.tv_nsec);
+  fs->ctime = _ts_sec_nsec_to_ms(st.st_ctim.tv_sec, st.st_ctim.tv_nsec);
+#endif
   fs->size = (uint64_t) st.st_size;
   if (S_ISREG(st.st_mode)) {
     fs->ftype = AKPATH_TYPE_FILE;
