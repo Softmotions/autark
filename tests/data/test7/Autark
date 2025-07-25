@@ -56,7 +56,7 @@ cc {
 include { ./libhello/Autark }
 
 run {
-  exec { ${CC} -static ${LDFLAGS} -o hello ${CC_OBJS} libhello/libhello.a }
+  exec { ${CC} ${LDFLAGS} -o hello ${CC_OBJS} libhello/libhello.a }
   consumes {
     ${CC_OBJS}
     libhello/libhello.a
