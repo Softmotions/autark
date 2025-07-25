@@ -25,4 +25,4 @@ jobs:
 
       - name: Run tests with ${{ matrix.compiler }}
         run: |
-          CC=${{ matrix.compiler }} BUILD_TESTS=1 ./build.sh
+          CC=${{ matrix.compiler }} RUN_TESTS=1 ./build.sh

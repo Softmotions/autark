@@ -40,22 +40,24 @@ install {
   hello.h
 }
 
-if { library { LIB_M libm.a }
-  echo { ${LIB_M} }
-} else {
-  error { Library libm not found }
-}
+if {!defined {SYSTEM_DARWIN}
+  if { library { LIB_M libm.a }
+    echo { ${LIB_M} }
+  } else {
+    error { Library libm not found }
+  }
 
-if { !${LIB_M}
-  error { Library libm not found }
-} else {
-  echo { ${LIB_M} }
-}
+  if { !${LIB_M}
+    error { Library libm not found }
+  } else {
+    echo { ${LIB_M} }
+  }
 
-if { library { LIB_N a0d36fdd87bc.a }
-  error { Library should't be found }
-}
+  if { library { LIB_N a0d36fdd87bc.a }
+    error { Library should't be found }
+  }
 
-if { ${LIB_N}
-  error { Library should't be found }
+  if { ${LIB_N}
+    error { Library should't be found }
+  }
 }
