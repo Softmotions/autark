@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=0097f27
+META_REVISION=b2d6ae5
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "0097f27"
+#define META_REVISION "b2d6ae5"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -5301,7 +5301,11 @@ static void _install_file(struct _install_on_resolve_ctx *ctx, const char *src, 
     }
   }
   fchmod(out_fd, st->st_mode);
+#ifdef __APPLE__
+  struct timespec times[2] = { st->st_atime, st->st_mtime };
+#else
   struct timespec times[2] = { st->st_atim, st->st_mtim };
+#endif
   futimens(out_fd, times);
   close(in_fd);
   close(out_fd);
