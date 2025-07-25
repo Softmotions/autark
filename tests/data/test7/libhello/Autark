@@ -40,7 +40,7 @@ install {
   hello.h
 }
 
-if {!defined {SYSTEM_DARWIN}
+if {!eq {@{uname -s} Darwin}
   if { library { LIB_M libm.a }
     echo { ${LIB_M} }
   } else {
