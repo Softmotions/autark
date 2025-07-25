@@ -15,6 +15,12 @@
 #include <dirent.h>
 #endif
 
+#ifdef __APPLE__
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+#define st_mtim st_mtimespec
+#endif
+
 #define _TIMESPEC2MS(ts__) (((ts__).tv_sec * 1000ULL) + utils_lround((ts__).tv_nsec / 1.0e6))
 
 bool path_is_absolute(const char *path) {
