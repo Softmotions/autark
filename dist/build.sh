@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=8c42186
+META_REVISION=c097805
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "8c42186"
+#define META_REVISION "c097805"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -5700,12 +5700,10 @@ struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *po
   unit->basename = path_basename((char*) unit->rel_path);
   unit->source_path = pool_printf(pool, "%s/%s", g_env.project.root_dir, unit_path);
   utils_strncpy(path, unit->source_path, sizeof(path));
-  path_dirname(path);
-  unit->dir = pool_strdup(pool, path);
+  unit->dir = pool_strdup(pool, path_dirname(path));
   unit->cache_path = pool_printf(pool, "%s/%s", g_env.project.cache_dir, unit_path);
   utils_strncpy(path, unit->cache_path, sizeof(path));
-  path_dirname(path);
-  unit->cache_dir = pool_strdup(pool, path);
+  unit->cache_dir = pool_strdup(pool, path_dirname(path));
   int rc = path_mkdirs(unit->cache_dir);
   if (rc) {
     akfatal(rc, "Failed to create directory: %s", path);

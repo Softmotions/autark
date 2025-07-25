@@ -142,13 +142,11 @@ struct unit* unit_create(const char *unit_path_, unsigned flags, struct pool *po
 
   unit->source_path = pool_printf(pool, "%s/%s", g_env.project.root_dir, unit_path);
   utils_strncpy(path, unit->source_path, sizeof(path));
-  path_dirname(path);
-  unit->dir = pool_strdup(pool, path);
+  unit->dir = pool_strdup(pool, path_dirname(path));
 
   unit->cache_path = pool_printf(pool, "%s/%s", g_env.project.cache_dir, unit_path);
   utils_strncpy(path, unit->cache_path, sizeof(path));
-  path_dirname(path);
-  unit->cache_dir = pool_strdup(pool, path);
+  unit->cache_dir = pool_strdup(pool, path_dirname(path));
 
   int rc = path_mkdirs(unit->cache_dir);
   if (rc) {
