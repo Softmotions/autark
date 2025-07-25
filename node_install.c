@@ -87,7 +87,11 @@ static void _install_file(struct _install_on_resolve_ctx *ctx, const char *src, 
   }
 
   fchmod(out_fd, st->st_mode);
+#ifdef __APPLE__
+  struct timespec times[2] = { st->st_atime, st->st_mtime };
+#else
   struct timespec times[2] = { st->st_atim, st->st_mtim };
+#endif
   futimens(out_fd, times);
 
   close(in_fd);
