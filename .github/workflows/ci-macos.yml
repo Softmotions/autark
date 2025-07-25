@@ -25,5 +25,4 @@ jobs:
 
       - name: Run tests with ${{ matrix.compiler }}
         run: |
-          cd ./autark
           CC=${{ matrix.compiler }} BUILD_TESTS=1 ./build.sh
