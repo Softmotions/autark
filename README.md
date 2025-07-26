@@ -110,6 +110,12 @@ You can also explore the following real-life C projects that use Autark:
 - https://github.com/Softmotions/iwnet
 - https://github.com/Softmotions/ejdb
 
+```
+git clone https://github.com/Softmotions/autark-sample-project
+cd ./autark-sample-project
+./build.sh
+```
+
 ```cfg
 # https://github.com/Softmotions/autark-sample-project
 #
