@@ -14,4 +14,10 @@ let &g:makeprg = 'BUILD_TESTS=1 '. g:root_dir . '/build.sh'
 packadd termdebug
 let g:termdebug_config = {'map_minus': 0, 'map_plus': 0, 'wide': 1}
 
+augroup lvimrc
+  autocmd!
+  autocmd BufWritePost ${ROOT_DIR}/README.md
+       \ exec ':AsyncRun -silent '.g:root_dir.'/docs/gendoc.sh'
+augroup END
+
 call LocalVimRCFinish()

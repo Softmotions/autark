@@ -20,6 +20,7 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - Build rules are described using a simple and clear declarative DSL, which is not a programming language.
 - The system provides extensive capabilities for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files is supported.
+- Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
 ## Installation
 
