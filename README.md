@@ -1,4 +1,4 @@
-# Autark – A self-contained build system for C/C++
+# Autark – A self-contained build system for C and C++
 
 [Autark source code repository](https://github.com/Softmotions/autark)
 
