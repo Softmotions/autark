@@ -53,7 +53,7 @@ int utils_file_write_buf(const char *path, const char *buf, size_t len, bool app
   } else {
     flags |= O_TRUNC;
   }
-  int fd = open(path, flags);
+  int fd = open(path, flags, 0644);
   if (fd == -1) {
     return errno;
   }

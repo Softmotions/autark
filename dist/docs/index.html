@@ -838,14 +838,20 @@ If the variable is not defined in the current script context, the
 <h2 id="-program-output-evaluation">@{...} Program output
 evaluation</h2>
 <div class="sourceCode" id="cb22"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="dt">@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span></code></pre></div>
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program every build</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="dt">@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program once and cache its output between builds</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="dt">@@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span></code></pre></div>
 <p>Invokes the specified program <code>PROGRAM</code> and returns its
-standard output as a string.</p>
+standard output as a string. The <code>@@</code> form caches the
+program’s output and reuses it in subsequent builds, which is useful for
+time-consuming invocations such as <code>pkg-config</code>.</p>
 <h3 id="example">Example:</h3>
 <div class="sourceCode" id="cb23"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..@{${PKGCONF pkgconf} --libs --static libcurl}</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..@@{${PKGCONF pkgconf} --libs --static libcurl}</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${LDFLAGS}</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>In this example, the output of

@@ -602,17 +602,23 @@ If the variable is not defined in the current script context, the `DEFAULT` valu
 ## @{...} Program output evaluation
 
 ```cfg
+# Run program every build
 @{PROGRAM [ARG1 ARG2 ...]}
+
+# Run program once and cache its output between builds
+@@{PROGRAM [ARG1 ARG2 ...]}
 ```
 
 Invokes the specified program `PROGRAM` and returns its standard output as a string.
+The `@@` form caches the program’s output and reuses it in subsequent builds,
+which is useful for time-consuming invocations such as `pkg-config`.
 
 ### Example:
 
 ```cfg
 set {
   LDFLAGS
-  ..@{${PKGCONF pkgconf} --libs --static libcurl}
+  ..@@{${PKGCONF pkgconf} --libs --static libcurl}
   ..${LDFLAGS}
 }
 ```

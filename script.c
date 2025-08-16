@@ -70,7 +70,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     *flags = NODE_FLG_NEGATE;
     key += 1;
   }
-  if (strcmp(key, "$") == 0 || strcmp(key, "@") == 0) {
+  if (strcmp(key, "$") == 0 || strcmp(key, "@") == 0 || strcmp(key, "@@") == 0) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;

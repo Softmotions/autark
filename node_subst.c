@@ -78,7 +78,6 @@ static const char* _subst_value_proc(struct node *n) {
   if (cmd == 0 || *cmd == '\0') {
     return 0;
   }
-
   struct xstr *xstr = xstr_create_empty();
   struct _subst_ctx ctx = {
     .n = n,
@@ -111,8 +110,69 @@ static const char* _subst_value_proc(struct node *n) {
   return n->impl;
 }
 
+static void _subst_value_proc_cache_on_resolve(struct node_resolve *r) {
+  struct node *n = r->n;
+  _subst_value_proc(n);
+
+  if (!n->impl) {
+    n->impl = xstrdup("");
+  }
+
+  struct unit *unit = unit_peek();
+  const char *path = pool_printf(r->pool, "%s/%s.cache", unit->cache_dir, r->path);
+  int rc = utils_file_write_buf(path, (char*) n->impl, strlen(n->impl), false);
+  if (rc) {
+    node_fatal(rc, n, "Failed to write file: %s", path);
+  }
+
+  struct deps deps;
+  rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, n, "Failed to open dependency file: %s", r->deps_path_tmp);
+  }
+  node_add_unit_deps(n, &deps);
+  deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
+  deps_close(&deps);
+}
+
+static const char* _subst_value_proc_cache(struct node *n) {
+  if (n->impl) {
+    return n->impl;
+  }
+
+  struct node_resolve r = {
+    .n = n,
+    .path = n->vfile,
+    .on_resolve = _subst_value_proc_cache_on_resolve,
+    .node_val_deps = { .usize = sizeof(struct node*) },
+  };
+
+  for (struct node *cn = n->child; cn; cn = cn->next) {
+    if (node_is_value_may_be_dep_saved(cn)) {
+      ulist_push(&r.node_val_deps, &cn);
+    }
+  }
+
+  node_resolve(&r);
+
+  if (!n->impl) {
+    struct unit *unit = unit_peek();
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/%s.cache", unit->cache_dir, r.path);
+    struct value val = utils_file_as_buf(path, 1024 * 1024); // 1Mb max
+    if (val.error) {
+      node_fatal(val.error, n, "Failed to read cache file: %s", path);
+    }
+    n->impl = val.buf;
+  }
+
+  return n->impl;
+}
+
 int node_subst_setup(struct node *n) {
-  if (strchr(n->value, '@')) {
+  if (strstr(n->value, "@@")) {
+    n->value_get = _subst_value_proc_cache;
+  } else if (strchr(n->value, '@')) {
     n->value_get = _subst_value_proc;
   } else {
     n->flags |= NODE_FLG_NO_CWD;
