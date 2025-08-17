@@ -90,8 +90,11 @@ static const char* _find_value_get(struct node *n) {
 
   n->impl = (void*) (intptr_t) -1;
 
+  const char *nv = n->value;
+  while(*nv == '!') ++nv;
 
-  if (strcmp("library", n->value) == 0) {
+
+  if (strcmp("library", nv) == 0) {
     _library_find(n);
   }
 
