@@ -180,7 +180,7 @@ if grep -E '^ID(_LIKE)?=.*debian' /etc/os-release >/dev/null; then
 fi
 
 (set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native ${CFLAGS} -o ${AUTARK_HOME}/autark)
-cp $0 ${AUTARK_HOME}/build.sh
+cp $(basename $0) ${AUTARK_HOME}/build.sh
 echo "Done"
 
 set +e

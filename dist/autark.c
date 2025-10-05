@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "85d4187"
+#define META_REVISION "da411bd"
 
 #endif
 #define _AMALGAMATE_
