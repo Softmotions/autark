@@ -565,7 +565,7 @@ set {
   parent {
     NAME
   }
-  ...
+  ... # values
 }
 ```
 
@@ -576,7 +576,7 @@ set {
   root {
     NAME
   }
-  ...
+  ... # values
 }
 ```
 
