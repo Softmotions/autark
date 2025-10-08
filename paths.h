@@ -15,8 +15,6 @@ enum akpath_access {
   AKPATH_EXEC  = 0x04,
 };
 
-int path_access(const char *path, enum akpath_access access);
-
 enum akpath_ftype {
   AKPATH_NOT_EXISTS,
   AKPATH_TYPE_FILE,
