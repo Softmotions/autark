@@ -859,7 +859,7 @@ void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) 
     while (vlist_iter_next(&iter)) {
       char path[PATH_MAX];
       utils_strnncpy(path, iter.item, iter.len, sizeof(path));
-      prod = path_normalize(prod, pathbuf);
+      prod = path_normalize(prod, path);
       node_product_add_raw(n, prod);
     }
   } else {
