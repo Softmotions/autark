@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=748399c
+META_REVISION=de3b58a
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "748399c"
+#define META_REVISION "de3b58a"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -7875,7 +7875,7 @@ void node_product_add(struct node *n, const char *prod, char pathbuf[PATH_MAX]) 
     while (vlist_iter_next(&iter)) {
       char path[PATH_MAX];
       utils_strnncpy(path, iter.item, iter.len, sizeof(path));
-      prod = path_normalize(prod, path);
+      prod = path_normalize(path, pathbuf);
       node_product_add_raw(n, prod);
     }
   } else {
