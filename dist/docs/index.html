@@ -289,6 +289,28 @@
 </header>
 <h1 id="autark--a-self-contained-build-system-for-c-and-c">Autark – A
 self-contained build system for C and C++</h1>
+<h2 id="quick-links">Quick links</h2>
+<ul>
+<li><a href="#meta-">meta</a></li>
+<li><a href="#option-">option</a></li>
+<li><a href="#check-">check</a></li>
+<li><a href="#set-">set</a></li>
+<li><a href="#env-">env</a></li>
+<li><a href="#-variable-evaluation">${}</a></li>
+<li><a href="#-program-output-evaluation">@{}</a></li>
+<li><a href="#-expressions-concatenation">^{}</a></li>
+<li><a href="#if--condition">if</a></li>
+<li><a href="#echo-">echo</a></li>
+<li><a href="#configure-">configure</a></li>
+<li><a href="#s--ss--c--cc---path-helpers">path helpers</a></li>
+<li><a href="#run-">run</a></li>
+<li><a href="#in-sources-">in-sources</a></li>
+<li><a href="#run-on-install-">run-on-install</a></li>
+<li><a href="#foreach-">foreach</a></li>
+<li><a href="#cc-----cxx---">cc/cxx</a></li>
+<li><a href="#library-">library</a></li>
+<li><a href="#install-">install</a></li>
+</ul>
 <p><a href="https://github.com/Softmotions/autark">Autark source code
 repository</a></p>
 <p><strong>Autark</strong> is a self-contained build system that resides
@@ -306,7 +328,7 @@ both internal and external project dependencies much more precisely and
 cleanly than is typically done with Makefiles by hands. Build rules are
 defined using a specialized DSL in Autark files, which is mostly
 declarative in nature.</p>
-<h2 id="key-features-of-autark">Key features of Autark</h2>
+<h2 id="key-features">Key features</h2>
 <ul>
 <li>To initialize the project build system on the target system, nothing
 is required except a C99-compliant compiler.</li>
@@ -614,29 +636,7 @@ message may be vague or imprecise. This is due to the use of the
 <code>leg</code> PEG parser generator, which can produce generic error
 reports for malformed input.</li>
 </ul>
-<h1 id="autark-script-rules">Autark script rules</h1>
-<ul>
-<li><a href="#meta-">meta</a></li>
-<li><a href="#option-">option</a></li>
-<li><a href="#check-">check</a></li>
-<li><a href="#set-">set</a></li>
-<li><a href="#env-">env</a></li>
-<li><a href="#-variable-evaluation">${}</a></li>
-<li><a href="#-program-output-evaluation">@{}</a></li>
-<li><a href="#-expressions-concatenation">^{}</a></li>
-<li><a href="#if--condition">if</a></li>
-<li><a href="#echo-">echo</a></li>
-<li><a href="#configure-">configure</a></li>
-<li><a href="#s--ss--c--cc---path-helpers">path helpers</a></li>
-<li><a href="#run-">run</a></li>
-<li><a href="#in-sources-">in-sources</a></li>
-<li><a href="#run-on-install-">run-on-install</a></li>
-<li><a href="#foreach-">foreach</a></li>
-<li><a href="#cc-----cxx---">cc/cxx</a></li>
-<li><a href="#library-">library</a></li>
-<li><a href="#install-">install</a></li>
-</ul>
-<h2 id="meta-">meta {...}</h2>
+<h1 id="meta-">meta {...}</h1>
 <p>Sets script variables using a simple convention: each variable name
 is automatically prefixed with <code>META_</code>. These variables are
 evaluated during the <code>init</code> phase of the build.</p>
@@ -653,7 +653,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb6-1"><a href="#c
 <p>If variable is defined using the <code>let</code> clause inside
 <code>meta</code>, the <code>META_</code> prefix is not added to its
 name.</p>
-<h2 id="option-">option {...}</h2>
+<h1 id="option-">option {...}</h1>
 <div class="sourceCode" id="cb7"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">option { &lt;OPTION NAME&gt; </span><span class="kw">[OPTION DESCRIPTION]</span><span class="dt"> }</span></span></code></pre></div>
 <p>This rule declares a build option. Build options are variables set at
@@ -669,7 +669,7 @@ where they might be unnecessary or accidentally override something.</p>
 <p>To list all documented build options, use:</p>
 <div class="sourceCode" id="cb10"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-l</span></span></code></pre></div>
-<h2 id="check-">check {...}</h2>
+<h1 id="check-">check {...}</h1>
 <p>This construct is the workhorse for checking system configuration and
 capabilities before compiling the project. Checks are performed using
 <code>dash</code> shell scripts.</p>
@@ -768,7 +768,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb16-1"><a href="#
 <span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> ...</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h2 id="set-">set {...}</h2>
+<h1 id="set-">set {...}</h1>
 <p>The <code>set</code> rule assigns a value to a variable in the build
 script.</p>
 <div class="sourceCode" id="cb17"><pre
@@ -822,22 +822,22 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb20-1"><a href="#
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ... # values</span></span>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h2 id="env-">env {...}</h2>
+<h1 id="env-">env {...}</h1>
 <p>Similar to <code>set</code>, but sets an <strong>environment
 variable</strong> for the build process using <code>setenv(3)</code> at
 the operating system level.</p>
 <p>Unlike <code>set</code>, the value of this rule is evaluated at the
 time it is executed, which happens during the <code>setup</code> phase
 of the build.</p>
-<h2 id="-variable-evaluation">${...} Variable evaluation</h2>
+<h1 id="-variable-evaluation">${...} Variable evaluation</h1>
 <div class="sourceCode" id="cb21"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="dt">${VARIABLE </span><span class="kw">[DEFAULT]</span><span class="dt">}`</span></span></code></pre></div>
 <p>The expression <code>${VARIABLE [DEFAULT]}</code> is used when the
 value of a variable needs to be passed as an argument to another rule.
 If the variable is not defined in the current script context, the
 <code>DEFAULT</code> value will be used if provided.</p>
-<h2 id="-program-output-evaluation">@{...} Program output
-evaluation</h2>
+<h1 id="-program-output-evaluation">@{...} Program output
+evaluation</h1>
 <div class="sourceCode" id="cb22"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program every build</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="dt">@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span>
@@ -848,7 +848,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb22-1"><a href="#
 standard output as a string. The <code>@@</code> form caches the
 program’s output and reuses it in subsequent builds, which is useful for
 time-consuming invocations such as <code>pkg-config</code>.</p>
-<h3 id="example">Example:</h3>
+<h2 id="example">Example:</h2>
 <div class="sourceCode" id="cb23"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span></span>
@@ -860,8 +860,8 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb23-1"><a href="#
 <code>LDFLAGS</code> list. <strong>Note</strong> what <code>..</code> in
 pkgconf instruction means what space separated output of pkgconf
 programm will be converted to list and merged with LDFLAGS list.</p>
-<h2 id="-expressions-concatenation">^{...} Expressions
-concatenation</h2>
+<h1 id="-expressions-concatenation">^{...} Expressions
+concatenation</h1>
 <div class="sourceCode" id="cb24"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{EXPR1 </span><span class="kw">[EXPR2]</span><span class="dt">...}</span></span></code></pre></div>
 <p>Concatenates expressions output. Here we encounter an important
@@ -884,7 +884,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb26-1"><a href="#
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ^{-DBUILD_TYPE</span><span class="ot">=</span><span class="st"> ${BUILD_TYPE}}</span></span></code></pre></div>
 <p>Note: the space between <code>-DBUILD_TYPE=</code> and
 <code>${BUILD_TYPE}</code> is required.</p>
-<h2 id="if--condition">if {...} condition</h2>
+<h1 id="if--condition">if {...} condition</h1>
 <p>Conditional directive.</p>
 <div class="sourceCode" id="cb27"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {</span></span>
@@ -913,7 +913,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb28-1"><a href="#
 replaced by <code>EXPR1</code> in the Autark script’s instruction tree.
 Otherwise, if an <code>else</code> block is provided, it will be
 replaced by <code>EXPR2</code>.</p>
-<h3 id="conditions">Conditions</h3>
+<h2 id="conditions">Conditions</h2>
 <p>Exclamation mark <code>!</code> means expression result negation,
 when trufly evaluated expressions became false.</p>
 <p><code>[!]${EXPR}</code> <br/>Evaluates as truthy in any of the
@@ -941,14 +941,14 @@ defined above).</p>
 expressions inside the directive are truthy.</p>
 <p><strong>Please Note:</strong> Autark syntax does not support
 <code>else if</code> constructs.</p>
-<h2 id="error--abort-build-and-report-error">error {...} Abort build and
-report error</h2>
+<h1 id="error--abort-build-and-report-error">error {...} Abort build and
+report error</h1>
 <p>Typical example <code>error</code> directive usage:</p>
 <div class="sourceCode" id="cb29"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined{ PTHREAD_LFLAG }</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Pthreads implementation is not found! }</span></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h2 id="echo-">echo {...}</h2>
+<h1 id="echo-">echo {...}</h1>
 <p>Prints arbitrary information to the console (standard output,
 <code>stdout</code>).</p>
 <div class="sourceCode" id="cb30"><pre
@@ -973,7 +973,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb31-1"><a href="#
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>This will print the current values of the CFLAGS and LDFLAGS
 variables.</p>
-<h2 id="configure-">configure {...}</h2>
+<h1 id="configure-">configure {...}</h1>
 <p>The <code>configure</code> rule acts as a preprocessor for text files
 and C/C++ source templates, replacing specific sections with values of
 variables from the current script context.</p>
@@ -1000,7 +1000,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb34-1"><a href="#
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
 <span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h3 id="-substitutions">@...@ Substitutions</h3>
+<h2 id="-substitutions">@...@ Substitutions</h2>
 <p>Text fragments enclosed in <code>@</code> symbols are interpreted as
 variable names and replaced with their corresponding values. If a
 variable is not defined, the expression is replaced with an empty
@@ -1020,7 +1020,7 @@ Requires: libiwnet
 Libs.private: @LDFLAGS_PKGCONF@
 Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir}
 Cflags.private: -DIW_STATIC</code></pre>
-<h3 id="autarkdef-for-cc-headers">//autarkdef for C/C++ Headers</h3>
+<h2 id="autarkdef-for-cc-headers">//autarkdef for C/C++ Headers</h2>
 <p>For C/C++ header files, the <code>//autarkdef</code> directive is a
 convenient way to conditionally generate <code>#define</code> statements
 based on variable presence.</p>
@@ -1036,12 +1036,12 @@ based on variable presence.</p>
 <div class="sourceCode" id="cb40"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME 1</span></span></code></pre></div>
 <p>If <code>VAR_NAME</code> is defined, this becomes:</p>
 <div class="sourceCode" id="cb41"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME </span><span class="dv">1</span></span></code></pre></div>
-<h2 id="s--ss--c--cc---path-helpers"><code>S</code> / <code>SS</code> /
-<code>C</code> / <code>CC</code> / <code>%</code> Path Helpers</h2>
+<h1 id="s--ss--c--cc---path-helpers"><code>S</code> / <code>SS</code> /
+<code>C</code> / <code>CC</code> / <code>%</code> Path Helpers</h1>
 <p>These small helper rules are useful for computing file paths in build
 scripts. They help avoid hardcoding paths that may depend on the current
 location of the project's source code.</p>
-<h3 id="s-">S {...}</h3>
+<h2 id="s-">S {...}</h2>
 <p>Computes the <strong>absolute path</strong> of the given argument(s)
 relative to the <strong>project root</strong>. If multiple arguments are
 provided, they are concatenated into a single path string.</p>
@@ -1051,18 +1051,18 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb42-1"><a href="#
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;project root&gt;/foo/bar/baz</span></span>
 <span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo bar baz}</span></span></code></pre></div>
-<h3 id="ss-">SS {...}</h3>
+<h2 id="ss-">SS {...}</h2>
 <p>Same as <code>S</code>, but relative to the directory where the
 current script is located.</p>
-<h3 id="c-">C {...}</h3>
+<h2 id="c-">C {...}</h2>
 <p>Computes the <strong>absolute path</strong> to the argument(s)
 relative to the <strong>project-wide autark-cache dir</strong>.</p>
-<h3 id="cc-">CC {...}</h3>
+<h2 id="cc-">CC {...}</h2>
 <p>Computes the <strong>absolute path</strong> relative to the
 <strong>local cache directory</strong> of the current script. This is
 the default working directory for tools and commands that operate on
 build artifacts.</p>
-<h3 id="-">% {...}</h3>
+<h2 id="-">% {...}</h2>
 <p>Returns the <code>basename</code> of the given filename changing its
 extension optionally.</p>
 <div class="sourceCode" id="cb43"><pre
@@ -1073,7 +1073,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb44-1"><a href="#
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;hello.c&#39;</span></span>
 <span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="dt">%{hello.x .c}</span></span></code></pre></div>
-<h2 id="run-">run {...}</h2>
+<h1 id="run-">run {...}</h1>
 <p>The <code>run</code> rule is the most powerful construct in the
 Autark system. It allows you to define custom build actions and their
 dependency chains.</p>
@@ -1121,7 +1121,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb46-1"><a href="#
 <span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    libhello.a</span></span>
 <span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
 <span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h2 id="in-sources-">in-sources {...}</h2>
+<h1 id="in-sources-">in-sources {...}</h1>
 <p>By default, most Autark rules are executed inside the
 <strong>autark-cache dir</strong> corresponding to the current build
 script. This is convenient because generated artifacts, logs, and
@@ -1134,8 +1134,8 @@ provides the <code>in-sources</code> rule.</p>
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in-sources {</span></span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h3 id="example-appending-glob-matched-source-files">Example: Appending
-glob-matched source Files</h3>
+<h2 id="example-appending-glob-matched-source-files">Example: Appending
+glob-matched source Files</h2>
 <p>In the example below, the <code>SOURCES</code> variable is extended
 with the output of a glob-matching command executed in the source
 directory. The result is assigned merged with <code>SOURCES</code>
@@ -1150,8 +1150,8 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb48-1"><a href="#
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{autark -C .. glob &#39;json/*.c&#39;}</span></span>
 <span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
 <span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h3 id="example-finding-java-source-files">Example: Finding Java Source
-Files</h3>
+<h2 id="example-finding-java-source-files">Example: Finding Java Source
+Files</h2>
 <div class="sourceCode" id="cb49"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  JAVA_SOURCES</span></span>
@@ -1162,7 +1162,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb49-1"><a href="#
 <p>This example populates <code>JAVA_SOURCES</code> with the full paths
 of all <code>.java</code> files under <code>src/main/java</code>,
 resolved from the script's source directory.</p>
-<h2 id="run-on-install-">run-on-install {...}</h2>
+<h1 id="run-on-install-">run-on-install {...}</h1>
 <p><code>run-on-install</code> is a special form of the <code>run</code>
 rule that is executed during the <code>post-build</code> phase.</p>
 <p>A typical use case for this rule is to <strong>install artifacts from
@@ -1184,7 +1184,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb50-1"><a href="#
 prefix.</p>
 <p>Reference: <a
 href="https://github.com/Softmotions/iwnet/blob/master/Autark">https://github.com/Softmotions/iwnet/blob/master/Autark</a></p>
-<h2 id="foreach-">foreach {...}</h2>
+<h1 id="foreach-">foreach {...}</h1>
 <p>When you need to perform many similar actions for a list of files or
 objects, <code>foreach</code> provides a concise and powerful
 solution.</p>
@@ -1250,8 +1250,8 @@ object file path (e.g., <code>main.o =&gt; main</code>).</li>
 </ul>
 <p>This approach enables clean, scalable test orchestration without
 hardcoding individual test names.</p>
-<h2 id="cc-----cxx---"><code>cc { ... }</code> /
-<code>cxx { ... }</code></h2>
+<h1 id="cc-----cxx---"><code>cc { ... }</code> /
+<code>cxx { ... }</code></h1>
 <p>This rule compiles C or C++ source files into object files, while
 automatically tracking all required dependencies including header files.
 Compilation is parallelized to speed up the build process.</p>
@@ -1263,7 +1263,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb53-1"><a href="#
 <span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[objects { NAME }]</span></span>
 <span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[consumes { ... }]</span></span>
 <span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h3 id="sources">SOURCES</h3>
+<h2 id="sources">SOURCES</h2>
 <p>The first argument must be an expression that returns a list of
 source files. It can be a single string (for one file) or a list defined
 by a <code>set</code> rule.</p>
@@ -1274,12 +1274,12 @@ by a <code>set</code> rule.</p>
 <li>Paths relative to the cache directory corresponding to the script
 (this is useful when compiling generated sources from other rules)</li>
 </ul>
-<h3 id="compiler_flags">COMPILER_FLAGS</h3>
+<h2 id="compiler_flags">COMPILER_FLAGS</h2>
 <p>A list of compiler flags, typically defined using a set rule.</p>
 <p><strong>Note:</strong> the <code>-I.</code> flag is automatically
 added to the compiler flags, which includes the current cache directory
 in the include path for header files.</p>
-<h3 id="compiler_cmd">COMPILER_CMD</h3>
+<h2 id="compiler_cmd">COMPILER_CMD</h2>
 <p>The compiler to use.</p>
 <p>If not explicitly specified:</p>
 <ul>
@@ -1291,7 +1291,7 @@ in the include path for header files.</p>
 <p><strong>Note:</strong> The compiler must support dependency
 generation using the <code>-MMD</code> flag to allow Autark to correctly
 track header file dependencies.</p>
-<h3 id="objects--name-">objects { NAME }</h3>
+<h2 id="objects--name-">objects { NAME }</h2>
 <p>By default, the <code>cc</code> rule sets a variable named
 <code>CC_OBJS</code> containing the list of object files produced during
 compilation.</p>
@@ -1300,7 +1300,7 @@ script, you may want to assign different output variable names using the
 <code>objects { NAME }</code> directive.</p>
 <p>This allows you to manage multiple sets of object files
 independently.</p>
-<h3 id="consumes---">consumes { ... }</h3>
+<h2 id="consumes---">consumes { ... }</h2>
 <p>This section declares <strong>additional dependencies</strong> for
 the <code>cc</code> compilation rule.</p>
 <p>For example, if your code depends on a file generated by a
@@ -1314,7 +1314,7 @@ the <code>-J</code> option on the command line. For example:</p>
 <div class="sourceCode" id="cb54"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
 <p>This will run up to 8 compilation jobs in parallel.</p>
-<h2 id="library-">library {...}</h2>
+<h1 id="library-">library {...}</h1>
 <p>Search for a library file by name.</p>
 <p>This simple rule looks for the specified <code>LIB_FILES</code>
 (e.g., <code>libm.a</code>, <code>libfoo.so</code>) in standard library
@@ -1353,14 +1353,14 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb56-1"><a href="#
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
-<h2 id="install-">install {..}</h2>
+<h1 id="install-">install {..}</h1>
 <p>If <code>build.sh</code> is run with the <code>-I</code> or
 <code>--install</code> option (to install all built artifacts), or if an
 install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
-<h3 id="available-variables-when-install-is-enabled">Available variables
-when install is enabled</h3>
+<h2 id="available-variables-when-install-is-enabled">Available variables
+when install is enabled</h2>
 <ul>
 <li><code>INSTALL_PREFIX</code> – Absolute path to the installation
 prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>

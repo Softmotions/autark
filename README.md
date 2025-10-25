@@ -1,5 +1,27 @@
 # Autark – A self-contained build system for C and C++
 
+## Quick links
+
+- [meta](#meta-)
+- [option](#option-)
+- [check](#check-)
+- [set](#set-)
+- [env](#env-)
+- [${}](#-variable-evaluation)
+- [@{}](#-program-output-evaluation)
+- [^{}](#-expressions-concatenation)
+- [if](#if--condition)
+- [echo](#echo-)
+- [configure](#configure-)
+- [path helpers](#s--ss--c--cc---path-helpers)
+- [run](#run-)
+- [in-sources](#in-sources-)
+- [run-on-install](#run-on-install-)
+- [foreach](#foreach-)
+- [cc/cxx](#cc-----cxx---)
+- [library](#library-)
+- [install](#install-)
+
 [Autark source code repository](https://github.com/Softmotions/autark)
 
 **Autark** is a self-contained build system that resides entirely within
@@ -14,7 +36,7 @@ The `build.sh` script automatically initializes the Autark build system, and the
 Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
 Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
 
-## Key features of Autark
+## Key features
 
 - To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
 - The build process does not modify the project's source tree.
@@ -326,30 +348,8 @@ It is primarily used for rules that install the built project artifacts.
   may be vague or imprecise. This is due to the use of the `leg` PEG parser generator,
   which can produce generic error reports for malformed input.
 
-# Autark script rules
 
-- [meta](#meta-)
-- [option](#option-)
-- [check](#check-)
-- [set](#set-)
-- [env](#env-)
-- [${}](#-variable-evaluation)
-- [@{}](#-program-output-evaluation)
-- [^{}](#-expressions-concatenation)
-- [if](#if--condition)
-- [echo](#echo-)
-- [configure](#configure-)
-- [path helpers](#s--ss--c--cc---path-helpers)
-- [run](#run-)
-- [in-sources](#in-sources-)
-- [run-on-install](#run-on-install-)
-- [foreach](#foreach-)
-- [cc/cxx](#cc-----cxx---)
-- [library](#library-)
-- [install](#install-)
-
-
-## meta {...}
+# meta {...}
 
 Sets script variables using a simple convention:
 each variable name is automatically prefixed with `META_`.
@@ -371,7 +371,7 @@ If variable is defined using the `let` clause inside `meta`,
 the `META_` prefix is not added to its name.
 
 
-## option {...}
+# option {...}
 
 ```cfg
 option { <OPTION NAME> [OPTION DESCRIPTION] }
@@ -401,7 +401,7 @@ To list all documented build options, use:
 ./build.sh -l
 ```
 
-## check {...}
+# check {...}
 
 This construct is the workhorse for checking system configuration and capabilities
 before compiling the project. Checks are performed using `dash` shell scripts.
@@ -517,7 +517,7 @@ set {
 }
 ```
 
-## set {...}
+# set {...}
 
 The `set` rule assigns a value to a variable in the build script.
 
@@ -580,7 +580,7 @@ set {
 }
 ```
 
-## env {...}
+# env {...}
 
 Similar to `set`, but sets an **environment variable** for the build process
 using `setenv(3)` at the operating system level.
@@ -588,7 +588,7 @@ using `setenv(3)` at the operating system level.
 Unlike `set`, the value of this rule is evaluated at the time it is executed,
 which happens during the `setup` phase of the build.
 
-## ${...} Variable evaluation
+# ${...} Variable evaluation
 
 ```cfg
 ${VARIABLE [DEFAULT]}`
@@ -599,7 +599,7 @@ as an argument to another rule.
 If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
 
 
-## @{...} Program output evaluation
+# @{...} Program output evaluation
 
 ```cfg
 # Run program every build
@@ -613,7 +613,7 @@ Invokes the specified program `PROGRAM` and returns its standard output as a str
 The `@@` form caches the program’s output and reuses it in subsequent builds,
 which is useful for time-consuming invocations such as `pkg-config`.
 
-### Example:
+## Example:
 
 ```cfg
 set {
@@ -626,7 +626,7 @@ In this example, the output of `pkgconf --libs --static libcurl` is appended to 
 **Note** what `..` in pkgconf instruction means what space separated output of pkgconf programm
 will be converted to list and merged with LDFLAGS list.
 
-## ^{...} Expressions concatenation
+# ^{...} Expressions concatenation
 
 ```cfg
 ^{EXPR1 [EXPR2]...}
@@ -657,7 +657,7 @@ set {
 
 Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
 
-## if {...} condition
+# if {...} condition
 
 Conditional directive.
 
@@ -692,7 +692,7 @@ If the condition `CONDITION_RULE` evaluates to a `truthy` value,
 the entire `if` expression is replaced by `EXPR1` in the Autark script’s instruction tree.
 Otherwise, if an `else` block is provided, it will be replaced by `EXPR2`.
 
-### Conditions
+## Conditions
 
 Exclamation mark `!` means expression result negation, when trufly evaluated expressions became false.
 
@@ -732,7 +732,7 @@ Exclamation mark `!` means expression result negation, when trufly evaluated exp
 **Please Note:** Autark syntax does not support `else if` constructs.
 
 
-## error {...} Abort build and report error
+# error {...} Abort build and report error
 
 Typical example `error` directive usage:
 
@@ -742,7 +742,7 @@ if { !defined{ PTHREAD_LFLAG }
 }
 ```
 
-## echo {...}
+# echo {...}
 
 Prints arbitrary information to the console (standard output, `stdout`).
 
@@ -771,7 +771,7 @@ echo {
 ```
 This will print the current values of the CFLAGS and LDFLAGS variables.
 
-## configure {...}
+# configure {...}
 
 The `configure` rule acts as a preprocessor for text files and C/C++ source templates,
 replacing specific sections with values of variables from the current script context.
@@ -806,7 +806,7 @@ configure {
 }
 ```
 
-### @...@ Substitutions
+## @...@ Substitutions
 
 Text fragments enclosed in `@` symbols are interpreted as variable names
 and replaced with their corresponding values.
@@ -830,7 +830,7 @@ Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir}
 Cflags.private: -DIW_STATIC
 ```
 
-### //autarkdef for C/C++ Headers
+## //autarkdef for C/C++ Headers
 
 For C/C++ header files, the `//autarkdef` directive is a convenient way
 to conditionally generate `#define` statements based on variable presence.
@@ -862,11 +862,11 @@ If `VAR_NAME` is defined, this becomes:
 #define VAR_NAME 1
 ```
 
-## `S` / `SS` / `C` / `CC` / `%` Path Helpers
+# `S` / `SS` / `C` / `CC` / `%` Path Helpers
 These small helper rules are useful for computing file paths in build scripts.
 They help avoid hardcoding paths that may depend on the current location of the project's source code.
 
-### S {...}
+## S {...}
 Computes the **absolute path** of the given argument(s) relative to the **project root**.
 If multiple arguments are provided, they are concatenated into a single path string.
 
@@ -878,17 +878,17 @@ If multiple arguments are provided, they are concatenated into a single path str
   S{foo bar baz}
 ```
 
-### SS {...}
+## SS {...}
 Same as `S`, but relative to the directory where the current script is located.
 
-### C {...}
+## C {...}
 Computes the **absolute path** to the argument(s) relative to the **project-wide autark-cache dir**.
 
-### CC {...}
+## CC {...}
 Computes the **absolute path** relative to the **local cache directory** of the current script.
 This is the default working directory for tools and commands that operate on build artifacts.
 
-### % {...}
+## % {...}
 Returns the `basename` of the given filename changing its extension optionally.
 
 ```cfg
@@ -903,7 +903,7 @@ Returns the `basename` of the given filename changing its extension optionally.
 %{hello.x .c}
 ```
 
-## run {...}
+# run {...}
 
 The `run` rule is the most powerful construct in the Autark system.
 It allows you to define custom build actions and their dependency chains.
@@ -951,7 +951,7 @@ run {
 }
 ```
 
-## in-sources {...}
+# in-sources {...}
 
 By default, most Autark rules are executed inside the **autark-cache dir**
 corresponding to the current build script.
@@ -967,7 +967,7 @@ in-sources {
 }
 ```
 
-### Example: Appending glob-matched source Files
+## Example: Appending glob-matched source Files
 In the example below, the `SOURCES` variable is extended with the output of a glob-matching command
 executed in the source directory. The result is assigned merged with `SOURCES` variable in the parent script:
 ```cfg
@@ -982,7 +982,7 @@ set {
 }
 ```
 
-### Example: Finding Java Source Files
+## Example: Finding Java Source Files
 ```cfg
 set {
   JAVA_SOURCES
@@ -995,7 +995,7 @@ set {
 This example populates `JAVA_SOURCES` with the full paths of all `.java` files under `src/main/java`,
 resolved from the script's source directory.
 
-## run-on-install {...}
+# run-on-install {...}
 
 `run-on-install` is a special form of the `run` rule that is executed during the `post-build` phase.
 
@@ -1022,7 +1022,7 @@ with the proper build flags and installation prefix.
 Reference:
 https://github.com/Softmotions/iwnet/blob/master/Autark
 
-## foreach {...}
+# foreach {...}
 
 When you need to perform many similar actions for a list of files or objects,
 `foreach` provides a concise and powerful solution.
@@ -1089,7 +1089,7 @@ In this example:
 
 This approach enables clean, scalable test orchestration without hardcoding individual test names.
 
-## `cc { ... }` / `cxx { ... }`
+# `cc { ... }` / `cxx { ... }`
 
 This rule compiles C or C++ source files into object files,
 while automatically tracking all required dependencies including header files.
@@ -1105,7 +1105,7 @@ cc|cxx {
 }
 ```
 
-### SOURCES
+## SOURCES
 
 The first argument must be an expression that returns a list of source files.
 It can be a single string (for one file) or a list defined by a `set` rule.
@@ -1117,14 +1117,14 @@ Paths to source files can be:
 - Paths relative to the cache directory corresponding to the script
   (this is useful when compiling generated sources from other rules)
 
-### COMPILER_FLAGS
+## COMPILER_FLAGS
 
 A list of compiler flags, typically defined using a set rule.
 
 **Note:** the `-I.` flag is automatically added to the compiler flags,
 which includes the current cache directory in the include path for header files.
 
-### COMPILER_CMD
+## COMPILER_CMD
 
 The compiler to use.
 
@@ -1136,7 +1136,7 @@ If not explicitly specified:
 **Note:** The compiler must support dependency generation using the `-MMD` flag
 to allow Autark to correctly track header file dependencies.
 
-### objects { NAME }
+## objects { NAME }
 
 By default, the `cc` rule sets a variable named `CC_OBJS`
 containing the list of object files produced during compilation.
@@ -1146,7 +1146,7 @@ you may want to assign different output variable names using the `objects { NAME
 
 This allows you to manage multiple sets of object files independently.
 
-### consumes { ... }
+## consumes { ... }
 
 This section declares **additional dependencies** for the `cc` compilation rule.
 
@@ -1165,7 +1165,7 @@ You can change this using the `-J` option on the command line. For example:
 This will run up to 8 compilation jobs in parallel.
 
 
-## library {...}
+# library {...}
 
 Search for a library file by name.
 
@@ -1207,13 +1207,13 @@ This will search for `libm.a`, and if found, store its absolute path in `LIB_M` 
 If the library is not found, the script will terminate with an error.
 
 
-## install {..}
+# install {..}
 
 If `build.sh` is run with the `-I` or `--install` option (to install all built artifacts),
 or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
 then all `install` rules will be executed after the `build` phase completes.
 
-### Available variables when install is enabled
+## Available variables when install is enabled
 
 - `INSTALL_PREFIX` – Absolute path to the installation prefix.
   **Default:** `$HOME/.local`
