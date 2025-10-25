@@ -22,8 +22,6 @@
 - [library](#library-)
 - [install](#install-)
 
-[Autark source code repository](https://github.com/Softmotions/autark)
-
 **Autark** is a self-contained build system that resides entirely within
 your project and requires only `/bin/sh` and a `C` compiler to work!
 
@@ -46,6 +44,8 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
 ## Installation
+
+[Autark source code repository](https://github.com/Softmotions/autark)
 
 To use Autark in your project, simply copy the latest version of Autark:
 
