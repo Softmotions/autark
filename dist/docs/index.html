@@ -629,13 +629,14 @@ previously executed.</p>
 <p>This phase is executed after the <code>build</code> phase has
 completed successfully. It is primarily used for rules that install the
 built project artifacts.</p>
-<h1 id="known-limitations-of-autark">Known Limitations of Autark</h1>
+<h1 id="known-limitations">Known Limitations</h1>
 <ul>
 <li>If the syntax of an Autark script is invalid, the resulting error
 message may be vague or imprecise. This is due to the use of the
 <code>leg</code> PEG parser generator, which can produce generic error
 reports for malformed input.</li>
 </ul>
+<h1 id="autark-script-rules">Autark script rules</h1>
 <h1 id="meta-">meta {...}</h1>
 <p>Sets script variables using a simple convention: each variable name
 is automatically prefixed with <code>META_</code>. These variables are
