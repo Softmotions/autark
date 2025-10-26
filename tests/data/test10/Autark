@@ -1,0 +1,16 @@
+
+macro {
+  M_ECHO
+  echo { &{2} }
+  echo {
+    init {
+      &{1}
+    }
+  }
+}
+
+call {
+  M_ECHO
+  foo
+  bar
+}

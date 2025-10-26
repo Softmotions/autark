@@ -109,6 +109,10 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_INSTALL;
   } else if (strcmp(key, "library") == 0) {
     return NODE_TYPE_FIND;
+  } else if (strcmp(key, "macro") == 0) {
+    return NODE_TYPE_MACRO;
+  } else if (strcmp(key, "call") == 0) {
+    return NODE_TYPE_CALL;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -292,6 +296,10 @@ static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct
     }
   }
   return visitor(n, -lvl, ctx);
+}
+
+int node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*)) {
+  return _node_visit(n, lvl, ctx, visitor);
 }
 
 static void _preprocess_script(struct value *v) {
@@ -508,6 +516,12 @@ static int _node_bind(struct node *n) {
       case NODE_TYPE_FIND:
         rc = node_find_setup(n);
         break;
+      case NODE_TYPE_MACRO:
+        rc = node_macro_setup(n);
+        break;
+      case NODE_TYPE_CALL:
+        rc = node_call_setup(n);
+        break;
     }
 
     switch (n->type) {
@@ -592,6 +606,30 @@ static void _build_subnodes(struct node *n) {
 static void _post_build_subnodes(struct node *n) {
   for (struct node *nn = n->child; nn; nn = nn->next) {
     node_post_build(nn);
+  }
+}
+
+static void _macro_call_init(struct node *n) {
+}
+
+static void _macros_init(struct sctx *s) {
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    if (n->type == NODE_TYPE_MACRO) {
+      n->flags |= NODE_FLG_SETUP;
+      _node_context_push(n);
+      n->init(n);
+      _node_context_pop(n);
+    }
+  }
+  for (int i = 0; i < s->nodes.num; ++i) {
+    struct node *n = NODE_AT(&s->nodes, i);
+    if (n->type == NODE_TYPE_CALL && !(n->flags & NODE_FLG_CALLED)) {
+      n->flags |= NODE_FLG_CALLED;
+      _node_context_push(n);
+      _macro_call_init(n);
+      _node_context_pop(n);
+    }
   }
 }
 
@@ -752,6 +790,7 @@ int script_include(struct node *parent, const char *file, struct node **out) {
 
 void script_build(struct sctx *s) {
   akassert(s->root);
+  _macros_init(s);
   node_init(s->root);
   node_setup(s->root);
   node_build(s->root);

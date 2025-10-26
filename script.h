@@ -34,6 +34,8 @@
 #define NODE_TYPE_ERROR      0x100000U
 #define NODE_TYPE_ECHO       0x200000U
 #define NODE_TYPE_INSTALL    0x400000U
+#define NODE_TYPE_MACRO      0x800000U
+#define NODE_TYPE_CALL       0x1000000U
 
 #define NODE_FLG_BOUND      0x01U
 #define NODE_FLG_INIT       0x02U
@@ -45,6 +47,7 @@
 #define NODE_FLG_IN_SRC     0x80U
 #define NODE_FLG_NO_CWD     0x100U
 #define NODE_FLG_NEGATE     0x200U
+#define NODE_FLG_CALLED     0x400U
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
@@ -133,6 +136,8 @@ void node_product_add_raw(struct node*, const char *prod);
 void node_reset(struct node *n);
 
 const char* node_value(struct node *n);
+
+int node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*));
 
 void node_module_setup(struct node *n, unsigned flags);
 

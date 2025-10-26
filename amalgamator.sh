@@ -95,6 +95,8 @@ cat ./node_error.c >> ${F}
 cat ./node_echo.c >> ${F}
 cat ./node_install.c >> ${F}
 cat ./node_find.c >> ${F}
+cat ./node_macro.c >> ${F}
+cat ./node_call.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

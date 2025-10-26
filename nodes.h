@@ -26,5 +26,7 @@ int node_error_setup(struct node*);
 int node_echo_setup(struct node*);
 int node_install_setup(struct node*);
 int node_find_setup(struct node*);
+int node_macro_setup(struct node*);
+int node_call_setup(struct node*);
 
 #endif
