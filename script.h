@@ -40,14 +40,13 @@
 #define NODE_FLG_BOUND      0x01U
 #define NODE_FLG_INIT       0x02U
 #define NODE_FLG_SETUP      0x04U
-#define NODE_FLG_UPDATED    0x08U // Node product updated as result of build
+// Vacant: 0x08U
 #define NODE_FLG_BUILT      0x10U // Node built
 #define NODE_FLG_POST_BUILT 0x20U // Node post-built
 #define NODE_FLG_IN_CACHE   0x40U
 #define NODE_FLG_IN_SRC     0x80U
 #define NODE_FLG_NO_CWD     0x100U
 #define NODE_FLG_NEGATE     0x200U
-#define NODE_FLG_CALLED     0x400U
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
@@ -204,5 +203,9 @@ void node_warn(struct node *n, const char *fmt, ...);
 
 int node_error(int rc, struct node *n, const char *fmt, ...);
 
+
+struct node* node_clone_and_register(struct node*);
+
+int node_bind(struct node*);
 
 #endif

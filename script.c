@@ -210,6 +210,30 @@ static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text) {
   return _push_and_register(yy, _node_text(yy, text));
 }
 
+int node_bind(struct node *n) {
+  return _node_bind(n);
+}
+
+struct node* node_clone_and_register(struct node *n_) {
+  struct sctx *ctx = n_->ctx;
+  struct xnode *n = (struct xnode*) n_;
+  struct xnode *x = pool_calloc(g_env.pool, sizeof(*x));
+  *x = *n;
+  x->base.flags = 0;
+  x->base.child = 0;
+  x->base.next = 0;
+  x->base.parent = 0;
+  x->base.impl = 0;
+  x->base.value_get = 0;
+  x->base.init = 0;
+  x->base.setup = 0;
+  x->base.build = 0;
+  x->base.post_build = 0;
+  x->base.dispose = 0;
+  _node_register(ctx, x);
+  return (struct node*) x;
+}
+
 static char* _text_escaped(char *wp, const char *rp) {
   // Replace: \} \{ \n \r \t
   int esc = 0;
@@ -445,16 +469,17 @@ static void _script_destroy(struct sctx *s) {
 
 static int _node_bind(struct node *n) {
   int rc = 0;
-  // Tree has been built since its safe to compute node name
-  if (n->type != NODE_TYPE_SCRIPT) {
-    n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
-  } else {
-    n->name = pool_printf(g_env.pool, "%s     %5s", _node_file(n), "");
-  }
-  n->vfile = pool_printf(g_env.pool, ".%u", n->index);
-
   if (!(n->flags & NODE_FLG_BOUND)) {
     n->flags |= NODE_FLG_BOUND;
+
+    // Tree has been built since its safe to compute node name
+    if (n->type != NODE_TYPE_SCRIPT) {
+      n->name = pool_printf(g_env.pool, "%s:%-3u %5s", _node_file(n), n->lnum, n->value);
+    } else {
+      n->name = pool_printf(g_env.pool, "%s     %5s", _node_file(n), "");
+    }
+    n->vfile = pool_printf(g_env.pool, ".%u", n->index);
+
     switch (n->type) {
       case NODE_TYPE_SCRIPT:
         rc = node_script_setup(n);
@@ -575,7 +600,7 @@ const char* node_value(struct node *n) {
 }
 
 void node_reset(struct node *n) {
-  n->flags &= ~(NODE_FLG_UPDATED | NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_INIT);
+  n->flags &= ~(NODE_FLG_BUILT | NODE_FLG_SETUP | NODE_FLG_INIT);
 }
 
 static void _init_subnodes(struct node *n) {
@@ -609,30 +634,6 @@ static void _post_build_subnodes(struct node *n) {
   }
 }
 
-static void _macro_call_init(struct node *n) {
-}
-
-static void _macros_init(struct sctx *s) {
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    if (n->type == NODE_TYPE_MACRO) {
-      n->flags |= NODE_FLG_SETUP;
-      _node_context_push(n);
-      n->init(n);
-      _node_context_pop(n);
-    }
-  }
-  for (int i = 0; i < s->nodes.num; ++i) {
-    struct node *n = NODE_AT(&s->nodes, i);
-    if (n->type == NODE_TYPE_CALL && !(n->flags & NODE_FLG_CALLED)) {
-      n->flags |= NODE_FLG_CALLED;
-      _node_context_push(n);
-      _macro_call_init(n);
-      _node_context_pop(n);
-    }
-  }
-}
-
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
@@ -641,6 +642,8 @@ void node_init(struct node *n) {
       case NODE_TYPE_INCLUDE:
       case NODE_TYPE_FOREACH:
       case NODE_TYPE_IN_SOURCES:
+      case NODE_TYPE_MACRO:
+      case NODE_TYPE_CALL:
         _node_context_push(n);
         n->init(n);
         _init_subnodes(n);
@@ -790,7 +793,6 @@ int script_include(struct node *parent, const char *file, struct node **out) {
 
 void script_build(struct sctx *s) {
   akassert(s->root);
-  _macros_init(s);
   node_init(s->root);
   node_setup(s->root);
   node_build(s->root);
