@@ -16,6 +16,7 @@ struct _call {
   struct ulist nodes;  ///< Nodes stack. struct node*
   struct node *args[MACRO_MAX_ARGS_NUM];
   int nn_idx;
+  int arg_idx;
 };
 
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
@@ -31,15 +32,23 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
   }
 
   // Macro arg
-  if (n->value[0] == '&' && n->value[1] == '\0' && n->child && !n->child->next) {
+  if (n->value[0] == '&' && n->value[1] == '\0') {
     int rc = 0;
-    int idx = utils_strtol(n->child->value, 10, &rc);
-    if (rc || idx < 1 || idx >= MACRO_MAX_ARGS_NUM) {
-      node_fatal(rc, n, "Invalid macro arg index: %d", idx);
-      return 0;
+    int idx;
+
+    if (n->child) {
+      idx = utils_strtol(n->child->value, 10, &rc);
+      if (rc || idx < 1 || idx >= MACRO_MAX_ARGS_NUM) {
+        node_fatal(rc, n, "Invalid macro arg index: %d", idx);
+        return 0;
+      }
+      n->child = 0;
+      idx--;
+    } else {
+      call->arg_idx++;
+      idx = call->arg_idx;
     }
-    n->child = 0; // Do not traverse arg index
-    idx--;
+    call->arg_idx = idx;
     n = call->args[idx];
     if (!n) {
       node_fatal(rc, call->n, "Call argument: %d for macro: %s is not set", (idx + 1), call->key);
@@ -91,6 +100,7 @@ static void _call_init(struct node *n) {
   }
   struct _call *call = xcalloc(1, sizeof(*call));
   call->nn_idx = -1;
+  call->arg_idx = -1;
   call->key = key;
   call->mn = mn;
   call->n = n;
