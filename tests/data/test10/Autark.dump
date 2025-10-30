@@ -1,0 +1,10 @@
+Autark:0x100 {
+  echo:0x200000 {
+    baz:0x1
+  }
+  echo:0x200000 {
+    init:0x200 {
+      foo bar:0x1
+    }
+  }
+}

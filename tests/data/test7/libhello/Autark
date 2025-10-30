@@ -42,7 +42,7 @@ install {
 
 if {!eq {@{uname -s} Darwin}
   if { library { LIB_M libm.a }
-    echo { ${LIB_M} }
+    #echo { ${LIB_M} }
   } else {
     error { Library libm not found }
   }
@@ -50,7 +50,7 @@ if {!eq {@{uname -s} Darwin}
   if { !${LIB_M}
     error { Library libm not found }
   } else {
-    echo { ${LIB_M} }
+    #echo { ${LIB_M} }
   }
 
   if { library { LIB_N a0d36fdd87bc.a }

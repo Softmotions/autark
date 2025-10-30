@@ -38,6 +38,10 @@ static void _echo(struct node *n) {
     }
   }
 
+  if (g_env.check.log) {
+    xstr_printf(g_env.check.log, "%s: %s\n", n->name, xstr_ptr(xstr));
+  }
+
   node_info(n, "%s", xstr_ptr(xstr));
   xstr_destroy(xstr);
 }

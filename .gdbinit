@@ -1,6 +1,6 @@
-#cd ./autark-cache/tests
-#file ./test9
-file ./autark-cache/autark
+cd ./autark-cache/tests
+file ./test10
+#file ./autark-cache/autark
 #set environment CC=clang
 #set environment IWNET_RUN_TESTS=1
 #set args /home/adam/Projects/softmotions/iwnet

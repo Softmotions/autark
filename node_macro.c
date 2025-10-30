@@ -14,7 +14,7 @@ static void _macro_remove(struct node *n) {
 static void _macro_init(struct node *n) {
   struct unit *unit = unit_peek();
   const char *key = node_value(n->child);
-  if (!key) {
+  if (!key || key[0] == '\0') {
     node_warn(n, "No name specified for 'macro' directive");
     return;
   }

@@ -646,7 +646,11 @@ void node_init(struct node *n) {
       case NODE_TYPE_CALL:
         _node_context_push(n);
         n->init(n);
-        _init_subnodes(n);
+        if (n->type == NODE_TYPE_CALL) {
+          _init_subnodes(n->parent);
+        } else if (n->type != NODE_TYPE_MACRO) {
+          _init_subnodes(n);
+        }
         _node_context_pop(n);
         break;
       default:

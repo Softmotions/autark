@@ -15,6 +15,7 @@ struct _call {
   struct node *cloned; ///< Macro cloned node
   struct ulist nodes;  ///< Nodes stack. struct node*
   struct node *args[MACRO_MAX_ARGS_NUM];
+  int nn_idx;
 };
 
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
@@ -30,13 +31,14 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
   }
 
   // Macro arg
-  if (n->value[0] == '&' && n->value[0] == '\0' && n->child && !n->child->next) {
+  if (n->value[0] == '&' && n->value[1] == '\0' && n->child && !n->child->next) {
     int rc = 0;
     int idx = utils_strtol(n->child->value, 10, &rc);
     if (rc || idx < 1 || idx >= MACRO_MAX_ARGS_NUM) {
       node_fatal(rc, n, "Invalid macro arg index: %d", idx);
       return 0;
     }
+    n->child = 0; // Do not traverse arg index
     idx--;
     n = call->args[idx];
     if (!n) {
@@ -46,6 +48,9 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
   }
 
   struct node *parent = *(struct node**) ulist_peek(&call->nodes);
+  if (call->nn_idx == -1) {
+    call->nn_idx = n->ctx->nodes.num;
+  }
   struct node *nn = node_clone_and_register(n);
   nn->parent = parent;
 
@@ -59,16 +64,23 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
     }
     c->next = nn;
   }
-
-  node_bind(nn);
   ulist_push(&call->nodes, &nn);
   return 0;
+}
+
+static void _call_remove(struct node *n) {
+  struct node *prev = node_find_prev_sibling(n);
+  if (prev) {
+    prev->next = n->next;
+  } else {
+    n->parent->child = n->next;
+  }
 }
 
 static void _call_init(struct node *n) {
   struct unit *unit = unit_peek();
   const char *key = node_value(n->child);
-  if (!key) {
+  if (!key || key[0] == '\0') {
     node_warn(n, "No name specified for 'call' directive");
     return;
   }
@@ -78,26 +90,35 @@ static void _call_init(struct node *n) {
     return;
   }
   struct _call *call = xcalloc(1, sizeof(*call));
+  call->nn_idx = -1;
   call->key = key;
   call->mn = mn;
   call->n = n;
   call->prev = node_find_prev_sibling(n);
-  ulist_init(&call->nodes, 32, sizeof(struct node*));
+  ulist_init(&call->nodes, 16, sizeof(struct node*));
   n->impl = call;
 
   int idx = 0;
-  for (struct node *pn = n->child->next; pn; pn = pn->next) {
+  struct node *next = 0;
+  for (struct node *pn = n->child->next; pn; pn = next) {
+    next = pn->next;
     if (idx >= MACRO_MAX_ARGS_NUM) {
       node_fatal(0, n, "Exceeded the maximum number of macro args: " Q_STR(MACRO_MAX_ARGS_NUM));
       return;
     }
+    pn->next = 0;
     call->args[idx++] = pn;
   }
 
   ulist_push(&call->nodes, &n->parent);
+  _call_remove(n);
   int rc = node_visit(mn, 1, call, _call_macro_visit);
   if (rc) {
     node_fatal(rc, n, 0);
+  }
+  for (int i = call->nn_idx; i < n->ctx->nodes.num; ++i) {
+    struct node *nn = *(struct node**) ulist_get(&n->ctx->nodes, i);
+    node_bind(nn);
   }
 }
 
