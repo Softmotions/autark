@@ -136,6 +136,8 @@ void node_reset(struct node *n);
 
 const char* node_value(struct node *n);
 
+#define NODE_VISIT_CHILD_SKIP INT_MAX
+
 int node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*));
 
 void node_module_setup(struct node *n, unsigned flags);

@@ -310,13 +310,15 @@ static void _finish(struct _yycontext *yy) {
 
 static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*)) {
   int ret = visitor(n, lvl, ctx);
-  if (ret) {
+  if (ret && ret != NODE_VISIT_CHILD_SKIP) {
     return ret;
   }
-  for (struct node *c = n->child; c; c = c->next) {
-    ret = _node_visit(c, lvl + 1, ctx, visitor);
-    if (ret) {
-      return ret;
+  if (ret != NODE_VISIT_CHILD_SKIP) {
+    for (struct node *c = n->child; c; c = c->next) {
+      ret = _node_visit(c, lvl + 1, ctx, visitor);
+      if (ret) {
+        return ret;
+      }
     }
   }
   return visitor(n, -lvl, ctx);

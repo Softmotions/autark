@@ -1,15 +1,26 @@
 macro {
   M_ECHO
+  set {
+    JOIN
+    ^{&{1} ' ' &{2}}
+  }
   echo { &{2} }
   echo {
     init {
       &{1}
     }
   }
+  echo { JOIN ${JOIN} }
 }
 
 call {
   M_ECHO
   'foo bar'
   baz
+}
+
+call {
+  M_ECHO
+  'baz gaz'
+  last
 }

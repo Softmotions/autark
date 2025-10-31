@@ -21,6 +21,7 @@ struct _call {
 
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
   struct _call *call = d;
+  int ret = 0;
 
   if (call->mn == n /*skip macro itself */ || call->mn->child == n /* skip macro name */) {
     return 0;
@@ -33,8 +34,8 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
 
   // Macro arg
   if (n->value[0] == '&' && n->value[1] == '\0') {
-    int rc = 0;
     int idx;
+    int rc = 0;
 
     if (n->child) {
       idx = utils_strtol(n->child->value, 10, &rc);
@@ -42,7 +43,8 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
         node_fatal(rc, n, "Invalid macro arg index: %d", idx);
         return 0;
       }
-      n->child = 0;
+      //n->child = 0;
+      ret = INT_MAX;
       idx--;
     } else {
       call->arg_idx++;
@@ -74,7 +76,7 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
     c->next = nn;
   }
   ulist_push(&call->nodes, &nn);
-  return 0;
+  return ret;
 }
 
 static void _call_remove(struct node *n) {
@@ -122,10 +124,7 @@ static void _call_init(struct node *n) {
 
   ulist_push(&call->nodes, &n->parent);
   _call_remove(n);
-  int rc = node_visit(mn, 1, call, _call_macro_visit);
-  if (rc) {
-    node_fatal(rc, n, 0);
-  }
+  node_visit(mn, 1, call, _call_macro_visit);
   for (int i = call->nn_idx; i < n->ctx->nodes.num; ++i) {
     struct node *nn = *(struct node**) ulist_get(&n->ctx->nodes, i);
     node_bind(nn);

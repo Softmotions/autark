@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "170d75f"
+#define META_REVISION "69a4678"
 
 #endif
 #define _AMALGAMATE_
@@ -1105,6 +1105,8 @@ void node_product_add_raw(struct node*, const char *prod);
 void node_reset(struct node *n);
 
 const char* node_value(struct node *n);
+
+#define NODE_VISIT_CHILD_SKIP INT_MAX
 
 int node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*));
 
@@ -6519,10 +6521,12 @@ struct _call {
   struct ulist nodes;  ///< Nodes stack. struct node*
   struct node *args[MACRO_MAX_ARGS_NUM];
   int nn_idx;
+  int arg_idx;
 };
 
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
   struct _call *call = d;
+  int ret = 0;
 
   if (call->mn == n /*skip macro itself */ || call->mn->child == n /* skip macro name */) {
     return 0;
@@ -6534,15 +6538,24 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
   }
 
   // Macro arg
-  if (n->value[0] == '&' && n->value[1] == '\0' && n->child && !n->child->next) {
+  if (n->value[0] == '&' && n->value[1] == '\0') {
+    int idx;
     int rc = 0;
-    int idx = utils_strtol(n->child->value, 10, &rc);
-    if (rc || idx < 1 || idx >= MACRO_MAX_ARGS_NUM) {
-      node_fatal(rc, n, "Invalid macro arg index: %d", idx);
-      return 0;
+
+    if (n->child) {
+      idx = utils_strtol(n->child->value, 10, &rc);
+      if (rc || idx < 1 || idx >= MACRO_MAX_ARGS_NUM) {
+        node_fatal(rc, n, "Invalid macro arg index: %d", idx);
+        return 0;
+      }
+      //n->child = 0;
+      ret = INT_MAX;
+      idx--;
+    } else {
+      call->arg_idx++;
+      idx = call->arg_idx;
     }
-    n->child = 0; // Do not traverse arg index
-    idx--;
+    call->arg_idx = idx;
     n = call->args[idx];
     if (!n) {
       node_fatal(rc, call->n, "Call argument: %d for macro: %s is not set", (idx + 1), call->key);
@@ -6568,7 +6581,7 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
     c->next = nn;
   }
   ulist_push(&call->nodes, &nn);
-  return 0;
+  return ret;
 }
 
 static void _call_remove(struct node *n) {
@@ -6594,6 +6607,7 @@ static void _call_init(struct node *n) {
   }
   struct _call *call = xcalloc(1, sizeof(*call));
   call->nn_idx = -1;
+  call->arg_idx = -1;
   call->key = key;
   call->mn = mn;
   call->n = n;
@@ -6615,10 +6629,7 @@ static void _call_init(struct node *n) {
 
   ulist_push(&call->nodes, &n->parent);
   _call_remove(n);
-  int rc = node_visit(mn, 1, call, _call_macro_visit);
-  if (rc) {
-    node_fatal(rc, n, 0);
-  }
+  node_visit(mn, 1, call, _call_macro_visit);
   for (int i = call->nn_idx; i < n->ctx->nodes.num; ++i) {
     struct node *nn = *(struct node**) ulist_get(&n->ctx->nodes, i);
     node_bind(nn);
@@ -8528,13 +8539,15 @@ static void _finish(struct _yycontext *yy) {
 
 static int _node_visit(struct node *n, int lvl, void *ctx, int (*visitor)(struct node*, int, void*)) {
   int ret = visitor(n, lvl, ctx);
-  if (ret) {
+  if (ret && ret != NODE_VISIT_CHILD_SKIP) {
     return ret;
   }
-  for (struct node *c = n->child; c; c = c->next) {
-    ret = _node_visit(c, lvl + 1, ctx, visitor);
-    if (ret) {
-      return ret;
+  if (ret != NODE_VISIT_CHILD_SKIP) {
+    for (struct node *c = n->child; c; c = c->next) {
+      ret = _node_visit(c, lvl + 1, ctx, visitor);
+      if (ret) {
+        return ret;
+      }
     }
   }
   return visitor(n, -lvl, ctx);
