@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=69a4678
+META_REVISION=e899b5a
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "69a4678"
+#define META_REVISION "e899b5a"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -802,6 +802,7 @@ void autark_build_prepare(const char *script_path);
 #define NODE_TYPE_INSTALL    0x400000U
 #define NODE_TYPE_MACRO      0x800000U
 #define NODE_TYPE_CALL       0x1000000U
+#define NODE_TYPE_SUBST_SET  0x2000000U
 #define NODE_FLG_BOUND      0x01U
 #define NODE_FLG_INIT       0x02U
 #define NODE_FLG_SETUP      0x04U
@@ -7846,7 +7847,7 @@ void node_init(struct node *n) {
       case NODE_TYPE_MACRO:
       case NODE_TYPE_CALL:
         _node_context_push(n);
-        n->init(n);
+          n->init(n);
         if (n->type == NODE_TYPE_CALL) {
           _init_subnodes(n->parent);
         } else if (n->type != NODE_TYPE_MACRO) {

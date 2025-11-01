@@ -64,23 +64,23 @@ set {
   node_cc.c
   node_check.c
   node_configure.c
+  node_dir.c
+  node_echo.c
+  node_error.c
+  node_find.c
   node_foreach.c
   node_if.c
   node_in_sources.c
   node_include.c
+  node_install.c
   node_join.c
   node_macro.c
   node_meta.c
+  node_option.c
   node_run.c
   node_script.c
   node_set.c
   node_subst.c
-  node_dir.c
-  node_option.c
-  node_error.c
-  node_echo.c
-  node_install.c
-  node_find.c
   paths.c
   pool.c
   script.c

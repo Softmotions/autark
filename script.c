@@ -74,7 +74,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;
-  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "set-force") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "check") == 0) {
     return NODE_TYPE_CHECK;
@@ -647,7 +647,7 @@ void node_init(struct node *n) {
       case NODE_TYPE_MACRO:
       case NODE_TYPE_CALL:
         _node_context_push(n);
-        n->init(n);
+          n->init(n);
         if (n->type == NODE_TYPE_CALL) {
           _init_subnodes(n->parent);
         } else if (n->type != NODE_TYPE_MACRO) {
