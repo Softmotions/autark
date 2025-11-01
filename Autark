@@ -149,6 +149,7 @@ in-sources {
     exec { amalgamator.sh }
     consumes {
       amalgamator.sh
+      autark
     }
     produces {
       dist/autark.c
