@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=e899b5a
+META_REVISION=abe2739
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "e899b5a"
+#define META_REVISION "abe2739"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -3298,7 +3298,11 @@ static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **
   }
   return unit_peek();
 }
+static void _set_init(struct node *n);
 static void _set_setup(struct node *n) {
+  if (!n->init) {
+    _set_init(n);
+  }
   if (n->child && strcmp(n->value, "env") == 0) {
     const char *v = _set_value_get(n);
     if (v) {
@@ -3326,13 +3330,16 @@ static void _set_init(struct node *n) {
   }
   unit_env_set_node(unit, key, n);
 }
+static bool _set_is_force(struct node *n) {
+  return strcmp(n->value, "set-force") == 0;
+}
 static const char* _set_value_get(struct node *n) {
   if (n->recur_next.active && n->recur_next.n) {
     return _set_value_get(n->recur_next.n);
   }
   n->recur_next.active = true;
   struct node_foreach *fe = node_find_parent_foreach(n);
-  if (fe) {
+  if (fe || _set_is_force(n)) {
     if ((uintptr_t) n->impl != (uintptr_t) -1) {
       free(n->impl);
     }
@@ -3383,12 +3390,18 @@ static void _set_dispose(struct node *n) {
   }
   n->impl = 0;
 }
+static void _set_build(struct node *n) {
+  _set_init(n);
+}
 int node_set_setup(struct node *n) {
   n->flags |= NODE_FLG_NO_CWD;
   n->init = _set_init;
   n->setup = _set_setup;
   n->value_get = _set_value_get;
   n->dispose = _set_dispose;
+  if (_set_is_force(n)) {
+    n->build = _set_build;
+  }
   return 0;
 }
 #ifndef _AMALGAMATE_
@@ -7320,7 +7333,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;
-  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "set-force") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "check") == 0) {
     return NODE_TYPE_CHECK;
