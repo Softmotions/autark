@@ -25,8 +25,12 @@ static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **
 
 static void _set_init(struct node *n);
 
+static bool _set_is_force(struct node *n) {
+  return strcmp(n->value, "set-force") == 0;
+}
+
 static void _set_setup(struct node *n) {
-  if (!n->init) {
+  if (_set_is_force(n)) {
     _set_init(n);
   }
   if (n->child && strcmp(n->value, "env") == 0) {
@@ -56,10 +60,6 @@ static void _set_init(struct node *n) {
     n->recur_next.n = nn;
   }
   unit_env_set_node(unit, key, n);
-}
-
-static bool _set_is_force(struct node *n) {
-  return strcmp(n->value, "set-force") == 0;
 }
 
 static const char* _set_value_get(struct node *n) {
