@@ -773,7 +773,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb16-1"><a href="#
 <p>The <code>set</code> rule assigns a value to a variable in the build
 script.</p>
 <div class="sourceCode" id="cb17"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set | set-force {</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   | NAME</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   | _</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   | parent { NAME }</span></span>
@@ -823,6 +823,20 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb20-1"><a href="#
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ... # values</span></span>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<h2 id="set-force">set-force</h2>
+<p>Please note that the <code>set</code> directive assigns a variable
+under the given name during the init <code>build</code> phase. If you
+use multiple set expressions for the same variable name, only the last
+one will take effect. This happens because set expression values are
+evaluated during the <code>init</code> phase, while the
+<code>build</code> and <code>setup</code> phases are executed afterward
+- using the values cached from <code>init</code>.</p>
+<p>This behavior often causes confusion in <code>macros</code> that are
+invoked multiple times and contain <code>set</code> directives in their
+bodies.</p>
+<p>To ensure the variable is correctly updated across all build and
+setup phases, use <code>set-force</code>. Unlike set, it is executed for
+every phase and does not cache its results.</p>
 <h1 id="env-">env {...}</h1>
 <p>Similar to <code>set</code>, but sets an <strong>environment
 variable</strong> for the build process using <code>setenv(3)</code> at
