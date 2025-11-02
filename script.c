@@ -636,7 +636,6 @@ static void _post_build_subnodes(struct node *n) {
   }
 }
 
-
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
