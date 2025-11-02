@@ -4,7 +4,7 @@
 #include "xstr.h"
 #include "alloc.h"
 #include "utils.h"
-#include "env.h"
+#include "config.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -47,6 +47,9 @@ static const char* _error_get(int code) {
       return "External command failed (AK_ERROR_EXTERNAL_COMMAND)";
     case AK_ERROR_DEPENDENCY_UNRESOLVED:
       return "I don't know how to build dependency (AK_ERROR_DEPENDENCY_UNRESOLVED)";
+    case AK_ERROR_MACRO_MAX_RECURSIVE_CALLS:
+      return "Max number of recursive macro calls reached: "
+             Q(MACRO_MAX_RECURSIVE_CALLS)  " (AK_ERROR_MACRO_MAX_RECURSIVE_CALLS)";
     case AK_ERROR_OK:
       return "OK";
     default:

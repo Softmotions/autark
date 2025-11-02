@@ -636,6 +636,7 @@ static void _post_build_subnodes(struct node *n) {
   }
 }
 
+
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
@@ -647,9 +648,15 @@ void node_init(struct node *n) {
       case NODE_TYPE_MACRO:
       case NODE_TYPE_CALL:
         _node_context_push(n);
-          n->init(n);
+        n->init(n);
         if (n->type == NODE_TYPE_CALL) {
-          _init_subnodes(n->parent);
+          struct node *cn = n->next;
+          struct node *mn = call_macro_node(n);
+          macro_register_call(mn);
+          for (struct node *nn = call_first_node(n); nn && nn != cn; nn = nn->next) {
+            node_init(nn);
+          }
+          macro_unregister_call(mn);
         } else if (n->type != NODE_TYPE_MACRO) {
           _init_subnodes(n);
         }

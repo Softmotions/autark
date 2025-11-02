@@ -7,20 +7,21 @@
 #endif
 
 enum akecode {
-  AK_ERROR_OK                    = 0,
-  AK_ERROR_FAIL                  = -1,
-  AK_ERROR_UNIMPLEMETED          = -2,
-  AK_ERROR_INVALID_ARGS          = -3,
-  AK_ERROR_ASSERTION             = -4,
-  AK_ERROR_OVERFLOW              = -5,
-  AK_ERROR_IO                    = -6,
-  AK_ERROR_SCRIPT_SYNTAX         = -10,
-  AK_ERROR_SCRIPT                = -11,
-  AK_ERROR_CYCLIC_BUILD_DEPS     = -12,
-  AK_ERROR_SCRIPT_ERROR          = -13,
-  AK_ERROR_NOT_IMPLEMENTED       = -14,
-  AK_ERROR_EXTERNAL_COMMAND      = -15,
-  AK_ERROR_DEPENDENCY_UNRESOLVED = -16,
+  AK_ERROR_OK                        = 0,
+  AK_ERROR_FAIL                      = -1,
+  AK_ERROR_UNIMPLEMETED              = -2,
+  AK_ERROR_INVALID_ARGS              = -3,
+  AK_ERROR_ASSERTION                 = -4,
+  AK_ERROR_OVERFLOW                  = -5,
+  AK_ERROR_IO                        = -6,
+  AK_ERROR_SCRIPT_SYNTAX             = -10,
+  AK_ERROR_SCRIPT                    = -11,
+  AK_ERROR_CYCLIC_BUILD_DEPS         = -12,
+  AK_ERROR_SCRIPT_ERROR              = -13,
+  AK_ERROR_NOT_IMPLEMENTED           = -14,
+  AK_ERROR_EXTERNAL_COMMAND          = -15,
+  AK_ERROR_DEPENDENCY_UNRESOLVED     = -16,
+  AK_ERROR_MACRO_MAX_RECURSIVE_CALLS = -17,
 };
 
 __attribute__((noreturn))

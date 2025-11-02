@@ -29,4 +29,9 @@ int node_find_setup(struct node*);
 int node_macro_setup(struct node*);
 int node_call_setup(struct node*);
 
+struct node* call_macro_node(struct node*);
+struct node* call_first_node(struct node*);
+void macro_register_call(struct node*);
+void macro_unregister_call(struct node*);
+
 #endif

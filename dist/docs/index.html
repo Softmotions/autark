@@ -310,6 +310,7 @@ self-contained build system for C and C++</h1>
 <li><a href="#cc-----cxx---">cc/cxx</a></li>
 <li><a href="#library-">library</a></li>
 <li><a href="#install-">install</a></li>
+<li><a href="#macros">macros</a></li>
 </ul>
 <p><strong>Autark</strong> is a self-contained build system that resides
 entirely within your project and requires only <code>/bin/sh</code> and
@@ -773,7 +774,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb16-1"><a href="#
 <p>The <code>set</code> rule assigns a value to a variable in the build
 script.</p>
 <div class="sourceCode" id="cb17"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set | set-force {</span></span>
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   | NAME</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   | _</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   | parent { NAME }</span></span>
@@ -1354,6 +1355,8 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb56-1"><a href="#
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
+<h1 id="macros">macros</h1>
+<p>Макросы являются удобным</p>
 <h1 id="install-">install {..}</h1>
 <p>If <code>build.sh</code> is run with the <code>-I</code> or
 <code>--install</code> option (to install all built artifacts), or if an

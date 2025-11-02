@@ -19,6 +19,25 @@ struct _call {
   int arg_idx;
 };
 
+struct node* call_macro_node(struct node *n) {
+  akassert(n->type == NODE_TYPE_CALL);
+  struct _call *c = n->impl;
+  akassert(c && c->mn);
+  return c->mn;
+}
+
+struct node* call_first_node(struct node *n) {
+  akassert(n->type == NODE_TYPE_CALL);
+  struct _call *c = n->impl;
+  akassert(c);
+  if (c->nn_idx > -1) {
+    struct node *nn = *(struct node**) ulist_get(&n->ctx->nodes, c->nn_idx);
+    return nn;
+  } else {
+    return 0;
+  }
+}
+
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
   struct _call *call = d;
   int ret = 0;
@@ -43,7 +62,6 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
         node_fatal(rc, n, "Invalid macro arg index: %d", idx);
         return 0;
       }
-      //n->child = 0;
       ret = INT_MAX;
       idx--;
     } else {

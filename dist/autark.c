@@ -2,7 +2,9 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "c05460d"
+#define META_REVISION "688d2f6"
+
+#define MACRO_MAX_RECURSIVE_CALLS 128
 
 #endif
 #define _AMALGAMATE_
@@ -122,20 +124,21 @@ static inline int value_destroy(struct value *v) {
 #endif
 
 enum akecode {
-  AK_ERROR_OK                    = 0,
-  AK_ERROR_FAIL                  = -1,
-  AK_ERROR_UNIMPLEMETED          = -2,
-  AK_ERROR_INVALID_ARGS          = -3,
-  AK_ERROR_ASSERTION             = -4,
-  AK_ERROR_OVERFLOW              = -5,
-  AK_ERROR_IO                    = -6,
-  AK_ERROR_SCRIPT_SYNTAX         = -10,
-  AK_ERROR_SCRIPT                = -11,
-  AK_ERROR_CYCLIC_BUILD_DEPS     = -12,
-  AK_ERROR_SCRIPT_ERROR          = -13,
-  AK_ERROR_NOT_IMPLEMENTED       = -14,
-  AK_ERROR_EXTERNAL_COMMAND      = -15,
-  AK_ERROR_DEPENDENCY_UNRESOLVED = -16,
+  AK_ERROR_OK                        = 0,
+  AK_ERROR_FAIL                      = -1,
+  AK_ERROR_UNIMPLEMETED              = -2,
+  AK_ERROR_INVALID_ARGS              = -3,
+  AK_ERROR_ASSERTION                 = -4,
+  AK_ERROR_OVERFLOW                  = -5,
+  AK_ERROR_IO                        = -6,
+  AK_ERROR_SCRIPT_SYNTAX             = -10,
+  AK_ERROR_SCRIPT                    = -11,
+  AK_ERROR_CYCLIC_BUILD_DEPS         = -12,
+  AK_ERROR_SCRIPT_ERROR              = -13,
+  AK_ERROR_NOT_IMPLEMENTED           = -14,
+  AK_ERROR_EXTERNAL_COMMAND          = -15,
+  AK_ERROR_DEPENDENCY_UNRESOLVED     = -16,
+  AK_ERROR_MACRO_MAX_RECURSIVE_CALLS = -17,
 };
 
 __attribute__((noreturn))
@@ -950,6 +953,11 @@ int node_install_setup(struct node*);
 int node_find_setup(struct node*);
 int node_macro_setup(struct node*);
 int node_call_setup(struct node*);
+
+struct node* call_macro_node(struct node*);
+struct node* call_first_node(struct node*);
+void macro_register_call(struct node*);
+void macro_unregister_call(struct node*);
 
 #endif
 #ifndef AUTARK_H
@@ -1773,7 +1781,7 @@ const char** pool_split_string(
 #include "xstr.h"
 #include "alloc.h"
 #include "utils.h"
-#include "env.h"
+#include "config.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -1816,6 +1824,9 @@ static const char* _error_get(int code) {
       return "External command failed (AK_ERROR_EXTERNAL_COMMAND)";
     case AK_ERROR_DEPENDENCY_UNRESOLVED:
       return "I don't know how to build dependency (AK_ERROR_DEPENDENCY_UNRESOLVED)";
+    case AK_ERROR_MACRO_MAX_RECURSIVE_CALLS:
+      return "Max number of recursive macro calls reached: "
+             Q(MACRO_MAX_RECURSIVE_CALLS)  " (AK_ERROR_MACRO_MAX_RECURSIVE_CALLS)";
     case AK_ERROR_OK:
       return "OK";
     default:
@@ -6492,7 +6503,38 @@ int node_find_setup(struct node *n) {
 }
 #ifndef _AMALGAMATE_
 #include "script.h"
+#include "log.h"
+#include "alloc.h"
+#include "config.h"
 #endif
+
+struct _macro_state {
+  int num_calls;
+};
+
+void macro_register_call(struct node *mn) {
+  akassert(mn->type == NODE_TYPE_MACRO);
+  struct _macro_state *s = mn->impl;
+  if (!s) {
+    s = xmalloc(sizeof(*s));
+    s->num_calls = 0;
+    mn->impl = s;
+  }
+  ++s->num_calls;
+  fprintf(stderr, "!!!! RC=%d\n", s->num_calls);
+  if (s->num_calls >= MACRO_MAX_RECURSIVE_CALLS) {
+    node_fatal(AK_ERROR_MACRO_MAX_RECURSIVE_CALLS, mn, 0);
+  }
+}
+
+void macro_unregister_call(struct node *mn) {
+  akassert(mn->type == NODE_TYPE_MACRO);
+  struct _macro_state *s = mn->impl;
+  akassert(s);
+  --s->num_calls;
+  fprintf(stderr, "!!!! UC=%d\n", s->num_calls);
+  akassert(s->num_calls >= 0);
+}
 
 static void _macro_remove(struct node *n) {
   struct node *prev = node_find_prev_sibling(n);
@@ -6514,9 +6556,17 @@ static void _macro_init(struct node *n) {
   unit_env_set_node(unit, key, n);
 }
 
+static void _macro_dispose(struct node *n) {
+  struct _macro_state *s = n->impl;
+  if (s) {
+    free(s);
+  }
+}
+
 int node_macro_setup(struct node *n) {
   n->flags |= NODE_FLG_NO_CWD;
   n->init = _macro_init;
+  n->dispose = _macro_dispose;
   return 0;
 }
 #ifndef _AMALGAMATE_
@@ -6539,6 +6589,25 @@ struct _call {
   int nn_idx;
   int arg_idx;
 };
+
+struct node* call_macro_node(struct node *n) {
+  akassert(n->type == NODE_TYPE_CALL);
+  struct _call *c = n->impl;
+  akassert(c && c->mn);
+  return c->mn;
+}
+
+struct node* call_first_node(struct node *n) {
+  akassert(n->type == NODE_TYPE_CALL);
+  struct _call *c = n->impl;
+  akassert(c);
+  if (c->nn_idx > -1) {
+    struct node *nn = *(struct node**) ulist_get(&n->ctx->nodes, c->nn_idx);
+    return nn;
+  } else {
+    return 0;
+  }
+}
 
 static int _call_macro_visit(struct node *n, int lvl, void *d) {
   struct _call *call = d;
@@ -6564,7 +6633,6 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
         node_fatal(rc, n, "Invalid macro arg index: %d", idx);
         return 0;
       }
-      //n->child = 0;
       ret = INT_MAX;
       idx--;
     } else {
@@ -8881,6 +8949,7 @@ static void _post_build_subnodes(struct node *n) {
   }
 }
 
+
 void node_init(struct node *n) {
   if (!node_is_init(n)) {
     n->flags |= NODE_FLG_INIT;
@@ -8892,9 +8961,15 @@ void node_init(struct node *n) {
       case NODE_TYPE_MACRO:
       case NODE_TYPE_CALL:
         _node_context_push(n);
-          n->init(n);
+        n->init(n);
         if (n->type == NODE_TYPE_CALL) {
-          _init_subnodes(n->parent);
+          struct node *cn = n->next;
+          struct node *mn = call_macro_node(n);
+          macro_register_call(mn);
+          for (struct node *nn = call_first_node(n); nn && nn != cn; nn = nn->next) {
+            node_init(nn);
+          }
+          macro_unregister_call(mn);
         } else if (n->type != NODE_TYPE_MACRO) {
           _init_subnodes(n);
         }

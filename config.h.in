@@ -4,4 +4,6 @@
 //autarkdef META_VERSION "
 //autarkdef META_REVISION "
 
+#define MACRO_MAX_RECURSIVE_CALLS 128
+
 #endif

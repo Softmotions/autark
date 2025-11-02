@@ -21,6 +21,7 @@
 - [cc/cxx](#cc-----cxx---)
 - [library](#library-)
 - [install](#install-)
+- [macros](#macros)
 
 **Autark** is a self-contained build system that resides entirely within
 your project and requires only `/bin/sh` and a `C` compiler to work!
@@ -523,7 +524,7 @@ set {
 The `set` rule assigns a value to a variable in the build script.
 
 ```cfg
-set | set-force {
+set {
    | NAME
    | _
    | parent { NAME }
@@ -1206,6 +1207,11 @@ if { library { LIB_M libm.a }
 
 This will search for `libm.a`, and if found, store its absolute path in `LIB_M` and print it.
 If the library is not found, the script will terminate with an error.
+
+
+# macros
+
+Макросы являются удобным
 
 
 # install {..}
