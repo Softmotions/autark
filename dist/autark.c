@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "4a66677"
+#define META_REVISION "4edc652"
 
 #endif
 #define _AMALGAMATE_
@@ -1006,7 +1006,6 @@ void autark_build_prepare(const char *script_path);
 #define NODE_TYPE_INSTALL    0x400000U
 #define NODE_TYPE_MACRO      0x800000U
 #define NODE_TYPE_CALL       0x1000000U
-#define NODE_TYPE_SUBST_SET  0x2000000U
 
 #define NODE_FLG_BOUND      0x01U
 #define NODE_FLG_INIT       0x02U
@@ -5246,6 +5245,7 @@ struct _cc_ctx {
   struct node *n_consumes;
   struct node *n_objects;
   const char  *cc;
+  const char *objskey;
   struct ulist consumes;    // sizeof(char*)
   int num_failed;
 };
@@ -5544,6 +5544,11 @@ static void _cc_on_resolve_init(struct node_resolve *r) {
 
 static void _cc_build(struct node *n) {
   struct _cc_ctx *ctx = n->impl;
+
+  char *objs = ulist_to_vlist(&ctx->objects);
+  node_env_set(n, ctx->objskey, objs);
+  free(objs);
+
   for (int i = 0; i < ctx->sources.num; ++i) {
     const char *src = *(char**) ulist_get(&ctx->sources, i);
     if (!path_is_exist(src)) {
@@ -5671,8 +5676,10 @@ static void _cc_setup(struct node *n) {
   if (g_env.verbose) {
     node_info(n, "Objects in ${%s}", objskey);
   }
+
+  ctx->objskey = pool_strdup(ctx->pool, objskey);
   char *objs = ulist_to_vlist(&ctx->objects);
-  node_env_set(n, objskey, objs);
+  node_env_set(n, ctx->objskey, objs);
   free(objs);
 }
 
