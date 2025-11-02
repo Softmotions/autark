@@ -25,14 +25,8 @@ static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **
 
 static void _set_init(struct node *n);
 
-static bool _set_is_force(struct node *n) {
-  return strcmp(n->value, "set-force") == 0;
-}
-
 static void _set_setup(struct node *n) {
-  if (_set_is_force(n)) {
-    _set_init(n);
-  }
+  _set_init(n);
   if (n->child && strcmp(n->value, "env") == 0) {
     const char *v = _set_value_get(n);
     if (v) {
@@ -56,7 +50,7 @@ static void _set_init(struct node *n) {
     return;
   }
   struct node *nn = unit_env_get_node(unit, key);
-  if (nn) {
+  if (nn && nn != n) {
     n->recur_next.n = nn;
   }
   unit_env_set_node(unit, key, n);
@@ -69,7 +63,7 @@ static const char* _set_value_get(struct node *n) {
   n->recur_next.active = true;
 
   struct node_foreach *fe = node_find_parent_foreach(n);
-  if (fe || _set_is_force(n)) {
+  if (fe) {
     if ((uintptr_t) n->impl != (uintptr_t) -1) {
       free(n->impl);
     }
@@ -138,8 +132,6 @@ int node_set_setup(struct node *n) {
   n->setup = _set_setup;
   n->value_get = _set_value_get;
   n->dispose = _set_dispose;
-  if (_set_is_force(n)) {
-    n->build = _set_build;
-  }
+  n->build = _set_build;
   return 0;
 }

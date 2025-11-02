@@ -1,6 +1,6 @@
 macro {
   M_ECHO
-  set-force {
+  set {
     JOIN
     ^{&{1} ' ' &{2}}
   }

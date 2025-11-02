@@ -1,5 +1,5 @@
 cd ./autark-cache/tests
-file ./test10
+file ./test6
 #file ./autark-cache/autark
 #set environment CC=clang
 #set environment IWNET_RUN_TESTS=1

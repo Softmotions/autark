@@ -581,19 +581,6 @@ set {
 }
 ```
 
-## set-force
-
-Please note that the `set` directive assigns a variable under the given name during the init `build` phase.
-If you use multiple set expressions for the same variable name, only the last one will take effect.
-This happens because set expression values are evaluated during the `init` phase, while the `build` and `setup` phases
-are executed afterward - using the values cached from `init`.
-
-This behavior often causes confusion in `macros` that are invoked multiple times and contain
-`set` directives in their bodies.
-
-To ensure the variable is correctly updated across all build and setup phases, use `set-force`.
-Unlike set, it is executed for every phase and does not cache its results.
-
 # env {...}
 
 Similar to `set`, but sets an **environment variable** for the build process

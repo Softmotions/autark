@@ -12,6 +12,7 @@ int main(void) {
   struct sctx *sctx;
   akassert(script_open("../../tests/data/test10/Autark", &sctx) == 0);
   script_build(sctx);
+
   akassert(
     strcmp(
       "Autark:9    init: foo bar\n"
@@ -21,6 +22,7 @@ int main(void) {
       "Autark:7    echo: last\n"
       "Autark:13   echo: JOIN baz gaz last\n",
       xstr_ptr(xstr)) == 0);
+
   xstr_clear(xstr);
   script_dump(sctx, xstr);
   script_close(&sctx);
