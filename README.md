@@ -21,7 +21,7 @@
 - [cc/cxx](#cc-----cxx---)
 - [library](#library-)
 - [install](#install-)
-- [macros](#macros)
+- [macros](#Macros)
 
 **Autark** is a self-contained build system that resides entirely within
 your project and requires only `/bin/sh` and a `C` compiler to work!
@@ -1208,11 +1208,69 @@ if { library { LIB_M libm.a }
 This will search for `libm.a`, and if found, store its absolute path in `LIB_M` and print it.
 If the library is not found, the script will terminate with an error.
 
+# Macros
 
-# macros
+Macros provide a convenient way to reuse code for implementing repetitive elements in a project’s build script.
+They are especially useful for defining test cases where the build steps differ only by a few parameter values.
 
-Макросы являются удобным
+A macro call is similar to a function call, but instead of executing code directly, it rewrites and rebuilds the
+script’s AST (Abstract Syntax Tree) before the build script starts.
 
+```cfg
+macro {
+  MACRO_NAME
+  ...
+}
+```
+
+The body of a macro directive can contain any valid Autark script elements and may include argument placeholders for macro calls.
+These placeholders have the following format: `&{N}`, where `N` is the argument number starting from one.
+A macro is invoked using the `call` directive:
+
+```cfg
+call {
+  MACRO_NAME
+  ARGS...
+}
+```
+
+Example:
+
+```cfg
+macro {
+  M_ECHO
+  set {
+    JOIN
+    ^{&{1} ' ' &{2}}
+  }
+  echo { JOIN ${JOIN} }
+}
+
+call {
+  M_ECHO
+  'foo bar'
+  baz
+}
+
+call {
+  M_ECHO
+  'baz gaz'
+  last
+}
+```
+
+Console output:
+
+```
+foo bar baz
+baz gaz last
+```
+
+All `&{N}` placeholders are replaced with the corresponding arguments from the call directive.
+If the argument index `N` is omitted (`&{}`), the arguments are substituted in sequential order starting from `1`.
+
+A good real-world example of using macros can be found here:
+https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark
 
 # install {..}
 

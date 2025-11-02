@@ -310,7 +310,7 @@ self-contained build system for C and C++</h1>
 <li><a href="#cc-----cxx---">cc/cxx</a></li>
 <li><a href="#library-">library</a></li>
 <li><a href="#install-">install</a></li>
-<li><a href="#macros">macros</a></li>
+<li><a href="#Macros">macros</a></li>
 </ul>
 <p><strong>Autark</strong> is a self-contained build system that resides
 entirely within your project and requires only <code>/bin/sh</code> and
@@ -1355,8 +1355,60 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb56-1"><a href="#
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
-<h1 id="macros">macros</h1>
-<p>Макросы являются удобным</p>
+<h1 id="macros">Macros</h1>
+<p>Macros provide a convenient way to reuse code for implementing
+repetitive elements in a project’s build script. They are especially
+useful for defining test cases where the build steps differ only by a
+few parameter values.</p>
+<p>A macro call is similar to a function call, but instead of executing
+code directly, it rewrites and rebuilds the script’s AST (Abstract
+Syntax Tree) before the build script starts.</p>
+<div class="sourceCode" id="cb57"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<p>The body of a macro directive can contain any valid Autark script
+elements and may include argument placeholders for macro calls. These
+placeholders have the following format: <code>&amp;{N}</code>, where
+<code>N</code> is the argument number starting from one. A macro is
+invoked using the <code>call</code> directive:</p>
+<div class="sourceCode" id="cb58"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ARGS...</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<p>Example:</p>
+<div class="sourceCode" id="cb59"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set {</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    JOIN</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ^{&amp;{1} &#39; &#39; &amp;{2}}</span></span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { JOIN ${JOIN} }</span></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;foo bar&#39;</span></span>
+<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  baz</span></span>
+<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;baz gaz&#39;</span></span>
+<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  last</span></span>
+<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<p>Console output:</p>
+<pre><code>foo bar baz
+baz gaz last</code></pre>
+<p>All <code>&amp;{N}</code> placeholders are replaced with the
+corresponding arguments from the call directive. If the argument index
+<code>N</code> is omitted (<code>&amp;{}</code>), the arguments are
+substituted in sequential order starting from <code>1</code>.</p>
+<p>A good real-world example of using macros can be found here: <a
+href="https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark">https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark</a></p>
 <h1 id="install-">install {..}</h1>
 <p>If <code>build.sh</code> is run with the <code>-I</code> or
 <code>--install</code> option (to install all built artifacts), or if an
@@ -1389,16 +1441,16 @@ prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
 <code>INSTALL_PREFIX</code> for man pages. <strong>Default:</strong>
 <code>share/man</code></li>
 </ul>
-<div class="sourceCode" id="cb57"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_DIR_EXPR FILES... }</span></span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_DIR_EXPR FILES... }</span></span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
 <code>${INSTALL_PREFIX}/${INSTALL_DIR_EXPR}</code> (creating it if
 necessary). File permissions from the original files are preserved
 during the copy.</p>
 <p>Example:</p>
-<div class="sourceCode" id="cb58"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }</span></span></code></pre></div>
+<div class="sourceCode" id="cb62"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }</span></span></code></pre></div>
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
 the chosen prefix.</p>
