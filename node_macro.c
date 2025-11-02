@@ -18,7 +18,6 @@ void macro_register_call(struct node *mn) {
     mn->impl = s;
   }
   ++s->num_calls;
-  fprintf(stderr, "!!!! RC=%d\n", s->num_calls);
   if (s->num_calls >= MACRO_MAX_RECURSIVE_CALLS) {
     node_fatal(AK_ERROR_MACRO_MAX_RECURSIVE_CALLS, mn, 0);
   }
@@ -29,7 +28,6 @@ void macro_unregister_call(struct node *mn) {
   struct _macro_state *s = mn->impl;
   akassert(s);
   --s->num_calls;
-  fprintf(stderr, "!!!! UC=%d\n", s->num_calls);
   akassert(s->num_calls >= 0);
 }
 
