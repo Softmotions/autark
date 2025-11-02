@@ -21,7 +21,7 @@
 - [cc/cxx](#cc-----cxx---)
 - [library](#library-)
 - [install](#install-)
-- [macros](#Macros)
+- [macros](#macros)
 
 **Autark** is a self-contained build system that resides entirely within
 your project and requires only `/bin/sh` and a `C` compiler to work!
