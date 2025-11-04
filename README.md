@@ -44,6 +44,10 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - Parallel compilation of C/C++ source files is supported.
 - Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
+## Articles
+
+- [Autark: Rethinking build systems – Integrate, Don’t Outsource](https://blog.annapurna.cc/posts/autark-intro/)
+
 ## Installation
 
 [Autark source code repository](https://github.com/Softmotions/autark)
