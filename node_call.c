@@ -113,7 +113,7 @@ static void _call_init(struct node *n) {
     node_warn(n, "No name specified for 'call' directive");
     return;
   }
-  struct node *mn = unit_env_get_node(unit, key);
+  struct node *mn = unit_env_get_node(unit, key, 0);
   if (!mn) {
     node_fatal(0, n, "Unknown script macro: %s", key);
     return;

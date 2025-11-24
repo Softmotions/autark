@@ -294,7 +294,7 @@ self-contained build system for C and C++</h1>
 <li><a href="#meta-">meta</a></li>
 <li><a href="#option-">option</a></li>
 <li><a href="#check-">check</a></li>
-<li><a href="#set-">set</a></li>
+<li><a href="#set--let-">set|let</a></li>
 <li><a href="#env-">env</a></li>
 <li><a href="#-variable-evaluation">${}</a></li>
 <li><a href="#-program-output-evaluation">@{}</a></li>
@@ -775,11 +775,17 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb16-1"><a href="#
 <span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> ...</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<h1 id="set-">set {...}</h1>
+<h1 id="set--let-">set | let {...}</h1>
 <p>The <code>set</code> rule assigns a value to a variable in the build
-script.</p>
+script. The expression value is registered during the <code>init</code>
+build phase and then lazily evaluated upon the first access to that
+variable.</p>
+<p>If a variable is used multiple times in a declarative context (for
+example, inside <a href="#macros">macros</a>) the let directive is more
+appropriate, as it is evaluated every time it is accessed in every build
+phase.</p>
 <div class="sourceCode" id="cb17"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set | let {</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   | NAME</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   | _</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   | parent { NAME }</span></span>
@@ -787,8 +793,6 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[VALUES]</span><span class="dt"> ...</span></span>
 <span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
-<p><code>set</code> is a lazily evaluated rule - the value of set is
-only computed if the variable or expression is actually used.</p>
 <p>The most common form is <code>set { NAME [VALUES]... }</code></p>
 <p>Note that in Autark, all variables are either strings or lists. A
 list is just a string internally, encoded in a special form:
@@ -1387,7 +1391,7 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#
 <div class="sourceCode" id="cb59"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set {</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  let {</span></span>
 <span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    JOIN</span></span>
 <span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ^{&amp;{1} &#39; &#39; &amp;{2}}</span></span>
 <span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>

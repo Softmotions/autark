@@ -130,7 +130,7 @@ static void _find_init(struct node *n) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No name specified for '%s' directive", n->value);
     return;
   }
-  unit_env_set_node(unit, key, n);
+  unit_env_set_node(unit, key, n, TAG_INIT);
 }
 
 static void _find_dispose(struct node *n) {

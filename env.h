@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #endif
 
+#define TAG_INIT  1
+#define TAG_SETUP 2
+#define TAG_BUILD 3
+
 #define AUTARK_CACHE  "autark-cache"
 #define AUTARK_SCRIPT "Autark"
 
@@ -26,6 +30,7 @@
 struct unit_env_item {
   const char  *val;
   struct node *n;
+  unsigned     tag;
 };
 
 /// Current execution unit.
@@ -66,7 +71,7 @@ struct env {
     const char *prefix_dir;  // Absolute path to install prefix dir.
     const char *bin_dir;     // Path to the bin dir relative to prefix.
     const char *lib_dir;     // Path to lib dir relative to prefix.
-    const char *data_dir; // Path to lib data dir relative to prefix.
+    const char *data_dir;    // Path to lib data dir relative to prefix.
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.
@@ -111,9 +116,9 @@ void unit_ch_src_dir(struct unit*, char *prevcwd);
 
 void unit_env_set_val(struct unit*, const char *key, const char *val);
 
-void unit_env_set_node(struct unit*, const char *key, struct node *n);
+void unit_env_set_node(struct unit*, const char *key, struct node *n, unsigned tag);
 
-struct node* unit_env_get_node(struct unit *u, const char *key);
+struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_tag);
 
 const char* unit_env_get(struct node *n, const char *key);
 

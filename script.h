@@ -122,7 +122,7 @@ const char* node_env_get(struct node*, const char *key);
 
 void node_env_set(struct node*, const char *key, const char *val);
 
-void node_env_set_node(struct node*, const char *key);
+void node_env_set_node(struct node*, const char *key, unsigned tag);
 
 struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 

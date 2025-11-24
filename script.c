@@ -74,7 +74,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;
-  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "let") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "check") == 0) {
     return NODE_TYPE_CHECK;
@@ -888,14 +888,14 @@ void node_env_set(struct node *n, const char *key, const char *val) {
   }
 }
 
-void node_env_set_node(struct node *n_, const char *key) {
+void node_env_set_node(struct node *n_, const char *key, unsigned tag) {
   if (key[0] == '_' && key[1] == '\0') {
     // Skip on special '_' key
     return;
   }
   for (struct node *n = n_; n; n = n->parent) {
     if (n->unit) {
-      unit_env_set_node(n->unit, key, n_);
+      unit_env_set_node(n->unit, key, n_, tag);
       return;
     }
   }

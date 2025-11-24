@@ -52,17 +52,23 @@ void unit_env_set_val(struct unit *u, const char *key, const char *val) {
   map_put_str(u->env, key, item);
 }
 
-void unit_env_set_node(struct unit *u, const char *key, struct node *n) {
+void unit_env_set_node(struct unit *u, const char *key, struct node *n, unsigned tag) {
   struct unit_env_item *item = xmalloc(sizeof(*item));
   item->val = 0;
   item->n = n;
+  item->tag = tag;
   map_put_str(u->env, key, item);
 }
 
-struct node* unit_env_get_node(struct unit *u, const char *key) {
+struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_tag) {
   struct unit_env_item *item = map_get(u->env, key);
   if (item) {
+    if (out_tag) {
+      *out_tag = item->tag;
+    }
     return item->n;
+  } else if (out_tag)  {
+    *out_tag = 0;
   }
   return 0;
 }

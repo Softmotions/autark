@@ -5,7 +5,7 @@
 - [meta](#meta-)
 - [option](#option-)
 - [check](#check-)
-- [set](#set-)
+- [set|let](#set--let-)
 - [env](#env-)
 - [${}](#-variable-evaluation)
 - [@{}](#-program-output-evaluation)
@@ -523,12 +523,17 @@ set {
 }
 ```
 
-# set {...}
+# set | let {...}
 
 The `set` rule assigns a value to a variable in the build script.
+The expression value is registered during the `init` build phase and then lazily evaluated
+upon the first access to that variable.
+
+If a variable is used multiple times in a declarative context (for example, inside [macros](#macros))
+the let directive is more appropriate, as it is evaluated every time it is accessed in every build phase.
 
 ```cfg
-set {
+set | let {
    | NAME
    | _
    | parent { NAME }
@@ -537,8 +542,6 @@ set {
    [VALUES] ...
 }
 ```
-
-`set` is a lazily evaluated rule - the value of set is only computed if the variable or expression is actually used.
 
 The most common form is `set { NAME [VALUES]... }`
 
@@ -1243,7 +1246,7 @@ Example:
 ```cfg
 macro {
   M_ECHO
-  set {
+  let {
     JOIN
     ^{&{1} ' ' &{2}}
   }

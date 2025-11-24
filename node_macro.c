@@ -48,7 +48,7 @@ static void _macro_init(struct node *n) {
     return;
   }
   _macro_remove(n);
-  unit_env_set_node(unit, key, n);
+  unit_env_set_node(unit, key, n, TAG_INIT);
 }
 
 static void _macro_dispose(struct node *n) {
