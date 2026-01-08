@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "4a8a474"
+#define META_REVISION "42084e3"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -572,6 +572,8 @@ void utils_split_values_add(const char *v, struct xstr *xstr);
 
 int utils_fd_make_non_blocking(int fd);
 
+int64_t utils_current_time_ms(void);
+
 //----------------------- Vlist
 
 struct vlist_iter {
@@ -885,13 +887,14 @@ const char* env_libdir(void);
 #include <stdint.h>
 #endif
 
-#define DEPS_TYPE_FILE          102 // f
-#define DEPS_TYPE_FILE_OUTDATED 111 // x
-#define DEPS_TYPE_NODE_VALUE    118 // v
-#define DEPS_TYPE_ENV           101 // e
-#define DEPS_TYPE_SYS_ENV       115 // s
-#define DEPS_TYPE_ALIAS         97  // a
-#define DEPS_TYPE_OUTDATED      120 // o
+#define DEPS_TYPE_FILE            102 // f
+#define DEPS_TYPE_FILE_OUTDATED   111 // x
+#define DEPS_TYPE_NODE_VALUE      118 // v
+#define DEPS_TYPE_ENV             101 // e
+#define DEPS_TYPE_SYS_ENV         115 // s
+#define DEPS_TYPE_ALIAS           97  // a
+#define DEPS_TYPE_OUTDATED        120 // o
+#define DEPS_TYPE_FILE_NOT_EXISTS 110 // n
 
 #define DEPS_OPEN_TRUNCATE 0x01U
 #define DEPS_OPEN_READONLY 0x02U
@@ -1110,6 +1113,8 @@ void node_env_set_node(struct node*, const char *key, unsigned tag);
 struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
 struct node* node_by_product_raw(struct node*, const char *prod);
+
+void node_products_add_as_deps(struct node *n, struct deps *deps);
 
 void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
@@ -2396,6 +2401,7 @@ int map_iter_next(struct map_iter *iter) {
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <time.h>
 #endif
 
 struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
@@ -2585,6 +2591,20 @@ int utils_fd_make_non_blocking(int fd) {
     return errno;
   }
   return 0;
+}
+
+int64_t utils_current_time_ms(void) {
+  struct timespec ts;
+#if defined(CLOCK_REALTIME)
+  if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+    akfatal(errno, "", 0);
+  }
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t) tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#endif
+  return (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 #ifndef _AMALGAMATE_
 #include "paths.h"
@@ -3607,6 +3627,13 @@ bool deps_cur_is_outdated(struct node *n, struct deps *d) {
         }
         return strcmp(val, d->resource) != 0;
       }
+      case DEPS_TYPE_FILE_NOT_EXISTS: {
+        struct akpath_stat st;
+        if (path_stat(d->resource, &st) || st.ftype == AKPATH_NOT_EXISTS) {
+          return true;
+        }
+        break;
+      }
       case DEPS_TYPE_OUTDATED:
         return true;
     }
@@ -3645,6 +3672,10 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     resource = dbuf;
   } else if (type == DEPS_TYPE_FILE_OUTDATED) {
     type = DEPS_TYPE_FILE;
+    path_normalize(resource, buf[0]);
+    resource = buf[0];
+    serial = 0;
+  } else if (type == DEPS_TYPE_FILE_NOT_EXISTS) {
     path_normalize(resource, buf[0]);
     resource = buf[0];
     serial = 0;
@@ -4765,6 +4796,8 @@ static void _run_on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 'f', path, 0);
   }
 
+  node_products_add_as_deps(n, &deps);
+
   deps_close(&deps);
 }
 
@@ -5146,6 +5179,8 @@ static void _configure_on_resolve(struct node_resolve *r) {
     char *src = *(char**) ulist_get(&ctx->sources, i);
     deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
   }
+
+  node_products_add_as_deps(n, &deps);
 
   deps_close(&deps);
 
@@ -9289,6 +9324,18 @@ struct node* node_by_product(struct node *n, const char *prod, char pathbuf[PATH
 struct node* node_by_product_raw(struct node *n, const char *prod) {
   struct sctx *s = n->ctx;
   return map_get(s->products, prod);
+}
+
+void node_products_add_as_deps(struct node *n, struct deps *deps) {
+  struct map_iter it;
+  struct sctx *s = n->ctx;
+  map_iter_init(s->products, &it);
+  int64_t ts = utils_current_time_ms();
+  while (map_iter_next(&it)) {
+    if (it.val == n) {
+      deps_add(deps, DEPS_TYPE_FILE, 0, it.key, ts);
+    }
+  }
 }
 
 struct node* node_find_direct_child(struct node *n, int type, const char *val) {

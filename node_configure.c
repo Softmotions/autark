@@ -239,6 +239,8 @@ static void _configure_on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 's', src, 0);
   }
 
+  node_products_add_as_deps(n, &deps);
+
   deps_close(&deps);
 
   ulist_destroy_keep(&rlist);

@@ -128,6 +128,8 @@ struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_M
 
 struct node* node_by_product_raw(struct node*, const char *prod);
 
+void node_products_add_as_deps(struct node *n, struct deps *deps);
+
 void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 
 void node_product_add_raw(struct node*, const char *prod);

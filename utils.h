@@ -116,6 +116,8 @@ void utils_split_values_add(const char *v, struct xstr *xstr);
 
 int utils_fd_make_non_blocking(int fd);
 
+int64_t utils_current_time_ms(void);
+
 //----------------------- Vlist
 
 struct vlist_iter {

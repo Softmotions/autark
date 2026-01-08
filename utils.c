@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <time.h>
 #endif
 
 struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
@@ -197,4 +198,18 @@ int utils_fd_make_non_blocking(int fd) {
     return errno;
   }
   return 0;
+}
+
+int64_t utils_current_time_ms(void) {
+  struct timespec ts;
+#if defined(CLOCK_REALTIME)
+  if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+    akfatal(errno, "", 0);
+  }
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t) tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#endif
+  return (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }

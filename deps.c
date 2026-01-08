@@ -111,6 +111,13 @@ bool deps_cur_is_outdated(struct node *n, struct deps *d) {
         }
         return strcmp(val, d->resource) != 0;
       }
+      case DEPS_TYPE_FILE_NOT_EXISTS: {
+        struct akpath_stat st;
+        if (path_stat(d->resource, &st) || st.ftype == AKPATH_NOT_EXISTS) {
+          return true;
+        }
+        break;
+      }
       case DEPS_TYPE_OUTDATED:
         return true;
     }
@@ -149,6 +156,10 @@ static int _deps_add(struct deps *d, char type, char flags, const char *resource
     resource = dbuf;
   } else if (type == DEPS_TYPE_FILE_OUTDATED) {
     type = DEPS_TYPE_FILE;
+    path_normalize(resource, buf[0]);
+    resource = buf[0];
+    serial = 0;
+  } else if (type == DEPS_TYPE_FILE_NOT_EXISTS) {
     path_normalize(resource, buf[0]);
     resource = buf[0];
     serial = 0;

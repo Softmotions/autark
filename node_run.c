@@ -217,6 +217,8 @@ static void _run_on_resolve(struct node_resolve *r) {
     deps_add(&deps, DEPS_TYPE_FILE, 'f', path, 0);
   }
 
+  node_products_add_as_deps(n, &deps);
+
   deps_close(&deps);
 }
 

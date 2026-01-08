@@ -958,6 +958,18 @@ struct node* node_by_product_raw(struct node *n, const char *prod) {
   return map_get(s->products, prod);
 }
 
+void node_products_add_as_deps(struct node *n, struct deps *deps) {
+  struct map_iter it;
+  struct sctx *s = n->ctx;
+  map_iter_init(s->products, &it);
+  int64_t ts = utils_current_time_ms();
+  while (map_iter_next(&it)) {
+    if (it.val == n) {
+      deps_add(deps, DEPS_TYPE_FILE, 0, it.key, ts);
+    }
+  }
+}
+
 struct node* node_find_direct_child(struct node *n, int type, const char *val) {
   if (n) {
     for (struct node *nn = n->child; nn; nn = nn->next) {
