@@ -48,6 +48,7 @@ cat <<'EOF' >> ${F}
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <time.h>
 EOF
 
 cat ./basedefs.h >> ${F}

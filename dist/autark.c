@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.0"
-#define META_REVISION "42084e3"
+#define META_REVISION "607c002"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <time.h>
 #ifndef BASEDEFS_H
 #define BASEDEFS_H
 
