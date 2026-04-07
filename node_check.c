@@ -45,14 +45,15 @@ static void _check_on_resolve(struct node_resolve *r) {
 
   int rc = spawn_do(s);
   if (rc) {
-    node_fatal(rc, n, "%s", unit->source_path);
+    node_fatal(rc, n, "%s", path);
   } else {
     int code = spawn_exit_code(s);
     if (code != 0) {
-      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", unit->source_path, code);
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", path, code);
     }
   }
   spawn_destroy(s);
+
 
   // Good, now add dependency on itself
   struct deps deps;
@@ -60,6 +61,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
   }
+  deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   node_add_unit_deps(n, &deps);
   deps_close(&deps);
 }
