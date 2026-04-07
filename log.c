@@ -31,8 +31,6 @@ static const char* _error_get(int code) {
       return "Fail (AK_ERROR_FAIL)";
     case AK_ERROR_IO:
       return "IO Error (AK_ERROR_IO)";
-    case AK_ERROR_UNIMPLEMETED:
-      return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
     case AK_ERROR_SCRIPT:

@@ -9,7 +9,6 @@
 enum akecode {
   AK_ERROR_OK                        = 0,
   AK_ERROR_FAIL                      = -1,
-  AK_ERROR_UNIMPLEMETED              = -2,
   AK_ERROR_INVALID_ARGS              = -3,
   AK_ERROR_ASSERTION                 = -4,
   AK_ERROR_OVERFLOW                  = -5,

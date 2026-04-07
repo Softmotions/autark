@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.1"
-#define META_REVISION "01e8dd1"
+#define META_REVISION "4051149"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -127,7 +127,6 @@ static inline int value_destroy(struct value *v) {
 enum akecode {
   AK_ERROR_OK                        = 0,
   AK_ERROR_FAIL                      = -1,
-  AK_ERROR_UNIMPLEMETED              = -2,
   AK_ERROR_INVALID_ARGS              = -3,
   AK_ERROR_ASSERTION                 = -4,
   AK_ERROR_OVERFLOW                  = -5,
@@ -1819,8 +1818,6 @@ static const char* _error_get(int code) {
       return "Fail (AK_ERROR_FAIL)";
     case AK_ERROR_IO:
       return "IO Error (AK_ERROR_IO)";
-    case AK_ERROR_UNIMPLEMETED:
-      return "Not implemented (AK_ERROR_UNIMPLEMETED)";
     case AK_ERROR_SCRIPT_SYNTAX:
       return "Invalid autark config syntax (AK_ERROR_SCRIPT_SYNTAX)";
     case AK_ERROR_SCRIPT:
