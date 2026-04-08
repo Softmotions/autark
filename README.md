@@ -1326,7 +1326,7 @@ and public headers into the include directory under the chosen prefix.
 
 MIT License
 
-Copyright (c) 2012-2025 Softmotions Ltd <info@softmotions.com>
+Copyright (c) 2012-2026 Softmotions Ltd <info@softmotions.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
