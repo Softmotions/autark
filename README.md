@@ -877,13 +877,13 @@ They help avoid hardcoding paths that may depend on the current location of the 
 
 ## S {...}
 Computes the **absolute path** of the given argument(s) relative to the **project root**.
-If multiple arguments are provided, they are concatenated into a single path string.
+If multiple arguments are provided, they are be converted to list of paths.
 
 ```cfg
   # <project root>/foo
   S{foo}
 
-  #<project root>/foo/bar/baz
+  #<src root>/foo <src root>/bar <src root>/baz
   S{foo bar baz}
 ```
 

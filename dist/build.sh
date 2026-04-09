@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.1
-META_REVISION=d55cd0f
+META_VERSION=0.9.2
+META_REVISION=053d09e
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -61,8 +61,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.1"
-#define META_REVISION "d55cd0f"
+#define META_VERSION "0.9.2"
+#define META_REVISION "053d09e"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -5159,9 +5159,18 @@ int node_in_sources_setup(struct node *n) {
 #include "env.h"
 #include "paths.h"
 #include "utils.h"
-#include "alloc.h"
 #include <unistd.h>
 #endif
+static void _node_dir_normalize_add(const char *dir, struct xstr *xstr, const char *v, char buf[PATH_MAX]) {
+  if (xstr_size(xstr)) {
+    if (!is_vlist(xstr_ptr(xstr))) {
+      xstr_unshift(xstr, "\1", 1);
+    }
+    xstr_cat2(xstr, "\1", 1);
+  }
+  char *path = path_normalize_cwd(v, dir, buf);
+  xstr_cat(xstr, path);
+}
 static const char* _dir_value(struct node *n) {
   struct node_foreach *fe = node_find_parent_foreach(n);
   if (fe) {
@@ -5195,23 +5204,20 @@ static const char* _dir_value(struct node *n) {
       struct vlist_iter iter;
       vlist_iter_init(v, &iter);
       while (vlist_iter_next(&iter)) {
-        if (xstr_size(xstr) && iter.len) {
-          if (iter.item[0] != '/' && !utils_endswith(xstr_ptr(xstr), "/")) {
-            xstr_cat2(xstr, "/", 1);
-          }
+        if (iter.len) {
+          char vbuf[iter.len + 1];
+          utils_strnncpy(vbuf, iter.item, iter.len, iter.len + 1);
+          _node_dir_normalize_add(dir, xstr, v, buf);
         }
-        xstr_cat2(xstr, iter.item, iter.len);
       }
     } else {
-      xstr_cat(xstr, v);
+      _node_dir_normalize_add(dir, xstr, v, buf);
     }
   }
   if (xstr_size(xstr) == 0) {
     xstr_cat2(xstr, ".", 1);
   }
-  char *path = path_normalize_cwd(xstr_ptr(xstr), dir, buf);
-  xstr_destroy(xstr);
-  n->impl = xstrdup(path);
+  n->impl = xstr_destroy_keep_ptr(xstr);
   return n->impl;
 }
 static void _dir_dispose(struct node *n) {

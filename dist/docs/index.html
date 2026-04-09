@@ -1055,12 +1055,12 @@ location of the project's source code.</p>
 <h2 id="s-">S {...}</h2>
 <p>Computes the <strong>absolute path</strong> of the given argument(s)
 relative to the <strong>project root</strong>. If multiple arguments are
-provided, they are concatenated into a single path string.</p>
+provided, they are be converted to list of paths.</p>
 <div class="sourceCode" id="cb42"><pre
 class="sourceCode cfg"><code class="sourceCode ini"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># &lt;project root&gt;/foo</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo}</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;project root&gt;/foo/bar/baz</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
 <span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo bar baz}</span></span></code></pre></div>
 <h2 id="ss-">SS {...}</h2>
 <p>Same as <code>S</code>, but relative to the directory where the
