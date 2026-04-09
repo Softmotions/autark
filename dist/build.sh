@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.2
-META_REVISION=053d09e
+META_REVISION=0641a27
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.2"
-#define META_REVISION "053d09e"
+#define META_REVISION "0641a27"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -5207,7 +5207,7 @@ static const char* _dir_value(struct node *n) {
         if (iter.len) {
           char vbuf[iter.len + 1];
           utils_strnncpy(vbuf, iter.item, iter.len, iter.len + 1);
-          _node_dir_normalize_add(dir, xstr, v, buf);
+          _node_dir_normalize_add(dir, xstr, vbuf, buf);
         }
       }
     } else {
@@ -5215,7 +5215,7 @@ static const char* _dir_value(struct node *n) {
     }
   }
   if (xstr_size(xstr) == 0) {
-    xstr_cat2(xstr, ".", 1);
+    _node_dir_normalize_add(dir, xstr, ".", buf);
   }
   n->impl = xstr_destroy_keep_ptr(xstr);
   return n->impl;
