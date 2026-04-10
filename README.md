@@ -666,6 +666,23 @@ set {
 
 Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
 
+## ^{...} Special forms
+
+Join operation has two special forms which are applicable only when
+two elements passed as arguments and the only one of them represents a list.
+
+**Add prefix to every element of collection:**
+
+```cfg
+^{"prefix" ${list}}
+```
+
+**Add suffix to every element of collection:**
+
+```cfg
+^{${list} "suffix"}
+```
+
 # if {...} condition
 
 Conditional directive.

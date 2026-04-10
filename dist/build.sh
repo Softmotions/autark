@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.2
-META_REVISION=0641a27
+META_VERSION=0.9.3
+META_REVISION=6b84394
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -61,8 +61,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.2"
-#define META_REVISION "0641a27"
+#define META_VERSION "0.9.3"
+#define META_REVISION "6b84394"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -3818,6 +3818,7 @@ int node_if_setup(struct node *n) {
 #ifndef _AMALGAMATE_
 #include "script.h"
 #include "xstr.h"
+#include "utils.h"
 #include <stdlib.h>
 #endif
 static const char* _join_value(struct node *n) {
@@ -3830,6 +3831,41 @@ static const char* _join_value(struct node *n) {
     return n->impl;
   }
   struct xstr *xstr = xstr_create_empty();
+  int c = 0;
+  struct node *pair[] = { 0, 0 };
+  for (struct node *nn = n->child; nn; nn = nn->next, ++c) {
+    if (c < 2) {
+      pair[c] = nn;
+    }
+  }
+  if (c == 2) {
+    const char *vpair[] = { node_value(pair[0]), node_value(pair[1]) };
+    if ((vpair[0] && !is_vlist(vpair[0]) && is_vlist(vpair[1]))) {
+      const char *prefix = vpair[0];
+      size_t prefix_len = strlen(prefix);
+      struct vlist_iter iter;
+      vlist_iter_init(vpair[1], &iter);
+      while (vlist_iter_next(&iter)) {
+        xstr_cat2(xstr, "\1", 1);
+        xstr_cat2(xstr, prefix, prefix_len);
+        xstr_cat2(xstr, iter.item, iter.len);
+      }
+      n->impl = xstr_destroy_keep_ptr(xstr);
+      return n->impl;
+    } else if (vpair[1] && !is_vlist(vpair[1]) && is_vlist(vpair[0])) {
+      const char *suffix = vpair[1];
+      size_t suffix_len = strlen(suffix);
+      struct vlist_iter iter;
+      vlist_iter_init(vpair[0], &iter);
+      while (vlist_iter_next(&iter)) {
+        xstr_cat2(xstr, "\1", 1);
+        xstr_cat2(xstr, iter.item, iter.len);
+        xstr_cat2(xstr, suffix, suffix_len);
+      }
+      n->impl = xstr_destroy_keep_ptr(xstr);
+      return n->impl;
+    }
+  }
   bool list = n->value[0] == '.';
   for (struct node *nn = n->child; nn; nn = nn->next) {
     if (list) {

@@ -5,7 +5,7 @@ meta {
   website { https://autark.dev }
   sources { https://git.sr.ht/~adamansky/autark }
   license { MIT }
-  version { 0.9.2 }
+  version { 0.9.3 }
 }
 
 if { ${RUN_TESTS}

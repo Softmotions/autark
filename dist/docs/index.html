@@ -895,30 +895,40 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb26-1"><a href="#
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ^{-DBUILD_TYPE</span><span class="ot">=</span><span class="st"> ${BUILD_TYPE}}</span></span></code></pre></div>
 <p>Note: the space between <code>-DBUILD_TYPE=</code> and
 <code>${BUILD_TYPE}</code> is required.</p>
+<h2 id="-special-forms">^{...} Special forms</h2>
+<p>Join operation has two special forms which are applicable only when
+two elements passed as arguments and the only one of them represents a
+list.</p>
+<p><strong>Add prefix to every element of collection:</strong></p>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{&quot;prefix&quot; ${list}}</span></span></code></pre></div>
+<p><strong>Add suffix to every element of collection:</strong></p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{${list} &quot;suffix&quot;}</span></span></code></pre></div>
 <h1 id="if--condition">if {...} condition</h1>
 <p>Conditional directive.</p>
-<div class="sourceCode" id="cb27"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="dt">    CONDITION_RULE</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    EXPR1</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  } </span><span class="kw">[  else { EXPR2 } ]</span></span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="dt">    CONDITION_RULE</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    EXPR1</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  } </span><span class="kw">[  else { EXPR2 } ]</span></span></code></pre></div>
 <p>Examples:</p>
-<div class="sourceCode" id="cb28"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} }</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  include { bindings/Autark }</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="dt">...</span></span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${EJDB_BUILD_SHARED_LIBS}</span></span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {!defined {SYSTEM_DARWIN}</span></span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    set {</span></span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="dt">      LIBEJDB_SO_BASE</span></span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="dt">      libejdb2.so</span></span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} }</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  include { bindings/Autark }</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="dt">...</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${EJDB_BUILD_SHARED_LIBS}</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {!defined {SYSTEM_DARWIN}</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    set {</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="dt">      LIBEJDB_SO_BASE</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="dt">      libejdb2.so</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>If the condition <code>CONDITION_RULE</code> evaluates to a
 <code>truthy</code> value, the entire <code>if</code> expression is
 replaced by <code>EXPR1</code> in the Autark script’s instruction tree.
@@ -955,20 +965,20 @@ expressions inside the directive are truthy.</p>
 <h1 id="error--abort-build-and-report-error">error {...} Abort build and
 report error</h1>
 <p>Typical example <code>error</code> directive usage:</p>
-<div class="sourceCode" id="cb29"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined{ PTHREAD_LFLAG }</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Pthreads implementation is not found! }</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined{ PTHREAD_LFLAG }</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Pthreads implementation is not found! }</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h1 id="echo-">echo {...}</h1>
 <p>Prints arbitrary information to the console (standard output,
 <code>stdout</code>).</p>
-<div class="sourceCode" id="cb30"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="dt"> echo {</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | build { ... }</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | setup { ... }</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  | init  { ... }</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="dt"> echo {</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | build { ... }</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | setup { ... }</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  | init  { ... }</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span></code></pre></div>
 <p>You can optionally specify the build phase (<code>init</code>,
 <code>setup</code>, or <code>build</code>) during which the output of
 the echo directive should appear. By default, it is printed during the
@@ -977,40 +987,40 @@ build phase.</p>
 are lazy evaluated, so by using <code>echo</code> you may indirectly
 change behaviour and effectiveness of your build process</em></p>
 <p>Example:</p>
-<div class="sourceCode" id="cb31"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="dt">echo {</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span><span class="ot">=</span><span class="st"> ${CFLAGS}</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span><span class="ot">=</span><span class="st"> ${LDFLAGS}</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="dt">echo {</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span><span class="ot">=</span><span class="st"> ${CFLAGS}</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span><span class="ot">=</span><span class="st"> ${LDFLAGS}</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>This will print the current values of the CFLAGS and LDFLAGS
 variables.</p>
 <h1 id="configure-">configure {...}</h1>
 <p>The <code>configure</code> rule acts as a preprocessor for text files
 and C/C++ source templates, replacing specific sections with values of
 variables from the current script context.</p>
-<div class="sourceCode" id="cb32"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>Autark tracks all variables used during the substitution process. If
 any of those variables change, <strong>the entire</strong> configure
 rule will be re-executed. This is why it's recommended to configure each
 file in a separate configure rule whenever possible.</p>
 <p>Incorrect:</p>
-<div class="sourceCode" id="cb33"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>Correct:</p>
-<div class="sourceCode" id="cb34"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h2 id="-substitutions">@...@ Substitutions</h2>
 <p>Text fragments enclosed in <code>@</code> symbols are interpreted as
 variable names and replaced with their corresponding values. If a
@@ -1036,17 +1046,17 @@ Cflags.private: -DIW_STATIC</code></pre>
 convenient way to conditionally generate <code>#define</code> statements
 based on variable presence.</p>
 <p><strong>Basic form:</strong></p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME</span></span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME</span></span></code></pre></div>
 <p>If <code>VAR_NAME</code> is defined, this will be replaced with:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME</span></span></code></pre></div>
 <p><strong>With string value:</strong></p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME &quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME &quot;</span></span></code></pre></div>
 <p>If <code>VAR_NAME</code> is defined, this becomes:</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME </span><span class="st">&quot;VAR_VALUE&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME </span><span class="st">&quot;VAR_VALUE&quot;</span></span></code></pre></div>
 <p><strong>With num value:</strong></p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME 1</span></span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co">//autarkdef VAR_NAME 1</span></span></code></pre></div>
 <p>If <code>VAR_NAME</code> is defined, this becomes:</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME </span><span class="dv">1</span></span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VAR_NAME </span><span class="dv">1</span></span></code></pre></div>
 <h1 id="s--ss--c--cc---path-helpers"><code>S</code> / <code>SS</code> /
 <code>C</code> / <code>CC</code> / <code>%</code> Path Helpers</h1>
 <p>These small helper rules are useful for computing file paths in build
@@ -1056,12 +1066,12 @@ location of the project's source code.</p>
 <p>Computes the <strong>absolute path</strong> of the given argument(s)
 relative to the <strong>project root</strong>. If multiple arguments are
 provided, they are be converted to list of paths.</p>
-<div class="sourceCode" id="cb42"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># &lt;project root&gt;/foo</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo}</span></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo bar baz}</span></span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># &lt;project root&gt;/foo</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo}</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo bar baz}</span></span></code></pre></div>
 <h2 id="ss-">SS {...}</h2>
 <p>Same as <code>S</code>, but relative to the directory where the
 current script is located.</p>
@@ -1076,14 +1086,14 @@ build artifacts.</p>
 <h2 id="-">% {...}</h2>
 <p>Returns the <code>basename</code> of the given filename changing its
 extension optionally.</p>
-<div class="sourceCode" id="cb43"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="dt">%{ PATH </span><span class="kw">[ NEW_FILE_EXT ]</span><span class="dt"> }</span></span></code></pre></div>
-<div class="sourceCode" id="cb44"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;main&#39;</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="dt">%{main.o}</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;hello.c&#39;</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="dt">%{hello.x .c}</span></span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="dt">%{ PATH </span><span class="kw">[ NEW_FILE_EXT ]</span><span class="dt"> }</span></span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;main&#39;</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="dt">%{main.o}</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;hello.c&#39;</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="dt">%{hello.x .c}</span></span></code></pre></div>
 <h1 id="run-">run {...}</h1>
 <p>The <code>run</code> rule is the most powerful construct in the
 Autark system. It allows you to define custom build actions and their
@@ -1091,14 +1101,14 @@ dependency chains.</p>
 <p>In C/C++ projects, <code>run</code> is typically used to build static
 and dynamic libraries, executables, and other artifacts - but it can
 support virtually any custom pipeline.</p>
-<div class="sourceCode" id="cb45"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[always]</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[exec  { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[shell { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[consumes{ CONSUMED_FILES... }]</span></span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[produces{ PRODUCED_FILES... }]</span></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[always]</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[exec  { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[shell { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[consumes{ CONSUMED_FILES... }]</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[produces{ PRODUCED_FILES... }]</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>The <code>consumes</code> section defines the <strong>input
 dependencies</strong> that must be satisfied before the <code>run</code>
 rule is executed. If any of the consumed files or variables change, the
@@ -1122,16 +1132,16 @@ commands.</p>
 <strong>unconditionally</strong>, regardless of input state. This is
 useful, for example, when running test cases or side-effectful
 operations.</p>
-<div class="sourceCode" id="cb46"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  exec { ${AR} rcs libhello.a ${CC_OBJS} }</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  produces {</span></span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    libhello.a</span></span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  exec { ${AR} rcs libhello.a ${CC_OBJS} }</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  produces {</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    libhello.a</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h1 id="in-sources-">in-sources {...}</h1>
 <p>By default, most Autark rules are executed inside the
 <strong>autark-cache dir</strong> corresponding to the current build
@@ -1141,35 +1151,35 @@ tree.</p>
 <p>However, in some cases, it's necessary to run a command in the
 context of the actual project source directory. For this purpose, Autark
 provides the <code>in-sources</code> rule.</p>
-<div class="sourceCode" id="cb47"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in-sources {</span></span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in-sources {</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h2 id="example-appending-glob-matched-source-files">Example: Appending
 glob-matched source Files</h2>
 <p>In the example below, the <code>SOURCES</code> variable is extended
 with the output of a glob-matching command executed in the source
 directory. The result is assigned merged with <code>SOURCES</code>
 variable in the parent script:</p>
-<div class="sourceCode" id="cb48"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  parent {</span></span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    SOURCES</span></span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${SOURCES}</span></span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{autark -C .. glob &#39;json/*.c&#39;}</span></span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb50"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  parent {</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    SOURCES</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${SOURCES}</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{autark -C .. glob &#39;json/*.c&#39;}</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h2 id="example-finding-java-source-files">Example: Finding Java Source
 Files</h2>
-<div class="sourceCode" id="cb49"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  JAVA_SOURCES</span></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{ find src/main/java -name &#39;*.java&#39; -exec realpath &#39;{}&#39; ; }</span></span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  JAVA_SOURCES</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{ find src/main/java -name &#39;*.java&#39; -exec realpath &#39;{}&#39; ; }</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>This example populates <code>JAVA_SOURCES</code> with the full paths
 of all <code>.java</code> files under <code>src/main/java</code>,
 resolved from the script's source directory.</p>
@@ -1178,18 +1188,18 @@ resolved from the script's source directory.</p>
 rule that is executed during the <code>post-build</code> phase.</p>
 <p>A typical use case for this rule is to <strong>install artifacts from
 dependent projects</strong> that the current project relies on.</p>
-<div class="sourceCode" id="cb50"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run-on-install {</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  shell {</span></span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    autark --prefix ${INSTALL_PREFIX}</span></span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    set { _</span></span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a><span class="dt">      if { ${IWNET_BUILD_SHARED_LIBS}</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="dt">        -DIOWOW_BUILD_SHARED_LIBS</span><span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a><span class="dt">      }</span></span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${IOWOW_SRC_DIR}</span></span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb52"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run-on-install {</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  shell {</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    autark --prefix ${INSTALL_PREFIX}</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    set { _</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="dt">      if { ${IWNET_BUILD_SHARED_LIBS}</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="dt">        -DIOWOW_BUILD_SHARED_LIBS</span><span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a><span class="dt">      }</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${IOWOW_SRC_DIR}</span></span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>In this example, the project invokes Autark to install the dependent
 <code>iowow</code> project with the proper build flags and installation
 prefix.</p>
@@ -1201,14 +1211,14 @@ objects, <code>foreach</code> provides a concise and powerful
 solution.</p>
 <p>Currently, <code>foreach</code> supports only the <code>run</code>
 rule as its body.</p>
-<div class="sourceCode" id="cb51"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  VAR_NAME</span></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIST_EXPR</span></span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ...</span></span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  VAR_NAME</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIST_EXPR</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ...</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p><code>foreach</code> iterates over all elements in
 <code>LIST_EXPR</code>, and for each element, it sets the variable
 <code>VAR_NAME</code> to the current item and evaluates the run
@@ -1216,40 +1226,40 @@ rule.</p>
 <hr />
 <p>A common use case for <code>foreach</code> is generating and running
 per-file executables, such as test cases. Here's an example:</p>
-<div class="sourceCode" id="cb52"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc {</span></span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${TESTS}</span></span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { _ ${CFLAGS} -I S{} }</span></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC}</span></span>
-<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
-<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  OBJ</span></span>
-<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC_OBJS}</span></span>
-<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
-<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a><span class="dt">    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }</span></span>
-<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    produces {</span></span>
-<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a><span class="dt">      %{${OBJ}}</span></span>
-<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a><span class="dt">    consumes {</span></span>
-<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${LIBAUTARK}</span></span>
-<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${OBJ}</span></span>
-<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-22"><a href="#cb52-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test cases</span></span>
-<span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${RUN_TESTS}</span></span>
-<span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a><span class="dt">  foreach {</span></span>
-<span id="cb52-25"><a href="#cb52-25" aria-hidden="true" tabindex="-1"></a><span class="dt">    OBJ</span></span>
-<span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
-<span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a><span class="dt">    run {</span></span>
-<span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a><span class="dt">      always</span></span>
-<span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a><span class="dt">      shell { %{${OBJ}} }</span></span>
-<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a><span class="dt">      consumes { %{${OBJ}} }</span></span>
-<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc {</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${TESTS}</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { _ ${CFLAGS} -I S{} }</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC}</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  OBJ</span></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC_OBJS}</span></span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a><span class="dt">    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    produces {</span></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a><span class="dt">      %{${OBJ}}</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a><span class="dt">    consumes {</span></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${LIBAUTARK}</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${OBJ}</span></span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test cases</span></span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${RUN_TESTS}</span></span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a><span class="dt">  foreach {</span></span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a><span class="dt">    OBJ</span></span>
+<span id="cb54-26"><a href="#cb54-26" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
+<span id="cb54-27"><a href="#cb54-27" aria-hidden="true" tabindex="-1"></a><span class="dt">    run {</span></span>
+<span id="cb54-28"><a href="#cb54-28" aria-hidden="true" tabindex="-1"></a><span class="dt">      always</span></span>
+<span id="cb54-29"><a href="#cb54-29" aria-hidden="true" tabindex="-1"></a><span class="dt">      shell { %{${OBJ}} }</span></span>
+<span id="cb54-30"><a href="#cb54-30" aria-hidden="true" tabindex="-1"></a><span class="dt">      consumes { %{${OBJ}} }</span></span>
+<span id="cb54-31"><a href="#cb54-31" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
+<span id="cb54-32"><a href="#cb54-32" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb54-33"><a href="#cb54-33" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>In this example:</p>
 <ul>
 <li><code>foreach</code> is used to build a separate binary for each
@@ -1266,14 +1276,14 @@ hardcoding individual test names.</p>
 <p>This rule compiles C or C++ source files into object files, while
 automatically tracking all required dependencies including header files.
 Compilation is parallelized to speed up the build process.</p>
-<div class="sourceCode" id="cb53"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc|cxx {</span></span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   SOURCES</span></span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_FLAGS]</span></span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_CMD]</span></span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[objects { NAME }]</span></span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[consumes { ... }]</span></span>
-<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc|cxx {</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   SOURCES</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_FLAGS]</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_CMD]</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[objects { NAME }]</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[consumes { ... }]</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <h2 id="sources">SOURCES</h2>
 <p>The first argument must be an expression that returns a list of
 source files. It can be a single string (for one file) or a list defined
@@ -1322,8 +1332,8 @@ executed <strong>before</strong> compilation starts.</p>
 <p>Source files compilation is performed in parallel. By default, the
 parallelism level is set to <code>4</code>. You can change this using
 the <code>-J</code> option on the command line. For example:</p>
-<div class="sourceCode" id="cb54"><pre
-class="sourceCode sh"><code class="sourceCode bash"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
 <p>This will run up to 8 compilation jobs in parallel.</p>
 <h1 id="library-">library {...}</h1>
 <p>Search for a library file by name.</p>
@@ -1340,13 +1350,13 @@ locations commonly used across Unix-like systems:</p>
 subdirectories where shared or static libraries may be located (such as
 <code>lib</code>, <code>lib64</code>, etc., depending on the
 system).</p>
-<div class="sourceCode" id="cb55"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="dt">library {</span></span>
-<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  | VAR_NAME</span></span>
-<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | parent { VAR_NAME }</span></span>
-<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | root { VAR_NAME }</span></span>
-<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIB_FILES...</span></span>
-<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb57"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="dt">library {</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  | VAR_NAME</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | parent { VAR_NAME }</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | root { VAR_NAME }</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIB_FILES...</span></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <ul>
 <li>The resulting absolute path to the first matched file will be stored
 in the specified variable.</li>
@@ -1355,12 +1365,12 @@ parent script (<code>parent { VAR_NAME }</code>), or root script
 (<code>root { VAR_NAME }</code>).</li>
 </ul>
 <p>Example:</p>
-<div class="sourceCode" id="cb56"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { library { LIB_M libm.a }</span></span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { ${LIB_M} }</span></span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="dt">} else {</span></span>
-<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Library libm not found }</span></span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { library { LIB_M libm.a }</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { ${LIB_M} }</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="dt">} else {</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Library libm not found }</span></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
@@ -1372,43 +1382,43 @@ few parameter values.</p>
 <p>A macro call is similar to a function call, but instead of executing
 code directly, it rewrites and rebuilds the script’s AST (Abstract
 Syntax Tree) before the build script starts.</p>
-<div class="sourceCode" id="cb57"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>The body of a macro directive can contain any valid Autark script
 elements and may include argument placeholders for macro calls. These
 placeholders have the following format: <code>&amp;{N}</code>, where
 <code>N</code> is the argument number starting from one. A macro is
 invoked using the <code>call</code> directive:</p>
-<div class="sourceCode" id="cb58"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ARGS...</span></span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb60"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ARGS...</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>Example:</p>
-<div class="sourceCode" id="cb59"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  let {</span></span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    JOIN</span></span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ^{&amp;{1} &#39; &#39; &amp;{2}}</span></span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { JOIN ${JOIN} }</span></span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;foo bar&#39;</span></span>
-<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  baz</span></span>
-<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;baz gaz&#39;</span></span>
-<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  last</span></span>
-<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  let {</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    JOIN</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ^{&amp;{1} &#39; &#39; &amp;{2}}</span></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { JOIN ${JOIN} }</span></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;foo bar&#39;</span></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  baz</span></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
+<span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;baz gaz&#39;</span></span>
+<span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  last</span></span>
+<span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
 <p>Console output:</p>
 <pre><code>foo bar baz
 baz gaz last</code></pre>
@@ -1450,16 +1460,16 @@ prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
 <code>INSTALL_PREFIX</code> for man pages. <strong>Default:</strong>
 <code>share/man</code></li>
 </ul>
-<div class="sourceCode" id="cb61"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_DIR_EXPR FILES... }</span></span></code></pre></div>
+<div class="sourceCode" id="cb63"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_DIR_EXPR FILES... }</span></span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
 <code>${INSTALL_PREFIX}/${INSTALL_DIR_EXPR}</code> (creating it if
 necessary). File permissions from the original files are preserved
 during the copy.</p>
 <p>Example:</p>
-<div class="sourceCode" id="cb62"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span></span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }</span></span></code></pre></div>
+<div class="sourceCode" id="cb64"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }</span></span></code></pre></div>
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
 the chosen prefix.</p>
