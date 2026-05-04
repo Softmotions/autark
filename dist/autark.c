@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.4"
-#define META_REVISION "ed72a54"
+#define META_REVISION "008f56a"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -2518,6 +2518,7 @@ int utils_rename_file(const char *src, const char *dst) {
 long int utils_strtol(const char *v, int base, int *rcp) {
   *rcp = 0;
   char *ep = 0;
+  errno = 0;
   long int ret = strtol(v, &ep, base);
   if (*ep != '\0' || errno == ERANGE) {
     *rcp = AK_ERROR_INVALID_ARGS;
@@ -2529,6 +2530,7 @@ long int utils_strtol(const char *v, int base, int *rcp) {
 long long utils_strtoll(const char *v, int base, int *rcp) {
   *rcp = 0;
   char *ep = 0;
+  errno = 0;
   long long ret = strtoll(v, &ep, base);
   if ((*ep != '\0' && *ep != '\n') || errno == ERANGE) {
     *rcp = AK_ERROR_INVALID_ARGS;
