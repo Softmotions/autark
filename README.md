@@ -530,7 +530,7 @@ The expression value is registered during the `init` build phase and then lazily
 upon the first access to that variable.
 
 If a variable is used multiple times in a declarative context (for example, inside [macros](#macros))
-the **let** directive is more appropriate, as it is evaluated every time it is accessed in every build phase.
+the `let` directive is more appropriate, as it is evaluated every time it is accessed in every build phase.
 
 ```cfg
 set | let {
