@@ -148,7 +148,7 @@ static const char* _subst_value_proc_cache(struct node *n) {
   };
 
   for (struct node *cn = n->child; cn; cn = cn->next) {
-    if (node_is_value_may_be_dep_saved(cn)) {
+    if (node_is_value_may_be_dep_saved(cn, NODE_TYPE_VALUE)) {
       ulist_push(&r.node_val_deps, &cn);
     }
   }

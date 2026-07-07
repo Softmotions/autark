@@ -1015,8 +1015,8 @@ struct node_foreach* node_find_parent_foreach(struct node *n) {
   }
 }
 
-bool node_is_value_may_be_dep_saved(struct node *n) {
-  if (!n || n->type == NODE_TYPE_VALUE) { // Hardcoded value
+bool node_is_value_may_be_dep_saved(struct node *n, unsigned skip_types) {
+  if (!n || (n->type & skip_types) != 0) { // Hardcoded value
     return false;
   }
   if (node_is_can_be_value(n)) {

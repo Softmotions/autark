@@ -160,7 +160,7 @@ struct  node* node_find_parent_of_type(struct node *n, int type);
 
 struct node_foreach* node_find_parent_foreach(struct node *n);
 
-bool node_is_value_may_be_dep_saved(struct node *n);
+bool node_is_value_may_be_dep_saved(struct node *n, unsigned skip_type);
 
 struct node* node_consumes_resolve(
   struct node *n,

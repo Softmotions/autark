@@ -241,7 +241,7 @@ static void _install_post_build(struct node *n) {
   };
 
   for (struct node *nn = ctx.n_target; nn; nn = nn->next) {
-    if (node_is_value_may_be_dep_saved(nn)) {
+    if (node_is_value_may_be_dep_saved(nn, NODE_TYPE_VALUE)) {
       ulist_push(&r.node_val_deps, &nn);
     }
   }

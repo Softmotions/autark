@@ -351,15 +351,15 @@ static void _cc_build(struct node *n) {
     .node_val_deps = { .usize = sizeof(struct node*) }
   };
 
-  if (node_is_value_may_be_dep_saved(ctx->n_cc)) {
+  if (node_is_value_may_be_dep_saved(ctx->n_cc, NODE_TYPE_VALUE)) {
     ulist_push(&r.node_val_deps, &ctx->n_cc);
   }
 
-  if (node_is_value_may_be_dep_saved(ctx->n_cflags)) {
+  if (node_is_value_may_be_dep_saved(ctx->n_cflags, NODE_TYPE_VALUE)) {
     ulist_push(&r.node_val_deps, &ctx->n_cflags);
   }
 
-  if (node_is_value_may_be_dep_saved(ctx->n_sources)) {
+  if (node_is_value_may_be_dep_saved(ctx->n_sources, NODE_TYPE_VALUE)) {
     ulist_push(&r.node_val_deps, &ctx->n_sources);
   }
 

@@ -34,6 +34,13 @@ static void _check_on_resolve(struct node_resolve *r) {
   struct node *n = unit->n;
   const char *path = unit->impl;
 
+  // Good, now add dependency on itself
+  struct deps deps;
+  int rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
+  }
+
   struct spawn *s = spawn_create(path, unit);
   spawn_set_stdout_handler(s, _check_stdout_handler);
   spawn_set_stderr_handler(s, _check_stderr_handler);
@@ -43,7 +50,7 @@ static void _check_on_resolve(struct node_resolve *r) {
     }
   }
 
-  int rc = spawn_do(s);
+  rc = spawn_do(s);
   if (rc) {
     node_fatal(rc, n, "%s", path);
   } else {
@@ -54,15 +61,16 @@ static void _check_on_resolve(struct node_resolve *r) {
   }
   spawn_destroy(s);
 
-
-  // Good, now add dependency on itself
-  struct deps deps;
-  rc = deps_open(r->deps_path_tmp, 0, &deps);
-  if (rc) {
-    node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
-  }
   deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
-  node_add_unit_deps(n, &deps);
+
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+
   deps_close(&deps);
 }
 
@@ -98,16 +106,23 @@ static void _check_script(struct node *n) {
   unit->impl = path;
   unit_push(unit, n);
 
-  struct node_resolve nr = {
+  struct node_resolve r = {
     .n = n,
     .mode = NODE_RESOLVE_ENV_ALWAYS,
     .path = n->vfile,
     .user_data = unit,
     .on_env_value = _check_on_env_value,
     .on_resolve = _check_on_resolve,
+    .node_val_deps = { .usize = sizeof(struct node*) },
   };
 
-  node_resolve(&nr);
+  for (struct node *nn = n->child; nn; nn = nn->next) {
+    if (node_is_value_may_be_dep_saved(nn, 0)) {
+      ulist_push(&r.node_val_deps, &nn);
+    }
+  }
+
+  node_resolve(&r);
 
   unit_pop();
   pool_destroy(pool);
