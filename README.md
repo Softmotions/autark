@@ -23,8 +23,8 @@
 - [install](#install-)
 - [macros](#macros)
 
-**Autark** is a self-contained build system that resides entirely within
-your project and requires only `/bin/sh` and a `C` compiler to work!
+**Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
+It builds with only `/bin/sh` and a `C99` compiler.
 
 The goal of this project is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
