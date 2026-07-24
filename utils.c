@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #endif
 
 struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
@@ -92,10 +94,14 @@ int utils_copy_file(const char *src, const char *dst) {
   while (1) {
     nr = fread(buf, 1, sizeof(buf), sf);
     if (nr) {
-      nr = fwrite(buf, 1, nr, df);
-      if (!nr) {
-        rc = AK_ERROR_IO;
-        break;
+      size_t offset = 0;
+      while (offset < nr) {
+        size_t nw = fwrite(buf + offset, 1, nr - offset, df);
+        if (!nw) {
+          rc = AK_ERROR_IO;
+          goto finish;
+        }
+        offset += nw;
       }
     } else if (feof(sf)) {
       break;
@@ -104,8 +110,13 @@ int utils_copy_file(const char *src, const char *dst) {
       break;
     }
   }
+finish:
   fclose(sf);
-  fclose(df);
+  if (fclose(df)) {
+    if (!rc) {
+      rc = AK_ERROR_IO;
+    }
+  }
   return rc;
 }
 
@@ -122,6 +133,315 @@ int utils_rename_file(const char *src, const char *dst) {
     }
   }
   return 0;
+}
+
+static inline int _utils_same_file(const struct stat *a, const struct stat *b) {
+  return a->st_dev == b->st_dev
+         && a->st_ino == b->st_ino;
+}
+
+static int _utils_join_path(const char *dir, const char *name, char **out) {
+  size_t dl = strlen(dir);
+  size_t nl = strlen(name);
+  size_t slash = dl && dir[dl - 1] != '/';
+  if (dl > SIZE_MAX - nl - slash - 1) {
+    return EOVERFLOW;
+  }
+  char *path = malloc(dl + slash + nl + 1);
+  if (!path) {
+    return ENOMEM;
+  }
+  memcpy(path, dir, dl);
+  if (slash) {
+    path[dl++] = '/';
+  }
+  memcpy(path + dl, name, nl + 1);
+  *out = path;
+  return 0;
+}
+
+static int _utils_path_is_same_or_child(const char *parent, const char *path) {
+  size_t len = strlen(parent);
+  if (strncmp(parent, path, len) != 0) {
+    return 0;
+  }
+  if (path[len] == '\0') {
+    return 1;
+  }
+  if (len == 1 && parent[0] == '/') {
+    return path[0] == '/';
+  }
+  return path[len] == '/';
+}
+
+static char* _utils_real_existing_ancestor(const char *path) {
+  char *current = strdup(path);
+  if (!current) {
+    errno = ENOMEM;
+    return 0;
+  }
+  for ( ; ; ) {
+    char *real = realpath(current, 0);
+    if (real) {
+      free(current);
+      return real;
+    }
+    if (errno != ENOENT && errno != ENOTDIR) {
+      int rc = errno;
+      free(current);
+      errno = rc;
+      return 0;
+    }
+    size_t len = strlen(current);
+    while (len > 1 && current[len - 1] == '/') {
+      current[--len] = '\0';
+    }
+    char *slash = strrchr(current, '/');
+    if (!slash) {
+      free(current);
+      current = strdup(".");
+      if (!current) {
+        errno = ENOMEM;
+        return 0;
+      }
+    } else if (slash == current) {
+      current[1] = '\0';
+    } else {
+      *slash = '\0';
+    }
+  }
+}
+
+static int _utils_check_overlap(const char *src, const char *dst) {
+  struct stat st;
+  if (lstat(src, &st) != 0) {
+    return errno;
+  }
+  if (S_ISLNK(st.st_mode)) {
+    return ELOOP;
+  }
+  if (!S_ISDIR(st.st_mode)) {
+    return ENOTDIR;
+  }
+  char *src_real = realpath(src, 0);
+  if (!src_real) {
+    return errno;
+  }
+  char *dst_ancestor = _utils_real_existing_ancestor(dst);
+  if (!dst_ancestor) {
+    int rc = errno;
+    free(src_real);
+    return rc;
+  }
+  int rc = _utils_path_is_same_or_child(src_real, dst_ancestor) ? EINVAL : 0;
+  if (!rc) {
+    if (lstat(dst, &st) == 0) {
+      if (S_ISLNK(st.st_mode)) {
+        rc = ELOOP;
+      } else if (!S_ISDIR(st.st_mode)) {
+        rc = ENOTDIR;
+      } else {
+        char *dst_real = realpath(dst, 0);
+
+        if (!dst_real) {
+          rc = errno;
+        } else {
+          if (_utils_path_is_same_or_child(
+                dst_real, src_real)) {
+            rc = EINVAL;
+          }
+          free(dst_real);
+        }
+      }
+    } else if (errno != ENOENT) {
+      rc = errno;
+    }
+  }
+  free(dst_ancestor);
+  free(src_real);
+  return rc;
+}
+
+static int _utils_copy_symlink(const char *src, const char *dst, const struct stat *src_st) {
+  ssize_t len;
+  char *target = 0;
+  size_t capacity = src_st->st_size > 0 ? (size_t) src_st->st_size + 1 : 256;
+
+  for ( ; ; ) {
+    target = malloc(capacity + 1);
+    if (!target) {
+      return ENOMEM;
+    }
+    len = readlink(src, target, capacity);
+    if (len < 0) {
+      int rc = errno;
+      free(target);
+      return rc;
+    }
+    if ((size_t) len < capacity) {
+      break;
+    }
+    free(target);
+    if (capacity > SIZE_MAX / 2) {
+      return EOVERFLOW;
+    }
+    capacity *= 2;
+  }
+  target[len] = '\0';
+
+  struct stat dst_st;
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISDIR(dst_st.st_mode)) {
+      free(target);
+      return EISDIR;
+    }
+    if (unlink(dst) != 0) {
+      int rc = errno;
+      free(target);
+      return rc;
+    }
+  } else if (errno != ENOENT) {
+    int rc = errno;
+    free(target);
+    return rc;
+  }
+  int rc = symlink(target, dst) == 0 ? 0 : errno;
+  free(target);
+  return rc;
+}
+
+static int _utils_copy_regular(
+  const char        *src,
+  const char        *dst,
+  const struct stat *src_st) {
+  struct stat dst_st;
+
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISDIR(dst_st.st_mode)) {
+      return EISDIR;
+    }
+    if (S_ISLNK(dst_st.st_mode)) {
+      if (unlink(dst) != 0) {
+        return errno;
+      }
+    } else if (!S_ISREG(dst_st.st_mode)) {
+      return ENOTSUP;
+    } else if (_utils_same_file(src_st, &dst_st)) {
+      return EINVAL;
+    }
+  } else if (errno != ENOENT) {
+    return errno;
+  }
+  int rc = utils_copy_file(src, dst);
+  if (  !rc
+     && chmod(dst, src_st->st_mode & 07777) != 0) {
+    rc = errno;
+  }
+  return rc;
+}
+
+static int _utils_copy_dir_recursive(const char *src, const char *dst) {
+  struct stat src_st;
+  struct stat dst_st;
+  if (lstat(src, &src_st) != 0) {
+    return errno;
+  }
+  if (S_ISLNK(src_st.st_mode)) {
+    return ELOOP;
+  }
+  if (!S_ISDIR(src_st.st_mode)) {
+    return ENOTDIR;
+  }
+
+  int created = 0;
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISLNK(dst_st.st_mode)) {
+      return ELOOP;
+    }
+    if (!S_ISDIR(dst_st.st_mode)) {
+      return ENOTDIR;
+    }
+    if (_utils_same_file(&src_st, &dst_st)) {
+      return EINVAL;
+    }
+  } else if (errno == ENOENT) {
+    if (mkdir(dst, 0700) != 0) {
+      return errno;
+    }
+    created = 1;
+  } else {
+    return errno;
+  }
+
+  DIR *dir = opendir(src);
+  if (!dir) {
+    return errno;
+  }
+
+  int rc = 0;
+  for ( ; ; ) {
+    errno = 0;
+    struct dirent *entry = readdir(dir);
+    if (!entry) {
+      if (errno) {
+        rc = errno;
+      }
+      break;
+    }
+    if (  !strcmp(entry->d_name, ".")
+       || !strcmp(entry->d_name, "..")) {
+      continue;
+    }
+
+    char *src_path = 0;
+    char *dst_path = 0;
+
+    rc = _utils_join_path(src, entry->d_name, &src_path);
+    if (!rc) {
+      rc = _utils_join_path(dst, entry->d_name, &dst_path);
+    }
+    if (!rc) {
+      struct stat entry_st;
+      if (lstat(src_path, &entry_st) != 0) {
+        rc = errno;
+      } else if (S_ISDIR(entry_st.st_mode)) {
+        rc = _utils_copy_dir_recursive(
+          src_path, dst_path);
+      } else if (S_ISREG(entry_st.st_mode)) {
+        rc = _utils_copy_regular(
+          src_path, dst_path, &entry_st);
+      } else if (S_ISLNK(entry_st.st_mode)) {
+        rc = _utils_copy_symlink(
+          src_path, dst_path, &entry_st);
+      } else {
+        // FIFO, socket, block/character device.
+        rc = ENOTSUP;
+      }
+    }
+
+    free(src_path);
+    free(dst_path);
+    if (rc) {
+      break;
+    }
+  }
+  if (closedir(dir) != 0 && !rc) {
+    rc = errno;
+  }
+  if (  created
+     && chmod(dst, src_st.st_mode & 07777) != 0
+     && !rc) {
+    rc = errno;
+  }
+  return rc;
+}
+
+int utils_copy_dir(const char *src, const char *dst) {
+  if (!src || !*src || !dst || !*dst) {
+    return AK_ERROR_INVALID_ARGS;
+  }
+  int rc = _utils_check_overlap(src, dst);
+  return rc ? rc : _utils_copy_dir_recursive(src, dst);
 }
 
 long int utils_strtol(const char *v, int base, int *rcp) {
@@ -210,7 +530,7 @@ int64_t utils_current_time_ms(void) {
   }
 #else
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, 0);
   return (int64_t) tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
   return (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;

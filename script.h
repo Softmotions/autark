@@ -19,27 +19,28 @@
 #define NODE_TYPE_DIR      0x20U
 #define NODE_TYPE_FIND     0x40U
 // eof value types
-#define NODE_TYPE_SCRIPT     0x100U
-#define NODE_TYPE_BAG        0x200U
-#define NODE_TYPE_META       0x400U
-#define NODE_TYPE_CHECK      0x800U
-#define NODE_TYPE_INCLUDE    0x1000U
-#define NODE_TYPE_IF         0x2000U
-#define NODE_TYPE_RUN        0x4000U
-#define NODE_TYPE_CC         0x8000U
-#define NODE_TYPE_CONFIGURE  0x10000U
-#define NODE_TYPE_FOREACH    0x20000U
-#define NODE_TYPE_IN_SOURCES 0x40000U
-#define NODE_TYPE_OPTION     0x80000U
-#define NODE_TYPE_ERROR      0x100000U
-#define NODE_TYPE_ECHO       0x200000U
-#define NODE_TYPE_INSTALL    0x400000U
-#define NODE_TYPE_MACRO      0x800000U
-#define NODE_TYPE_CALL       0x1000000U
+#define NODE_TYPE_SCRIPT       0x100U
+#define NODE_TYPE_BAG          0x200U
+#define NODE_TYPE_META         0x400U
+#define NODE_TYPE_CHECK        0x800U
+#define NODE_TYPE_INCLUDE      0x1000U
+#define NODE_TYPE_IF           0x2000U
+#define NODE_TYPE_RUN          0x4000U
+#define NODE_TYPE_CC           0x8000U
+#define NODE_TYPE_CONFIGURE    0x10000U
+#define NODE_TYPE_FOREACH      0x20000U
+#define NODE_TYPE_IN_SOURCES   0x40000U
+#define NODE_TYPE_OPTION       0x80000U
+#define NODE_TYPE_ERROR        0x100000U
+#define NODE_TYPE_ECHO         0x200000U
+#define NODE_TYPE_INSTALL      0x400000U
+#define NODE_TYPE_MACRO        0x800000U
+#define NODE_TYPE_CALL         0x1000000U
+#define NODE_TYPE_SOURCE_DISTR 0x2000000U
 
-#define NODE_FLG_BOUND      0x01U
-#define NODE_FLG_INIT       0x02U
-#define NODE_FLG_SETUP      0x04U
+#define NODE_FLG_BOUND 0x01U
+#define NODE_FLG_INIT  0x02U
+#define NODE_FLG_SETUP 0x04U
 // Vacant: 0x08U
 #define NODE_FLG_BUILT      0x10U // Node built
 #define NODE_FLG_POST_BUILT 0x20U // Node post-built
@@ -156,7 +157,7 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node* node_find_prev_sibling(struct node *n);
 
-struct  node* node_find_parent_of_type(struct node *n, int type);
+struct node* node_find_parent_of_type(struct node *n, int type);
 
 struct node_foreach* node_find_parent_foreach(struct node *n);
 

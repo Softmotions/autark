@@ -2,7 +2,7 @@
 #define ENV_H
 
 #ifndef _AMALGAMATE_
-#include "basedefs.h"
+#include "basedefs.h" // IWYU pragma: keep
 #include "pool.h"
 #include "map.h"
 #include "ulist.h"
@@ -17,15 +17,22 @@
 #define AUTARK_CACHE  "autark-cache"
 #define AUTARK_SCRIPT "Autark"
 
-#define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
-#define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
-#define AUTARK_UNIT      "AUTARK_UNIT"      // Path relative to AUTARK_ROOT_DIR of build process unit executed
-                                            // currently.
-#define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
+#define AUTARK_CACHE_OVERLAY_DIR ".overlay"
+#define AUTARK_SOURCE_DISTR_DIR  ".source-distr"
+
+#define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
+#define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
+#define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
+#define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
+                                                                // unit executed
+#define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
 #define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
+
+#define DISTR_FLG_PACK      0x01U // Source distribution package enabled.
+#define DISTR_FLG_WITH_DEPS 0x02U // Provide distribution with dependencies.
 
 struct unit_env_item {
   const char  *val;
@@ -61,8 +68,9 @@ struct env {
   int verbose;
   int max_parallel_jobs;            // Max number of allowed parallel jobs.
   struct {
-    const char *root_dir;           // Project root source dir.
-    const char *cache_dir;          // Project artifacts cache dir.
+    const char *root_dir;           // Project root source dir. Not zero.
+    const char *cache_dir;          // Project artifacts cache dir. Not zero.
+    const char *cache_overlay_dir;  // Overlay data dir for autark cache. Can be zero.
     bool cleanup;                   // Clean project cache before build
     bool prepared;                  // Autark build prepared
     struct xstr *options;           // Ask option values
@@ -75,8 +83,11 @@ struct env {
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.
-    bool enabled;            // True if install operation should be performed
+    bool enabled;            // True if install operation should be performed.
   } install;
+  struct {
+    unsigned flags;   // DISTR_FLG_XXX
+  } distr;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;

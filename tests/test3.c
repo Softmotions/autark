@@ -14,13 +14,13 @@ int main(void) {
 
   char path[PATH_MAX], path2[PATH_MAX];
   getcwd(path, PATH_MAX - 1);
-  setenv(AUTARK_ROOT_DIR, path, 1);
+  setenv(AUTARK_ROOT_DIR_ENV, path, 1);
 
   snprintf(path2, sizeof(path2), "%s/%s", path, AUTARK_CACHE);
   ASSERT(assert, path_rm_cache(path2) == 0);
 
-  setenv(AUTARK_CACHE_DIR, path2, 1);
-  setenv(AUTARK_UNIT, "test3", 1);
+  setenv(AUTARK_CACHE_DIR_ENV, path2, 1);
+  setenv(AUTARK_UNIT_ENV, "test3", 1);
 
   const char *argv[] = { "test3", "set", "foo=bar" };
   int argc = sizeof(argv) / sizeof(argv[0]);

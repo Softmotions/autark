@@ -67,7 +67,7 @@ struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_ta
       *out_tag = item->tag;
     }
     return item->n;
-  } else if (out_tag)  {
+  } else if (out_tag) {
     *out_tag = 0;
   }
   return 0;
@@ -190,7 +190,7 @@ void unit_push(struct unit *unit, struct node *n) {
   }
   ulist_push(&g_env.stack_units, &ctx);
   unit_ch_dir(&ctx, 0);
-  setenv(AUTARK_UNIT, unit->rel_path, 1);
+  setenv(AUTARK_UNIT_ENV, unit->rel_path, 1);
 }
 
 struct unit* unit_pop(void) {
@@ -200,9 +200,9 @@ struct unit* unit_pop(void) {
   struct unit_ctx peek = unit_peek_ctx();
   if (peek.unit) {
     unit_ch_dir(&peek, 0);
-    setenv(AUTARK_UNIT, peek.unit->rel_path, 1);
+    setenv(AUTARK_UNIT_ENV, peek.unit->rel_path, 1);
   } else {
-    unsetenv(AUTARK_UNIT);
+    unsetenv(AUTARK_UNIT_ENV);
   }
   return ctx->unit;
 }
@@ -270,7 +270,9 @@ void unit_ch_src_dir(struct unit *unit, char *prevcwd) {
   akcheck(chdir(unit->dir));
 }
 
-static int _usage_va(const char *err, va_list ap) {
+static int _usage_va(
+  const char *err,
+  va_list     ap) {
   if (err) {
     fprintf(stderr, "\nError:  ");
     vfprintf(stderr, err, ap);
@@ -299,6 +301,12 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -R, --prefix=<>             Install prefix. Default: $HOME/.local\n");
   fprintf(stderr,
+          "    -s, --source-distr-pack     Build source distribution package dir.\n"
+          "                                Package directory: <cache>/.source-distr\n");
+  fprintf(stderr,
+          "    -S, --source-distr-deps     Build autonomous source distribution package dir with all external project dependencies packed.\n"
+          "                                Package directory: <cache>/.source-distr\n");
+  fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
@@ -315,6 +323,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
 #endif
+
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from check script.\n");
   fprintf(stderr,
@@ -354,7 +363,7 @@ void autark_build_prepare(const char *script_path) {
 
   if (!g_env.project.root_dir) {
     if (script_path) {
-      utils_strncpy(path_buf, script_path, PATH_MAX);
+      utils_strncpy(path_buf, script_path, sizeof(path_buf));
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
     } else {
       g_env.project.root_dir = g_env.cwd;
@@ -386,6 +395,14 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "Project cache dir cannot be parent of project root dir", 0);
   }
 
+  setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
+  setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
+
+  if (g_env.distr.flags & DISTR_FLG_WITH_DEPS) {
+    g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
+    setenv(AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_overlay_dir, 1);
+  }
+
   if (g_env.project.cleanup) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rm_cache(g_env.project.cache_dir);
@@ -395,7 +412,7 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
-  utils_strncpy(path_buf, script_path, PATH_MAX);
+  utils_strncpy(path_buf, script_path, sizeof(path_buf));
   const char *path = path_basename(path_buf);
 
   struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD | UNIT_FLG_ROOT, g_env.pool);
@@ -405,43 +422,45 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
 
-  setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
-  setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-
   if (g_env.verbose) {
-    setenv(AUTARK_VERBOSE, "1", 1);
+    setenv(AUTARK_VERBOSE_ENV, "1", 1);
   }
 }
 
-static void _project_env_read(void) {
+static void _project_command_env_read(void) {
   autark_init();
 
-  const char *val = getenv(AUTARK_CACHE_DIR);
+  const char *val = getenv(AUTARK_CACHE_DIR_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_CACHE_DIR env variable", 0);
   }
   g_env.project.cache_dir = pool_strdup(g_env.pool, val);
 
-  val = getenv(AUTARK_ROOT_DIR);
+  val = getenv(AUTARK_ROOT_DIR_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_ROOT_DIR env variable", 0);
   }
   g_env.project.root_dir = pool_strdup(g_env.pool, val);
 
-  val = getenv(AUTARK_UNIT);
+  val = getenv(AUTARK_CACHE_OVERLAY_DIR);
+  if (val) {
+    g_env.project.cache_overlay_dir = pool_strdup(g_env.pool, val);
+  }
+
+  val = getenv(AUTARK_UNIT_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_UNIT env variable", 0);
   }
+
   if (path_is_absolute(val)) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
-
   struct unit *unit = unit_create(val, UNIT_FLG_NO_CWD, g_env.pool);
   unit_push(unit, 0);
 }
 
 static void _on_command_set(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   const char *kv;
   if (optind >= argc) {
     _usage("Missing <key> argument");
@@ -465,7 +484,7 @@ static void _on_command_set(int argc, const char **argv) {
 }
 
 static void _on_command_dep(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
   }
@@ -489,10 +508,37 @@ static void _on_command_dep(int argc, const char **argv) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }
   deps_close(&deps);
+
+  // Process .autark-fetch-dep deps in special way
+  if (g_env.project.cache_overlay_dir && type == DEPS_TYPE_FILE && utils_endswith(file, "/.autark-fetch-dep")) {
+    char pbuf[PATH_MAX];
+    path_normalize(file, pbuf);
+    if (path_is_prefix_for(g_env.project.cache_dir, pbuf, 0)) {
+      char obuf[PATH_MAX];
+      utils_strncpy(obuf, g_env.project.cache_overlay_dir, sizeof(obuf));
+      const char *overlay_parent_dir = path_dirname(obuf);
+      const char *dir = path_dirname(pbuf);
+      char *reldir = path_relativize_cwd(overlay_parent_dir, dir, overlay_parent_dir);
+      snprintf(pbuf, sizeof(pbuf), "%s/%s", g_env.project.cache_overlay_dir, reldir);
+      dir = path_dirname(pbuf);
+      int rc = path_mkdirs(dir);
+      if (!rc) {
+        utils_strncpy(obuf, file, sizeof(obuf));
+        const char *src = path_dirname(obuf);
+        rc = utils_copy_dir(src, dir);
+        if (rc) {
+          akerror(rc, "Error copying dir: %s into: %s", src, dir);
+        }
+      } else {
+        akerror(rc, "Failed to create a directory: %s", dir);
+      }
+      free(reldir);
+    }
+  }
 }
 
 static void _on_command_dep_env(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
   }
@@ -674,6 +720,8 @@ void autark_run(int argc, const char **argv) {
     { "prefix", 1, 0, 'R' },
     { "dir", 1, 0, 'C' },
     { "jobs", 1, 0, 'J' },
+    { "source-distr", 0, 0, 's' },
+    { "source-distr-deps", 0, 0, 'S' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
@@ -721,6 +769,12 @@ void autark_run(int argc, const char **argv) {
       case 'C':
         cdir = pool_strdup(g_env.pool, optarg);
         break;
+      case 'S':
+        g_env.distr.flags |= DISTR_FLG_WITH_DEPS;
+      // fallthrough
+      case 's':
+        g_env.distr.flags |= DISTR_FLG_PACK;
+        break;
       case -1:
         g_env.install.bin_dir = pool_strdup(g_env.pool, optarg);
         break;
@@ -763,8 +817,8 @@ void autark_run(int argc, const char **argv) {
   }
 
   if (!g_env.verbose) {
-    const char *v = getenv(AUTARK_VERBOSE);
-    if (v && *v == '1') {
+    const char *v = getenv(AUTARK_VERBOSE_ENV);
+    if (v && (*v == '1' || *v == 'y' || *v == 'Y')) {
       g_env.verbose = true;
     }
   }

@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.4"
-#define META_REVISION "1eb896b"
+#define META_REVISION "1b7d4e8"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -562,9 +562,9 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max);
 
 int utils_file_write_buf(const char *path, const char *buf, size_t len, bool append);
 
-int utils_exec_path(char buf[PATH_MAX]);
-
 int utils_copy_file(const char *src, const char *dst);
+
+int utils_copy_dir(const char *src, const char *dst);
 
 int utils_rename_file(const char *src, const char *dst);
 
@@ -749,7 +749,7 @@ char* path_basename(char *path);
 #define ENV_H
 
 #ifndef _AMALGAMATE_
-#include "basedefs.h"
+#include "basedefs.h" // IWYU pragma: keep
 #include "pool.h"
 #include "map.h"
 #include "ulist.h"
@@ -764,15 +764,22 @@ char* path_basename(char *path);
 #define AUTARK_CACHE  "autark-cache"
 #define AUTARK_SCRIPT "Autark"
 
-#define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
-#define AUTARK_CACHE_DIR "AUTARK_CACHE_DIR" // Project cache directory
-#define AUTARK_UNIT      "AUTARK_UNIT"      // Path relative to AUTARK_ROOT_DIR of build process unit executed
-                                            // currently.
-#define AUTARK_VERBOSE "AUTARK_VERBOSE"     // Autark verbose env key
+#define AUTARK_CACHE_OVERLAY_DIR ".overlay"
+#define AUTARK_SOURCE_DISTR_DIR  ".source-distr"
+
+#define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
+#define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
+#define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
+#define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
+                                                                // unit executed
+#define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
 #define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
+
+#define DISTR_FLG_PACK      0x01U // Source distribution package enabled.
+#define DISTR_FLG_WITH_DEPS 0x02U // Provide distribution with dependencies.
 
 struct unit_env_item {
   const char  *val;
@@ -808,8 +815,9 @@ struct env {
   int verbose;
   int max_parallel_jobs;            // Max number of allowed parallel jobs.
   struct {
-    const char *root_dir;           // Project root source dir.
-    const char *cache_dir;          // Project artifacts cache dir.
+    const char *root_dir;           // Project root source dir. Not zero.
+    const char *cache_dir;          // Project artifacts cache dir. Not zero.
+    const char *cache_overlay_dir;  // Overlay data dir for autark cache. Can be zero.
     bool cleanup;                   // Clean project cache before build
     bool prepared;                  // Autark build prepared
     struct xstr *options;           // Ask option values
@@ -822,8 +830,11 @@ struct env {
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.
-    bool enabled;            // True if install operation should be performed
+    bool enabled;            // True if install operation should be performed.
   } install;
+  struct {
+    unsigned flags;   // DISTR_FLG_XXX
+  } distr;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;
@@ -961,6 +972,7 @@ int node_install_setup(struct node*);
 int node_find_setup(struct node*);
 int node_macro_setup(struct node*);
 int node_call_setup(struct node*);
+int node_source_distr_setup(struct node*);
 
 struct node* call_macro_node(struct node*);
 struct node* call_first_node(struct node*);
@@ -1005,27 +1017,28 @@ void autark_build_prepare(const char *script_path);
 #define NODE_TYPE_DIR      0x20U
 #define NODE_TYPE_FIND     0x40U
 // eof value types
-#define NODE_TYPE_SCRIPT     0x100U
-#define NODE_TYPE_BAG        0x200U
-#define NODE_TYPE_META       0x400U
-#define NODE_TYPE_CHECK      0x800U
-#define NODE_TYPE_INCLUDE    0x1000U
-#define NODE_TYPE_IF         0x2000U
-#define NODE_TYPE_RUN        0x4000U
-#define NODE_TYPE_CC         0x8000U
-#define NODE_TYPE_CONFIGURE  0x10000U
-#define NODE_TYPE_FOREACH    0x20000U
-#define NODE_TYPE_IN_SOURCES 0x40000U
-#define NODE_TYPE_OPTION     0x80000U
-#define NODE_TYPE_ERROR      0x100000U
-#define NODE_TYPE_ECHO       0x200000U
-#define NODE_TYPE_INSTALL    0x400000U
-#define NODE_TYPE_MACRO      0x800000U
-#define NODE_TYPE_CALL       0x1000000U
+#define NODE_TYPE_SCRIPT       0x100U
+#define NODE_TYPE_BAG          0x200U
+#define NODE_TYPE_META         0x400U
+#define NODE_TYPE_CHECK        0x800U
+#define NODE_TYPE_INCLUDE      0x1000U
+#define NODE_TYPE_IF           0x2000U
+#define NODE_TYPE_RUN          0x4000U
+#define NODE_TYPE_CC           0x8000U
+#define NODE_TYPE_CONFIGURE    0x10000U
+#define NODE_TYPE_FOREACH      0x20000U
+#define NODE_TYPE_IN_SOURCES   0x40000U
+#define NODE_TYPE_OPTION       0x80000U
+#define NODE_TYPE_ERROR        0x100000U
+#define NODE_TYPE_ECHO         0x200000U
+#define NODE_TYPE_INSTALL      0x400000U
+#define NODE_TYPE_MACRO        0x800000U
+#define NODE_TYPE_CALL         0x1000000U
+#define NODE_TYPE_SOURCE_DISTR 0x2000000U
 
-#define NODE_FLG_BOUND      0x01U
-#define NODE_FLG_INIT       0x02U
-#define NODE_FLG_SETUP      0x04U
+#define NODE_FLG_BOUND 0x01U
+#define NODE_FLG_INIT  0x02U
+#define NODE_FLG_SETUP 0x04U
 // Vacant: 0x08U
 #define NODE_FLG_BUILT      0x10U // Node built
 #define NODE_FLG_POST_BUILT 0x20U // Node post-built
@@ -1142,7 +1155,7 @@ struct node* node_find_direct_child(struct node *n, int type, const char *val);
 
 struct node* node_find_prev_sibling(struct node *n);
 
-struct  node* node_find_parent_of_type(struct node *n, int type);
+struct node* node_find_parent_of_type(struct node *n, int type);
 
 struct node_foreach* node_find_parent_foreach(struct node *n);
 
@@ -2400,6 +2413,8 @@ int map_iter_next(struct map_iter *iter) {
 #include <fcntl.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #endif
 
 struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
@@ -2483,10 +2498,14 @@ int utils_copy_file(const char *src, const char *dst) {
   while (1) {
     nr = fread(buf, 1, sizeof(buf), sf);
     if (nr) {
-      nr = fwrite(buf, 1, nr, df);
-      if (!nr) {
-        rc = AK_ERROR_IO;
-        break;
+      size_t offset = 0;
+      while (offset < nr) {
+        size_t nw = fwrite(buf + offset, 1, nr - offset, df);
+        if (!nw) {
+          rc = AK_ERROR_IO;
+          goto finish;
+        }
+        offset += nw;
       }
     } else if (feof(sf)) {
       break;
@@ -2495,8 +2514,13 @@ int utils_copy_file(const char *src, const char *dst) {
       break;
     }
   }
+finish:
   fclose(sf);
-  fclose(df);
+  if (fclose(df)) {
+    if (!rc) {
+      rc = AK_ERROR_IO;
+    }
+  }
   return rc;
 }
 
@@ -2513,6 +2537,315 @@ int utils_rename_file(const char *src, const char *dst) {
     }
   }
   return 0;
+}
+
+static inline int _utils_same_file(const struct stat *a, const struct stat *b) {
+  return a->st_dev == b->st_dev
+         && a->st_ino == b->st_ino;
+}
+
+static int _utils_join_path(const char *dir, const char *name, char **out) {
+  size_t dl = strlen(dir);
+  size_t nl = strlen(name);
+  size_t slash = dl && dir[dl - 1] != '/';
+  if (dl > SIZE_MAX - nl - slash - 1) {
+    return EOVERFLOW;
+  }
+  char *path = malloc(dl + slash + nl + 1);
+  if (!path) {
+    return ENOMEM;
+  }
+  memcpy(path, dir, dl);
+  if (slash) {
+    path[dl++] = '/';
+  }
+  memcpy(path + dl, name, nl + 1);
+  *out = path;
+  return 0;
+}
+
+static int _utils_path_is_same_or_child(const char *parent, const char *path) {
+  size_t len = strlen(parent);
+  if (strncmp(parent, path, len) != 0) {
+    return 0;
+  }
+  if (path[len] == '\0') {
+    return 1;
+  }
+  if (len == 1 && parent[0] == '/') {
+    return path[0] == '/';
+  }
+  return path[len] == '/';
+}
+
+static char* _utils_real_existing_ancestor(const char *path) {
+  char *current = strdup(path);
+  if (!current) {
+    errno = ENOMEM;
+    return 0;
+  }
+  for ( ; ; ) {
+    char *real = realpath(current, 0);
+    if (real) {
+      free(current);
+      return real;
+    }
+    if (errno != ENOENT && errno != ENOTDIR) {
+      int rc = errno;
+      free(current);
+      errno = rc;
+      return 0;
+    }
+    size_t len = strlen(current);
+    while (len > 1 && current[len - 1] == '/') {
+      current[--len] = '\0';
+    }
+    char *slash = strrchr(current, '/');
+    if (!slash) {
+      free(current);
+      current = strdup(".");
+      if (!current) {
+        errno = ENOMEM;
+        return 0;
+      }
+    } else if (slash == current) {
+      current[1] = '\0';
+    } else {
+      *slash = '\0';
+    }
+  }
+}
+
+static int _utils_check_overlap(const char *src, const char *dst) {
+  struct stat st;
+  if (lstat(src, &st) != 0) {
+    return errno;
+  }
+  if (S_ISLNK(st.st_mode)) {
+    return ELOOP;
+  }
+  if (!S_ISDIR(st.st_mode)) {
+    return ENOTDIR;
+  }
+  char *src_real = realpath(src, 0);
+  if (!src_real) {
+    return errno;
+  }
+  char *dst_ancestor = _utils_real_existing_ancestor(dst);
+  if (!dst_ancestor) {
+    int rc = errno;
+    free(src_real);
+    return rc;
+  }
+  int rc = _utils_path_is_same_or_child(src_real, dst_ancestor) ? EINVAL : 0;
+  if (!rc) {
+    if (lstat(dst, &st) == 0) {
+      if (S_ISLNK(st.st_mode)) {
+        rc = ELOOP;
+      } else if (!S_ISDIR(st.st_mode)) {
+        rc = ENOTDIR;
+      } else {
+        char *dst_real = realpath(dst, 0);
+
+        if (!dst_real) {
+          rc = errno;
+        } else {
+          if (_utils_path_is_same_or_child(
+                dst_real, src_real)) {
+            rc = EINVAL;
+          }
+          free(dst_real);
+        }
+      }
+    } else if (errno != ENOENT) {
+      rc = errno;
+    }
+  }
+  free(dst_ancestor);
+  free(src_real);
+  return rc;
+}
+
+static int _utils_copy_symlink(const char *src, const char *dst, const struct stat *src_st) {
+  ssize_t len;
+  char *target = 0;
+  size_t capacity = src_st->st_size > 0 ? (size_t) src_st->st_size + 1 : 256;
+
+  for ( ; ; ) {
+    target = malloc(capacity + 1);
+    if (!target) {
+      return ENOMEM;
+    }
+    len = readlink(src, target, capacity);
+    if (len < 0) {
+      int rc = errno;
+      free(target);
+      return rc;
+    }
+    if ((size_t) len < capacity) {
+      break;
+    }
+    free(target);
+    if (capacity > SIZE_MAX / 2) {
+      return EOVERFLOW;
+    }
+    capacity *= 2;
+  }
+  target[len] = '\0';
+
+  struct stat dst_st;
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISDIR(dst_st.st_mode)) {
+      free(target);
+      return EISDIR;
+    }
+    if (unlink(dst) != 0) {
+      int rc = errno;
+      free(target);
+      return rc;
+    }
+  } else if (errno != ENOENT) {
+    int rc = errno;
+    free(target);
+    return rc;
+  }
+  int rc = symlink(target, dst) == 0 ? 0 : errno;
+  free(target);
+  return rc;
+}
+
+static int _utils_copy_regular(
+  const char        *src,
+  const char        *dst,
+  const struct stat *src_st) {
+  struct stat dst_st;
+
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISDIR(dst_st.st_mode)) {
+      return EISDIR;
+    }
+    if (S_ISLNK(dst_st.st_mode)) {
+      if (unlink(dst) != 0) {
+        return errno;
+      }
+    } else if (!S_ISREG(dst_st.st_mode)) {
+      return ENOTSUP;
+    } else if (_utils_same_file(src_st, &dst_st)) {
+      return EINVAL;
+    }
+  } else if (errno != ENOENT) {
+    return errno;
+  }
+  int rc = utils_copy_file(src, dst);
+  if (  !rc
+     && chmod(dst, src_st->st_mode & 07777) != 0) {
+    rc = errno;
+  }
+  return rc;
+}
+
+static int _utils_copy_dir_recursive(const char *src, const char *dst) {
+  struct stat src_st;
+  struct stat dst_st;
+  if (lstat(src, &src_st) != 0) {
+    return errno;
+  }
+  if (S_ISLNK(src_st.st_mode)) {
+    return ELOOP;
+  }
+  if (!S_ISDIR(src_st.st_mode)) {
+    return ENOTDIR;
+  }
+
+  int created = 0;
+  if (lstat(dst, &dst_st) == 0) {
+    if (S_ISLNK(dst_st.st_mode)) {
+      return ELOOP;
+    }
+    if (!S_ISDIR(dst_st.st_mode)) {
+      return ENOTDIR;
+    }
+    if (_utils_same_file(&src_st, &dst_st)) {
+      return EINVAL;
+    }
+  } else if (errno == ENOENT) {
+    if (mkdir(dst, 0700) != 0) {
+      return errno;
+    }
+    created = 1;
+  } else {
+    return errno;
+  }
+
+  DIR *dir = opendir(src);
+  if (!dir) {
+    return errno;
+  }
+
+  int rc = 0;
+  for ( ; ; ) {
+    errno = 0;
+    struct dirent *entry = readdir(dir);
+    if (!entry) {
+      if (errno) {
+        rc = errno;
+      }
+      break;
+    }
+    if (  !strcmp(entry->d_name, ".")
+       || !strcmp(entry->d_name, "..")) {
+      continue;
+    }
+
+    char *src_path = 0;
+    char *dst_path = 0;
+
+    rc = _utils_join_path(src, entry->d_name, &src_path);
+    if (!rc) {
+      rc = _utils_join_path(dst, entry->d_name, &dst_path);
+    }
+    if (!rc) {
+      struct stat entry_st;
+      if (lstat(src_path, &entry_st) != 0) {
+        rc = errno;
+      } else if (S_ISDIR(entry_st.st_mode)) {
+        rc = _utils_copy_dir_recursive(
+          src_path, dst_path);
+      } else if (S_ISREG(entry_st.st_mode)) {
+        rc = _utils_copy_regular(
+          src_path, dst_path, &entry_st);
+      } else if (S_ISLNK(entry_st.st_mode)) {
+        rc = _utils_copy_symlink(
+          src_path, dst_path, &entry_st);
+      } else {
+        // FIFO, socket, block/character device.
+        rc = ENOTSUP;
+      }
+    }
+
+    free(src_path);
+    free(dst_path);
+    if (rc) {
+      break;
+    }
+  }
+  if (closedir(dir) != 0 && !rc) {
+    rc = errno;
+  }
+  if (  created
+     && chmod(dst, src_st.st_mode & 07777) != 0
+     && !rc) {
+    rc = errno;
+  }
+  return rc;
+}
+
+int utils_copy_dir(const char *src, const char *dst) {
+  if (!src || !*src || !dst || !*dst) {
+    return AK_ERROR_INVALID_ARGS;
+  }
+  int rc = _utils_check_overlap(src, dst);
+  return rc ? rc : _utils_copy_dir_recursive(src, dst);
 }
 
 long int utils_strtol(const char *v, int base, int *rcp) {
@@ -2601,7 +2934,7 @@ int64_t utils_current_time_ms(void) {
   }
 #else
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, 0);
   return (int64_t) tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
   return (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
@@ -6858,6 +7191,47 @@ int node_call_setup(struct node *n) {
   return 0;
 }
 #ifndef _AMALGAMATE_
+#include "script.h"
+#endif
+
+static void _source_distr_init(struct node *n) {
+}
+
+static void _source_distr_setup(struct node *n) {
+}
+
+static void _source_distr_build(struct node *n) {
+}
+
+
+//
+//  A
+//  | autark-cache
+//               | .overlay
+//                        | extern_iowow
+//                                     | autark-cache
+//                                                  | extern_mylib
+//               extern_iowow
+//                          | autark-cache
+//                                       | extern_mylub
+//
+
+static void _source_distr_post_build(struct node *n) {
+}
+
+static void _source_distr_dispose(struct node *n) {
+}
+
+int node_source_distr_setup(struct node *n) {
+  n->init = _source_distr_init;
+  n->setup = _source_distr_setup;
+  n->build = _source_distr_build;
+  n->post_build = _source_distr_post_build;
+  n->dispose = _source_distr_dispose;
+  return 0;
+}
+
+#ifndef _AMALGAMATE_
 
 #ifndef META_VERSION
 #define META_VERSION "dev"
@@ -6926,7 +7300,7 @@ struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_ta
       *out_tag = item->tag;
     }
     return item->n;
-  } else if (out_tag)  {
+  } else if (out_tag) {
     *out_tag = 0;
   }
   return 0;
@@ -7049,7 +7423,7 @@ void unit_push(struct unit *unit, struct node *n) {
   }
   ulist_push(&g_env.stack_units, &ctx);
   unit_ch_dir(&ctx, 0);
-  setenv(AUTARK_UNIT, unit->rel_path, 1);
+  setenv(AUTARK_UNIT_ENV, unit->rel_path, 1);
 }
 
 struct unit* unit_pop(void) {
@@ -7059,9 +7433,9 @@ struct unit* unit_pop(void) {
   struct unit_ctx peek = unit_peek_ctx();
   if (peek.unit) {
     unit_ch_dir(&peek, 0);
-    setenv(AUTARK_UNIT, peek.unit->rel_path, 1);
+    setenv(AUTARK_UNIT_ENV, peek.unit->rel_path, 1);
   } else {
-    unsetenv(AUTARK_UNIT);
+    unsetenv(AUTARK_UNIT_ENV);
   }
   return ctx->unit;
 }
@@ -7129,7 +7503,9 @@ void unit_ch_src_dir(struct unit *unit, char *prevcwd) {
   akcheck(chdir(unit->dir));
 }
 
-static int _usage_va(const char *err, va_list ap) {
+static int _usage_va(
+  const char *err,
+  va_list     ap) {
   if (err) {
     fprintf(stderr, "\nError:  ");
     vfprintf(stderr, err, ap);
@@ -7158,6 +7534,12 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "    -R, --prefix=<>             Install prefix. Default: $HOME/.local\n");
   fprintf(stderr,
+          "    -s, --source-distr-pack     Build source distribution package dir.\n"
+          "                                Package directory: <cache>/.source-distr\n");
+  fprintf(stderr,
+          "    -S, --source-distr-deps     Build autonomous source distribution package dir with all external project dependencies packed.\n"
+          "                                Package directory: <cache>/.source-distr\n");
+  fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
@@ -7174,6 +7556,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
 #endif
+
   fprintf(stderr, "\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from check script.\n");
   fprintf(stderr,
@@ -7213,7 +7596,7 @@ void autark_build_prepare(const char *script_path) {
 
   if (!g_env.project.root_dir) {
     if (script_path) {
-      utils_strncpy(path_buf, script_path, PATH_MAX);
+      utils_strncpy(path_buf, script_path, sizeof(path_buf));
       g_env.project.root_dir = pool_strdup(g_env.pool, path_dirname(path_buf));
     } else {
       g_env.project.root_dir = g_env.cwd;
@@ -7245,6 +7628,14 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "Project cache dir cannot be parent of project root dir", 0);
   }
 
+  setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
+  setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
+
+  if (g_env.distr.flags & DISTR_FLG_WITH_DEPS) {
+    g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
+    setenv(AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_overlay_dir, 1);
+  }
+
   if (g_env.project.cleanup) {
     if (path_is_dir(g_env.project.cache_dir)) {
       int rc = path_rm_cache(g_env.project.cache_dir);
@@ -7254,7 +7645,7 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
-  utils_strncpy(path_buf, script_path, PATH_MAX);
+  utils_strncpy(path_buf, script_path, sizeof(path_buf));
   const char *path = path_basename(path_buf);
 
   struct unit *unit = unit_create(path, UNIT_FLG_SRC_CWD | UNIT_FLG_ROOT, g_env.pool);
@@ -7264,43 +7655,45 @@ void autark_build_prepare(const char *script_path) {
     akfatal(AK_ERROR_FAIL, "Failed to access build CACHE directory: %s", g_env.project.cache_dir);
   }
 
-  setenv(AUTARK_ROOT_DIR, g_env.project.root_dir, 1);
-  setenv(AUTARK_CACHE_DIR, g_env.project.cache_dir, 1);
-
   if (g_env.verbose) {
-    setenv(AUTARK_VERBOSE, "1", 1);
+    setenv(AUTARK_VERBOSE_ENV, "1", 1);
   }
 }
 
-static void _project_env_read(void) {
+static void _project_command_env_read(void) {
   autark_init();
 
-  const char *val = getenv(AUTARK_CACHE_DIR);
+  const char *val = getenv(AUTARK_CACHE_DIR_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_CACHE_DIR env variable", 0);
   }
   g_env.project.cache_dir = pool_strdup(g_env.pool, val);
 
-  val = getenv(AUTARK_ROOT_DIR);
+  val = getenv(AUTARK_ROOT_DIR_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_ROOT_DIR env variable", 0);
   }
   g_env.project.root_dir = pool_strdup(g_env.pool, val);
 
-  val = getenv(AUTARK_UNIT);
+  val = getenv(AUTARK_CACHE_OVERLAY_DIR);
+  if (val) {
+    g_env.project.cache_overlay_dir = pool_strdup(g_env.pool, val);
+  }
+
+  val = getenv(AUTARK_UNIT_ENV);
   if (!val) {
     akfatal(AK_ERROR_FAIL, "Missing required AUTARK_UNIT env variable", 0);
   }
+
   if (path_is_absolute(val)) {
     akfatal(AK_ERROR_FAIL, "AUTARK_UNIT cannot be an absolute path", 0);
   }
-
   struct unit *unit = unit_create(val, UNIT_FLG_NO_CWD, g_env.pool);
   unit_push(unit, 0);
 }
 
 static void _on_command_set(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   const char *kv;
   if (optind >= argc) {
     _usage("Missing <key> argument");
@@ -7324,7 +7717,7 @@ static void _on_command_set(int argc, const char **argv) {
 }
 
 static void _on_command_dep(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
   }
@@ -7348,10 +7741,37 @@ static void _on_command_dep(int argc, const char **argv) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }
   deps_close(&deps);
+
+  // Process .autark-fetch-dep deps in special way
+  if (g_env.project.cache_overlay_dir && type == DEPS_TYPE_FILE && utils_endswith(file, "/.autark-fetch-dep")) {
+    char pbuf[PATH_MAX];
+    path_normalize(file, pbuf);
+    if (path_is_prefix_for(g_env.project.cache_dir, pbuf, 0)) {
+      char obuf[PATH_MAX];
+      utils_strncpy(obuf, g_env.project.cache_overlay_dir, sizeof(obuf));
+      const char *overlay_parent_dir = path_dirname(obuf);
+      const char *dir = path_dirname(pbuf);
+      char *reldir = path_relativize_cwd(overlay_parent_dir, dir, overlay_parent_dir);
+      snprintf(pbuf, sizeof(pbuf), "%s/%s", g_env.project.cache_overlay_dir, reldir);
+      dir = path_dirname(pbuf);
+      int rc = path_mkdirs(dir);
+      if (!rc) {
+        utils_strncpy(obuf, file, sizeof(obuf));
+        const char *src = path_dirname(obuf);
+        rc = utils_copy_dir(src, dir);
+        if (rc) {
+          akerror(rc, "Error copying dir: %s into: %s", src, dir);
+        }
+      } else {
+        akerror(rc, "Failed to create a directory: %s", dir);
+      }
+      free(reldir);
+    }
+  }
 }
 
 static void _on_command_dep_env(int argc, const char **argv) {
-  _project_env_read();
+  _project_command_env_read();
   if (optind >= argc) {
     _usage("Missing required dependency option");
   }
@@ -7533,6 +7953,8 @@ void autark_run(int argc, const char **argv) {
     { "prefix", 1, 0, 'R' },
     { "dir", 1, 0, 'C' },
     { "jobs", 1, 0, 'J' },
+    { "source-distr", 0, 0, 's' },
+    { "source-distr-deps", 0, 0, 'S' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
@@ -7580,6 +8002,12 @@ void autark_run(int argc, const char **argv) {
       case 'C':
         cdir = pool_strdup(g_env.pool, optarg);
         break;
+      case 'S':
+        g_env.distr.flags |= DISTR_FLG_WITH_DEPS;
+      // fallthrough
+      case 's':
+        g_env.distr.flags |= DISTR_FLG_PACK;
+        break;
       case -1:
         g_env.install.bin_dir = pool_strdup(g_env.pool, optarg);
         break;
@@ -7622,8 +8050,8 @@ void autark_run(int argc, const char **argv) {
   }
 
   if (!g_env.verbose) {
-    const char *v = getenv(AUTARK_VERBOSE);
-    if (v && *v == '1') {
+    const char *v = getenv(AUTARK_VERBOSE_ENV);
+    if (v && (*v == '1' || *v == 'y' || *v == 'Y')) {
       g_env.verbose = true;
     }
   }
@@ -8555,6 +8983,8 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_MACRO;
   } else if (strcmp(key, "call") == 0) {
     return NODE_TYPE_CALL;
+  } else if (strcmp(key, "source-distribution") == 0) {
+    return NODE_TYPE_SOURCE_DISTR;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -8990,6 +9420,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_CALL:
         rc = node_call_setup(n);
+        break;
+      case NODE_TYPE_SOURCE_DISTR:
+        rc = node_source_distr_setup(n);
         break;
     }
 

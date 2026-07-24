@@ -79,6 +79,7 @@ set {
   node_option.c
   node_run.c
   node_script.c
+  node_source_distr.c
   node_set.c
   node_subst.c
   paths.c

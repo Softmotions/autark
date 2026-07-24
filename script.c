@@ -113,6 +113,8 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_MACRO;
   } else if (strcmp(key, "call") == 0) {
     return NODE_TYPE_CALL;
+  } else if (strcmp(key, "source-distribution") == 0) {
+    return NODE_TYPE_SOURCE_DISTR;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -548,6 +550,9 @@ static int _node_bind(struct node *n) {
         break;
       case NODE_TYPE_CALL:
         rc = node_call_setup(n);
+        break;
+      case NODE_TYPE_SOURCE_DISTR:
+        rc = node_source_distr_setup(n);
         break;
     }
 

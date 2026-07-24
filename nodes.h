@@ -28,6 +28,7 @@ int node_install_setup(struct node*);
 int node_find_setup(struct node*);
 int node_macro_setup(struct node*);
 int node_call_setup(struct node*);
+int node_source_distr_setup(struct node*);
 
 struct node* call_macro_node(struct node*);
 struct node* call_first_node(struct node*);

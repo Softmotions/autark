@@ -98,6 +98,7 @@ cat ./node_install.c >> ${F}
 cat ./node_find.c >> ${F}
 cat ./node_macro.c >> ${F}
 cat ./node_call.c >> ${F}
+cat ./node_source_distr.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 
