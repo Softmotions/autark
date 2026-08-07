@@ -158,6 +158,10 @@ char* path_normalize_pool(const char *path, struct pool *pool) {
 }
 
 char* path_normalize_cwd_pool(const char *path, const char *cwd, struct pool *pool) {
+  if (cwd == 0) {
+    return path_normalize_pool(path, pool);
+  }
+
   char buf[PATH_MAX];
   path_normalize_cwd(path, cwd, buf);
   return pool_strdup(pool, buf);
@@ -268,6 +272,32 @@ int path_rm_cache(const char *path) {
     if (!_is_autark_dist_root(child)) {
       _rm_dir_recursive(child);
     }
+  }
+  closedir(dir);
+  return 0;
+}
+
+int path_rm_dir_recursive(const char *path) {
+  char resolved[PATH_MAX];
+  char child[PATH_MAX];
+
+  if (!path_is_dir(path)) {
+    return 0;
+  }
+  if (!realpath(path, resolved)) {
+    return errno;
+  }
+  DIR *dir = opendir(resolved);
+  if (!dir) {
+    return errno;
+  }
+  for (struct dirent *entry; (entry = readdir(dir)) != 0; ) {
+    const char *name = entry->d_name;
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+      continue;
+    }
+    snprintf(child, sizeof(child), "%s/%s", path, name);
+    _rm_dir_recursive(child);
   }
   closedir(dir);
   return 0;
@@ -457,4 +487,38 @@ const char* path_is_prefix_for(const char *prefix, const char *path, const char 
   } else {
     return 0;
   }
+}
+
+char* path_join_path_alloc(const char *dir, const char *name, char **out) {
+  while (*name == '/') ++name;
+  size_t dl = strlen(dir);
+  size_t nl = strlen(name);
+  size_t slash = dl && dir[dl - 1] != '/';
+  char *path = xmalloc(dl + slash + nl + 1);
+  memcpy(path, dir, dl);
+  if (slash) {
+    path[dl++] = '/';
+  }
+  memcpy(path + dl, name, nl + 1);
+  if (out) {
+    *out = path;
+  }
+  return path;
+}
+
+const char* path_join_path_pool(struct pool *pool, const char *dir, const char *name, const char **out) {
+  while (*name == '/') ++name;
+  size_t dl = strlen(dir);
+  size_t nl = strlen(name);
+  size_t slash = dl && dir[dl - 1] != '/';
+  char *path = pool_alloc(pool, dl + slash + nl + 1);
+  memcpy(path, dir, dl);
+  if (slash) {
+    path[dl++] = '/';
+  }
+  memcpy(path + dl, name, nl + 1);
+  if (out) {
+    *out = path;
+  }
+  return path;
 }

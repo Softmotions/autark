@@ -1,5 +1,6 @@
 #ifndef _AMALGAMATE_
 #include "utils.h"
+#include "paths.h"
 #include "xstr.h"
 #include "log.h"
 
@@ -138,26 +139,6 @@ int utils_rename_file(const char *src, const char *dst) {
 static inline int _utils_same_file(const struct stat *a, const struct stat *b) {
   return a->st_dev == b->st_dev
          && a->st_ino == b->st_ino;
-}
-
-static int _utils_join_path(const char *dir, const char *name, char **out) {
-  size_t dl = strlen(dir);
-  size_t nl = strlen(name);
-  size_t slash = dl && dir[dl - 1] != '/';
-  if (dl > SIZE_MAX - nl - slash - 1) {
-    return EOVERFLOW;
-  }
-  char *path = malloc(dl + slash + nl + 1);
-  if (!path) {
-    return ENOMEM;
-  }
-  memcpy(path, dir, dl);
-  if (slash) {
-    path[dl++] = '/';
-  }
-  memcpy(path + dl, name, nl + 1);
-  *out = path;
-  return 0;
 }
 
 static int _utils_path_is_same_or_child(const char *parent, const char *path) {
@@ -392,31 +373,20 @@ static int _utils_copy_dir_recursive(const char *src, const char *dst) {
        || !strcmp(entry->d_name, "..")) {
       continue;
     }
-
-    char *src_path = 0;
-    char *dst_path = 0;
-
-    rc = _utils_join_path(src, entry->d_name, &src_path);
-    if (!rc) {
-      rc = _utils_join_path(dst, entry->d_name, &dst_path);
-    }
-    if (!rc) {
-      struct stat entry_st;
-      if (lstat(src_path, &entry_st) != 0) {
-        rc = errno;
-      } else if (S_ISDIR(entry_st.st_mode)) {
-        rc = _utils_copy_dir_recursive(
-          src_path, dst_path);
-      } else if (S_ISREG(entry_st.st_mode)) {
-        rc = _utils_copy_regular(
-          src_path, dst_path, &entry_st);
-      } else if (S_ISLNK(entry_st.st_mode)) {
-        rc = _utils_copy_symlink(
-          src_path, dst_path, &entry_st);
-      } else {
-        // FIFO, socket, block/character device.
-        rc = ENOTSUP;
-      }
+    struct stat entry_st;
+    char *src_path = path_join_path_alloc(src, entry->d_name, 0);
+    char *dst_path = path_join_path_alloc(dst, entry->d_name, 0);
+    if (lstat(src_path, &entry_st) != 0) {
+      rc = errno;
+    } else if (S_ISDIR(entry_st.st_mode)) {
+      rc = _utils_copy_dir_recursive(src_path, dst_path);
+    } else if (S_ISREG(entry_st.st_mode)) {
+      rc = _utils_copy_regular(src_path, dst_path, &entry_st);
+    } else if (S_ISLNK(entry_st.st_mode)) {
+      rc = _utils_copy_symlink(src_path, dst_path, &entry_st);
+    } else {
+      // FIFO, socket, block/character device.
+      rc = ENOTSUP;
     }
 
     free(src_path);
@@ -442,6 +412,18 @@ int utils_copy_dir(const char *src, const char *dst) {
   }
   int rc = _utils_check_overlap(src, dst);
   return rc ? rc : _utils_copy_dir_recursive(src, dst);
+}
+
+int utils_copy_dir_to_parent(const char *src, const char *dst) {
+  if (!src || !*src || !dst || !*dst) {
+    return AK_ERROR_INVALID_ARGS;
+  }
+  struct pool *pool = pool_create_empty();
+  char *bname = path_basename(pool_strdup(pool, src));
+  dst = path_join_path_pool(pool, dst, bname, 0);
+  int rv = utils_copy_dir(src, dst);
+  pool_destroy(pool);
+  return rv;
 }
 
 long int utils_strtol(const char *v, int base, int *rcp) {

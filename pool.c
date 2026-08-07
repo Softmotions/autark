@@ -10,7 +10,7 @@
 
 #define _UNIT_ALIGN_SIZE 8UL
 
-static int _extend(struct pool *pool, size_t siz);
+static void _extend(struct pool *pool, size_t siz);
 
 struct pool* pool_create_empty(void) {
   return xcalloc(1, sizeof(struct pool));
@@ -43,7 +43,7 @@ void pool_destroy(struct pool *pool) {
   free(pool);
 }
 
-static int _extend(struct pool *pool, size_t siz) {
+static void _extend(struct pool *pool, size_t siz) {
   struct pool_unit *nunit = xmalloc(sizeof(*nunit));
   siz = ROUNDUP(siz, _UNIT_ALIGN_SIZE);
   nunit->heap = xmalloc(siz);
@@ -52,7 +52,6 @@ static int _extend(struct pool *pool, size_t siz) {
   pool->unit = nunit;
   pool->usiz = 0;
   pool->asiz = siz;
-  return 1;
 }
 
 void* pool_alloc(struct pool *pool, size_t siz) {
@@ -61,9 +60,7 @@ void* pool_alloc(struct pool *pool, size_t siz) {
   void *h = pool->heap;
   if (usiz > pool->asiz) {
     usiz = usiz + pool->asiz;
-    if (!_extend(pool, usiz)) {
-      return 0;
-    }
+    _extend(pool, usiz);
     h = pool->heap;
   }
   pool->usiz += siz;

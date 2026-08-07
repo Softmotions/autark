@@ -17,6 +17,7 @@
 #include "map.h"
 #include "alloc.h"
 #include "deps.h"
+#include "fetchreg.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -301,11 +302,7 @@ static int _usage_va(
   fprintf(stderr,
           "    -R, --prefix=<>             Install prefix. Default: $HOME/.local\n");
   fprintf(stderr,
-          "    -s, --source-distr-pack     Build source distribution package dir.\n"
-          "                                Package directory: <cache>/.source-distr\n");
-  fprintf(stderr,
-          "    -S, --source-distr-deps     Build autonomous source distribution package dir with all external project dependencies packed.\n"
-          "                                Package directory: <cache>/.source-distr\n");
+          "    -S, --install-source-deps   Build autonomous source distribution package dir with all external project dependencies packed.\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
@@ -339,6 +336,10 @@ static int _usage_va(
           "\nautark glob <pattern>\n"
           "   -C, --dir                   Current directory for glob list.\n"
           "  Lists files in current directory filtered by glob pattern.\n");
+  fprintf(stderr,
+          "\nautark fetched <url> <target_dir>\n"
+          "  Registers external resource located at <url> is downloaded to <target_dir>.\n"
+          "  See .autark/fetch_resource.sh script.\n");
 
   fprintf(stderr, "\n");
   return AK_ERROR_INVALID_ARGS;
@@ -398,9 +399,11 @@ void autark_build_prepare(const char *script_path) {
   setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
 
-  if (g_env.distr.flags & DISTR_FLG_WITH_DEPS) {
+  if (  (g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS)
+     || (getenv(AUTARK_CACHE_OVERLAY_DIR_ENV) != 0 && g_env.install.enabled)) {
+    g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
     g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
-    setenv(AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_overlay_dir, 1);
+    setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
   }
 
   if (g_env.project.cleanup) {
@@ -442,7 +445,7 @@ static void _project_command_env_read(void) {
   }
   g_env.project.root_dir = pool_strdup(g_env.pool, val);
 
-  val = getenv(AUTARK_CACHE_OVERLAY_DIR);
+  val = getenv(AUTARK_CACHE_OVERLAY_DIR_ENV);
   if (val) {
     g_env.project.cache_overlay_dir = pool_strdup(g_env.pool, val);
   }
@@ -483,12 +486,7 @@ static void _on_command_set(int argc, const char **argv) {
   fclose(f);
 }
 
-static void _on_command_dep(int argc, const char **argv) {
-  _project_command_env_read();
-  if (optind >= argc) {
-    _usage("Missing required dependency option");
-  }
-  const char *file = argv[optind];
+static void _on_command_dep_impl(const char *file) {
   if (g_env.verbose) {
     akinfo("autark dep %s", file);
   }
@@ -508,33 +506,68 @@ static void _on_command_dep(int argc, const char **argv) {
     akfatal(rc, "Failed to write deps file: %s", deps_path);
   }
   deps_close(&deps);
+}
 
-  // Process .autark-fetch-dep deps in special way
-  if (g_env.project.cache_overlay_dir && type == DEPS_TYPE_FILE && utils_endswith(file, "/.autark-fetch-dep")) {
-    char pbuf[PATH_MAX];
-    path_normalize(file, pbuf);
-    if (path_is_prefix_for(g_env.project.cache_dir, pbuf, 0)) {
-      char obuf[PATH_MAX];
-      utils_strncpy(obuf, g_env.project.cache_overlay_dir, sizeof(obuf));
-      const char *overlay_parent_dir = path_dirname(obuf);
-      const char *dir = path_dirname(pbuf);
-      char *reldir = path_relativize_cwd(overlay_parent_dir, dir, overlay_parent_dir);
-      snprintf(pbuf, sizeof(pbuf), "%s/%s", g_env.project.cache_overlay_dir, reldir);
-      dir = path_dirname(pbuf);
-      int rc = path_mkdirs(dir);
-      if (!rc) {
-        utils_strncpy(obuf, file, sizeof(obuf));
-        const char *src = path_dirname(obuf);
-        rc = utils_copy_dir(src, dir);
-        if (rc) {
-          akerror(rc, "Error copying dir: %s into: %s", src, dir);
-        }
-      } else {
-        akerror(rc, "Failed to create a directory: %s", dir);
-      }
-      free(reldir);
-    }
+static void _on_command_dep(int argc, const char **argv) {
+  _project_command_env_read();
+  if (optind >= argc) {
+    _usage("Missing required dependency option: autark dep <file>");
   }
+  const char *file = argv[optind];
+  _on_command_dep_impl(file);
+}
+
+static void _on_command_fetched(int argc, const char **argv) {
+  _project_command_env_read();
+  if (optind + 1 >= argc) {
+    _usage("Missing required command arg: autark fetched <project_url> <target_dir>");
+  }
+  const char *url = argv[optind++];
+  const char *target_dir = argv[optind++];
+  if (g_env.verbose) {
+    akinfo("autark fetched %s %s", url, target_dir);
+  }
+  struct pool *pool = pool_create_empty();
+
+  target_dir = path_normalize_pool(target_dir, pool);
+  const char *fetch_dep_file = path_join_path_pool(pool, target_dir, AUTARK_FETCH_DEP, 0);
+  int rc = utils_file_write_buf(fetch_dep_file, "", 0, false);
+  if (rc) {
+    akfatal(rc, "autark fetched Failed to create dependency file: %s", fetch_dep_file);
+  }
+
+  _on_command_dep_impl(fetch_dep_file);
+
+  if (  g_env.project.cache_overlay_dir
+     && path_is_prefix_for(g_env.project.cache_dir, target_dir, 0)) {
+    char *target_rel = path_relativize_cwd(g_env.project.cache_dir, target_dir, g_env.project.cache_dir);
+    const char *overlay_target = path_join_path_pool(pool, g_env.project.cache_overlay_dir, target_rel, 0);
+    rc = path_mkdirs_for(overlay_target);
+    if (rc) {
+      akfatal(rc, "autark fetched Failed to create parent dir for: %s", overlay_target);
+    }
+    if (g_env.verbose) {
+      akinfo("autark fetched Copy overlay dir: %s into %s", target_dir, overlay_target);
+    }
+    rc = utils_copy_dir(target_dir, overlay_target);
+    if (rc) {
+      akfatal(rc, "Error copying dir: %s into: %s", target_dir, overlay_target);
+    }
+
+    struct fetchreg *reg;
+    const char *path = path_join_path_pool(pool, g_env.project.cache_overlay_dir, AUTARK_FETCHED_REG, 0);
+    rc = fetchreg_open(path, &reg);
+    if (rc) {
+      akfatal(rc, "autark fetched Failed to open fetch registry file: %s", path);
+    }
+    akcheck(fetchreg_register(reg, &(struct fetcherg_entry) {
+      .url = url,
+      .target = target_rel,
+    }));
+    fetchreg_close(reg);
+    free(target_rel);
+  }
+  pool_destroy(pool);
 }
 
 static void _on_command_dep_env(int argc, const char **argv) {
@@ -600,6 +633,10 @@ void on_command_dep(int argc, const char **argv) {
 
 void on_command_dep_env(int argc, const char **argv) {
   _on_command_dep_env(argc, argv);
+}
+
+void on_command_fetched(int argc, const char **argv) {
+  _on_command_fetched(argc, argv);
 }
 
 #endif
@@ -717,11 +754,10 @@ void autark_run(int argc, const char **argv) {
     { "version", 0, 0, 'v' },
     { "options", 0, 0, 'l' },
     { "install", 0, 0, 'I' },
+    { "install-source-deps", 0, 0, 'S' },
     { "prefix", 1, 0, 'R' },
     { "dir", 1, 0, 'C' },
     { "jobs", 1, 0, 'J' },
-    { "source-distr", 0, 0, 's' },
-    { "source-distr-deps", 0, 0, 'S' },
     { "bindir", 1, 0, -1 },
     { "libdir", 1, 0, -2 },
     { "includedir", 1, 0, -3 },
@@ -735,7 +771,7 @@ void autark_run(int argc, const char **argv) {
   const char *cdir = 0;
   struct ulist options = { .usize = sizeof(char*) };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:J:I", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:J:IS", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'H':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -770,10 +806,8 @@ void autark_run(int argc, const char **argv) {
         cdir = pool_strdup(g_env.pool, optarg);
         break;
       case 'S':
-        g_env.distr.flags |= DISTR_FLG_WITH_DEPS;
-      // fallthrough
-      case 's':
-        g_env.distr.flags |= DISTR_FLG_PACK;
+        g_env.install.enabled = true;
+        g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
         break;
       case -1:
         g_env.install.bin_dir = pool_strdup(g_env.pool, optarg);
@@ -886,6 +920,9 @@ void autark_run(int argc, const char **argv) {
       return;
     } else if (strcmp(arg, "glob") == 0) {
       _on_command_glob(argc, argv, cdir);
+      return;
+    } else if (strcmp(arg, "fetched") == 0) {
+      _on_command_fetched(argc, argv);
       return;
     } else { // Root dir expected
       g_env.project.root_dir = pool_strdup(g_env.pool, arg);

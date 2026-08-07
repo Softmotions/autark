@@ -86,7 +86,7 @@ static inline bool utils_startswith(const char *str, const char *prefix) {
   return strncmp(str, prefix, prefix_len) == 0;
 }
 
-static inline bool utils_endswith(const char *str, const char *suffix) {
+static inline int utils_endswith(const char *str, const char *suffix) {
   if (!str || !suffix) {
     return false;
   }
@@ -95,7 +95,11 @@ static inline bool utils_endswith(const char *str, const char *suffix) {
   if (suffix_len > str_len) {
     return false;
   }
-  return strcmp(str + str_len - suffix_len, suffix) == 0;
+  if (strcmp(str + str_len - suffix_len, suffix) == 0) {
+    return str_len - suffix_len + 1;
+  } else {
+    return 0;
+  }
 }
 
 long int utils_strtol(const char *v, int base, int *rcp);
@@ -109,6 +113,8 @@ int utils_file_write_buf(const char *path, const char *buf, size_t len, bool app
 int utils_copy_file(const char *src, const char *dst);
 
 int utils_copy_dir(const char *src, const char *dst);
+
+int utils_copy_dir_to_parent(const char *src, const char *dst);
 
 int utils_rename_file(const char *src, const char *dst);
 

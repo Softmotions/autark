@@ -1,0 +1,44 @@
+check {
+  env.sh
+  fetch_resource.sh { fetch-url { dir://../../libext } C{extern_libext} LIBEXT_SRC_DIR }
+}
+
+set {
+  LIBEXT_A
+  ^{C{${INSTALL_LIB_DIR}} /libext.a}
+}
+
+run {
+  shell { autark --prefix C{} ${LIBEXT_SRC_DIR} }
+  consumes {
+    ${LIBEXT_SRC_DIR}
+  }
+  produces {
+    ${LIBEXT_A}
+  }
+}
+
+set {
+  CC
+  ${CC cc}
+}
+
+cc {
+  set { _ main.c }
+  set { _ -I C{${INSTALL_INCLUDE_DIR}} }
+}
+
+run {
+  exec { ${CC} -o main ${CC_OBJS} ${LIBEXT_A} }
+  produces {
+    main
+  }
+}
+
+install-sources {
+  ^{${INSTALL_DATA_DIR} /test11/test11-source-1.0.0 }
+  .autark
+  Autark
+  README.md
+  main.c
+}

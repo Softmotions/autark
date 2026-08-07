@@ -1,14 +1,19 @@
+source ./.gdb/auto-inferior.py
+
 cd ./autark-cache/tests
-file ./test10
+file ./test11
 #file ./autark-cache/autark
-#set environment CC=clang
-#set environment IWNET_RUN_TESTS=1
 #set args /home/adam/Projects/softmotions/iwnet
 #set args --prefix /home/adam/Projects/softmotions/iwnet/install /home/adam/Projects/softmotions/iwnet/autark-cache/extern_iowow
 
-set confirm off
+#set detach-on-fork off
+#catch exec
+
 set follow-fork-mode parent
-set detach-on-fork on
+set schedule-multiple on
+set breakpoint pending on
+
+set confirm off
 set print elements 4096
 
 handle SIGUSR1 pass nostop print

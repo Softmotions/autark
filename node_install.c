@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
+#include <dirent.h>
 #endif
 
 struct _install_on_resolve_ctx {
@@ -20,11 +21,11 @@ struct _install_on_resolve_ctx {
   struct node *n;
   struct node *n_target;
   struct ulist consumes;  // sizeof(char*)
+  bool install_overlays;
 };
 
-static void _install_symlink(struct _install_on_resolve_ctx *ctx, const char *src, const char *dst, struct stat *st) {
+static void _install_symlink(struct node *n, const char *src, const char *dst, struct stat *st) {
   char buf[PATH_MAX];
-  struct node *n = ctx->n;
   node_info(n, "Symlink %s => %s", src, dst);
 
   ssize_t len = readlink(src, buf, sizeof(buf) - 1);
@@ -53,8 +54,7 @@ static void _install_symlink(struct _install_on_resolve_ctx *ctx, const char *sr
   utimensat(AT_FDCWD, dst, times, AT_SYMLINK_NOFOLLOW);
 }
 
-static void _install_file(struct _install_on_resolve_ctx *ctx, const char *src, const char *dst, struct stat *st) {
-  struct node *n = ctx->n;
+static void _install_file(struct node *n, const char *src, const char *dst, struct stat *st) {
   node_info(n, "File %s => %s", src, dst);
 
   int in_fd = open(src, O_RDONLY);
@@ -103,25 +103,47 @@ static void _install_file(struct _install_on_resolve_ctx *ctx, const char *src, 
   close(out_fd);
 }
 
-static void _install_do(struct node_resolve *r, const char *src, const char *target) {
+static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const char *target) {
   char src_buf[PATH_MAX];
   char dst_buf[PATH_MAX];
 
   struct stat st;
-  struct _install_on_resolve_ctx *ctx = r->user_data;
+  struct node *n = ctx->n;
 
-  akcheck(lstat(src, &st));
-  if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode)) {
-    node_fatal(AK_ERROR_FAIL, ctx->n, "Cannot install unsupported file type. File: %s", src);
+  if (ctx->install_overlays) {
+    if (utils_endswith(src, "/" AUTARK_FETCH_DEP)) {
+      // autark-cache/.overlay/myproj/.autark-fetch-dep = autark-cache/.overlay/myproj
+      src = path_dirname(src);
+      snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR, target);
+      path_mkdirs(dst_buf);
+      int rci = utils_copy_dir_to_parent(src, dst_buf);
+      if (rci) {
+        node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
+      }
+      return;
+    } else if (utils_endswith(src, "/" AUTARK_FETCHED_REG)) {
+      snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST, target);
+      _install_file(n, src, dst_buf, &st);
+      return;
+    }
+  }
+
+  if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
+    node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
   }
 
   utils_strncpy(src_buf, src, sizeof(src_buf));
   snprintf(dst_buf, sizeof(dst_buf), "%s/%s", target, path_basename(src_buf));
 
   if (S_ISREG(st.st_mode)) {
-    _install_file(ctx, src, dst_buf, &st);
+    _install_file(n, src, dst_buf, &st);
   } else if (S_ISLNK(st.st_mode)) {
-    _install_symlink(ctx, src, dst_buf, &st);
+    _install_symlink(n, src, dst_buf, &st);
+  } else if (S_ISDIR(st.st_mode)) {
+    int rci = utils_copy_dir_to_parent(src, target);
+    if (rci) {
+      node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
+    }
   }
 }
 
@@ -173,8 +195,8 @@ static void _install_on_resolve(struct node_resolve *r) {
   }
 
   for (int i = 0; i < slist->num; ++i) {
-    const char *src = *(const char**) ulist_get(slist, i);
-    _install_do(r, src, target);
+    char *src = *(char**) ulist_get(slist, i);
+    _install_do(ctx, src, target);
   }
 
   rc = deps_open(r->deps_path_tmp, 0, &deps);
@@ -203,9 +225,6 @@ static void _install_on_resolve(struct node_resolve *r) {
 
 static void _install_on_consumed_resolved(const char *path_, void *d) {
   struct _install_on_resolve_ctx *ctx = d;
-  if (path_is_dir(path_)) {
-    node_fatal(AK_ERROR_FAIL, ctx->n, "Installing of directories is not supported. Path: %s", path_);
-  }
   const char *path = pool_strdup(ctx->r->pool, path_);
   ulist_push(&ctx->consumes, &path);
 }
@@ -217,6 +236,27 @@ static void _install_on_resolve_init(struct node_resolve *r) {
   if (nn) {
     node_consumes_resolve(r->n, nn, 0, _install_on_consumed_resolved, ctx);
   }
+  if (ctx->install_overlays) {
+    DIR *dir = opendir(g_env.project.cache_overlay_dir);
+    if (dir) {
+      for (struct dirent *entry; (entry = readdir(dir)) != 0; ) {
+        const char *name = entry->d_name;
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+          continue;
+        }
+        if (strcmp(name, AUTARK_FETCHED_REG) == 0) {
+          const char *file = pool_printf(r->pool, "%s/" AUTARK_FETCHED_REG, g_env.project.cache_overlay_dir);
+          ulist_push(&ctx->consumes, &file);
+        } else {
+          const char *file = pool_printf(r->pool, "%s/%s/" AUTARK_FETCH_DEP, g_env.project.cache_overlay_dir, name);
+          if (path_is_file(file)) {
+            ulist_push(&ctx->consumes, &file);
+          }
+        }
+      }
+      closedir(dir);
+    }
+  }
 }
 
 static void _install_post_build(struct node *n) {
@@ -224,6 +264,8 @@ static void _install_post_build(struct node *n) {
     .n = n,
     .n_target = n->child,
     .consumes = { .usize = sizeof(char*) },
+    .install_overlays = (  n->type == NODE_TYPE_INSTALL_SOURCES && g_env.project.cache_overlay_dir != 0
+                        && !(g_env.install.flags & INSTALL_FLG_SRC_OVERLAYS_APPLIED))
   };
   if (!ctx.n_target || !node_is_can_be_value(ctx.n_target)) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No target dir specified");
@@ -248,13 +290,21 @@ static void _install_post_build(struct node *n) {
 
   node_resolve(&r);
   ulist_destroy_keep(&ctx.consumes);
+
+  if (ctx.install_overlays) {
+    g_env.install.flags |= INSTALL_FLG_SRC_OVERLAYS_APPLIED;
+  }
 }
 
 int node_install_setup(struct node *n) {
   if (!g_env.install.enabled || !g_env.install.prefix_dir) {
     return 0;
   }
-  n->flags |= NODE_FLG_IN_CACHE;
+  if (n->type == NODE_TYPE_INSTALL_SOURCES) {
+    n->flags |= NODE_FLG_IN_SRC | NODE_FLG_PREFER_SRC_RESOLVING;
+  } else {
+    n->flags |= NODE_FLG_IN_CACHE;
+  }
   n->post_build = _install_post_build;
   return 0;
 }

@@ -113,8 +113,10 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_MACRO;
   } else if (strcmp(key, "call") == 0) {
     return NODE_TYPE_CALL;
-  } else if (strcmp(key, "source-distribution") == 0) {
-    return NODE_TYPE_SOURCE_DISTR;
+  } else if (strcmp(key, "install-sources") == 0) {
+    return NODE_TYPE_INSTALL_SOURCES;
+  } else if (strcmp(key, "fetch-url") == 0) {
+    return NODE_TYPE_FETCH_URL;
   } else {
     return NODE_TYPE_BAG;
   }
@@ -198,7 +200,7 @@ static struct xnode* _push_and_register(struct _yycontext *yy, struct xnode *x) 
   return x;
 }
 
-static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
+static struct xnode* _node_text(struct _yycontext *yy, const char *text) {
   struct sctx *ctx = XCTX(yy->x);
   struct xnode *x = pool_calloc(g_env.pool, sizeof(*x));
   x->base.value = pool_strdup(g_env.pool, text);
@@ -208,7 +210,7 @@ static struct xnode* _node_text(struct  _yycontext *yy, const char *text) {
   return x;
 }
 
-static struct xnode* _node_text_push(struct  _yycontext *yy, const char *text) {
+static struct xnode* _node_text_push(struct _yycontext *yy, const char *text) {
   return _push_and_register(yy, _node_text(yy, text));
 }
 
@@ -271,7 +273,7 @@ static char* _text_escaped(char *wp, const char *rp) {
   return ret;
 }
 
-static struct xnode* _node_text_escaped_push(struct  _yycontext *yy, const char *text) {
+static struct xnode* _node_text_escaped_push(struct _yycontext *yy, const char *text) {
   char buf[strlen(text) + 1];
   return _push_and_register(yy, _node_text(yy, _text_escaped(buf, text)));
 }
@@ -540,6 +542,7 @@ static int _node_bind(struct node *n) {
         rc = node_echo_setup(n);
         break;
       case NODE_TYPE_INSTALL:
+      case NODE_TYPE_INSTALL_SOURCES:
         rc = node_install_setup(n);
         break;
       case NODE_TYPE_FIND:
@@ -551,8 +554,8 @@ static int _node_bind(struct node *n) {
       case NODE_TYPE_CALL:
         rc = node_call_setup(n);
         break;
-      case NODE_TYPE_SOURCE_DISTR:
-        rc = node_source_distr_setup(n);
+      case NODE_TYPE_FETCH_URL:
+        rc = node_fetch_url_setup(n);
         break;
     }
 
@@ -779,14 +782,16 @@ int script_open(const char *file, struct sctx **out) {
     if (g_env.install.enabled) {
       unit_env_set_val(root, "INSTALL_ENABLED", "1");
     }
+
+    unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
+    unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
+    unit_env_set_val(root, "INSTALL_DATA_DIR", g_env.install.data_dir);
+    unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
+    unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
+    unit_env_set_val(root, "INSTALL_MAN_DIR", g_env.install.man_dir);
+
     if (g_env.install.prefix_dir || g_env.install.bin_dir) {
       unit_env_set_val(root, "INSTALL_PREFIX", g_env.install.prefix_dir);
-      unit_env_set_val(root, "INSTALL_BIN_DIR", g_env.install.bin_dir);
-      unit_env_set_val(root, "INSTALL_LIB_DIR", g_env.install.lib_dir);
-      unit_env_set_val(root, "INSTALL_DATA_DIR", g_env.install.data_dir);
-      unit_env_set_val(root, "INSTALL_INCLUDE_DIR", g_env.install.include_dir);
-      unit_env_set_val(root, "INSTALL_PKGCONFIG_DIR", g_env.install.pkgconf_dir);
-      unit_env_set_val(root, "INSTALL_MAN_DIR", g_env.install.man_dir);
       if (g_env.verbose) {
         akinfo("%s: INSTALL_PREFIX=%s", root->rel_path, g_env.install.prefix_dir);
         akinfo("%s: INSTALL_BIN_DIR=%s", root->rel_path, g_env.install.bin_dir);
@@ -1002,7 +1007,7 @@ struct node* node_find_prev_sibling(struct node *n) {
   return 0;
 }
 
-struct  node* node_find_parent_of_type(struct node *n, int type) {
+struct node* node_find_parent_of_type(struct node *n, int type) {
   for (struct node *nn = n->parent; nn; nn = nn->parent) {
     if (type == 0 || nn->type == type) {
       return nn;
@@ -1074,21 +1079,23 @@ struct node* node_consumes_resolve(
       }
     }
 
-    unit_ch_cache_dir(unit, prevcwd);
-    for (int i = 0; i < rlist.num; ++i) {
-      const char *cv = *(char**) ulist_get(&rlist, i);
-      struct node *pn = node_by_product(n, cv, pathbuf);
-      if (pn) {
-        node_build(pn);
-      }
-      if (path_is_exist(pathbuf)) {
-        if (on_resolved) {
-          on_resolved(pathbuf, opq);
+    if ((n->flags & NODE_FLG_PREFER_SRC_RESOLVING) == 0) {
+      unit_ch_cache_dir(unit, prevcwd);
+      for (int i = 0; i < rlist.num; ++i) {
+        const char *cv = *(char**) ulist_get(&rlist, i);
+        struct node *pn = node_by_product(n, cv, pathbuf);
+        if (pn) {
+          node_build(pn);
         }
-        ulist_remove(&rlist, i--);
+        if (path_is_exist(pathbuf)) {
+          if (on_resolved) {
+            on_resolved(pathbuf, opq);
+          }
+          ulist_remove(&rlist, i--);
+        }
       }
+      akcheck(chdir(prevcwd));
     }
-    akcheck(chdir(prevcwd));
 
     if (rlist.num) {
       unit_ch_src_dir(unit, prevcwd);

@@ -11,43 +11,45 @@
 #endif
 
 // value types
-#define NODE_TYPE_VALUE    0x01U
-#define NODE_TYPE_SUBST    0x02U
-#define NODE_TYPE_SET      0x04U
-#define NODE_TYPE_JOIN     0x08U
-#define NODE_TYPE_BASENAME 0x10U
-#define NODE_TYPE_DIR      0x20U
-#define NODE_TYPE_FIND     0x40U
+#define NODE_TYPE_VALUE     0x01U
+#define NODE_TYPE_SUBST     0x02U
+#define NODE_TYPE_SET       0x04U
+#define NODE_TYPE_JOIN      0x08U
+#define NODE_TYPE_BASENAME  0x10U
+#define NODE_TYPE_DIR       0x20U
+#define NODE_TYPE_FIND      0x40U
+#define NODE_TYPE_FETCH_URL 0x80U
 // eof value types
-#define NODE_TYPE_SCRIPT       0x100U
-#define NODE_TYPE_BAG          0x200U
-#define NODE_TYPE_META         0x400U
-#define NODE_TYPE_CHECK        0x800U
-#define NODE_TYPE_INCLUDE      0x1000U
-#define NODE_TYPE_IF           0x2000U
-#define NODE_TYPE_RUN          0x4000U
-#define NODE_TYPE_CC           0x8000U
-#define NODE_TYPE_CONFIGURE    0x10000U
-#define NODE_TYPE_FOREACH      0x20000U
-#define NODE_TYPE_IN_SOURCES   0x40000U
-#define NODE_TYPE_OPTION       0x80000U
-#define NODE_TYPE_ERROR        0x100000U
-#define NODE_TYPE_ECHO         0x200000U
-#define NODE_TYPE_INSTALL      0x400000U
-#define NODE_TYPE_MACRO        0x800000U
-#define NODE_TYPE_CALL         0x1000000U
-#define NODE_TYPE_SOURCE_DISTR 0x2000000U
+#define NODE_TYPE_SCRIPT          0x100U
+#define NODE_TYPE_BAG             0x200U
+#define NODE_TYPE_META            0x400U
+#define NODE_TYPE_CHECK           0x800U
+#define NODE_TYPE_INCLUDE         0x1000U
+#define NODE_TYPE_IF              0x2000U
+#define NODE_TYPE_RUN             0x4000U
+#define NODE_TYPE_CC              0x8000U
+#define NODE_TYPE_CONFIGURE       0x10000U
+#define NODE_TYPE_FOREACH         0x20000U
+#define NODE_TYPE_IN_SOURCES      0x40000U
+#define NODE_TYPE_OPTION          0x80000U
+#define NODE_TYPE_ERROR           0x100000U
+#define NODE_TYPE_ECHO            0x200000U
+#define NODE_TYPE_INSTALL         0x400000U
+#define NODE_TYPE_MACRO           0x800000U
+#define NODE_TYPE_CALL            0x1000000U
+#define NODE_TYPE_INSTALL_SOURCES 0x2000000U
 
 #define NODE_FLG_BOUND 0x01U
 #define NODE_FLG_INIT  0x02U
 #define NODE_FLG_SETUP 0x04U
 // Vacant: 0x08U
-#define NODE_FLG_BUILT      0x10U // Node built
-#define NODE_FLG_POST_BUILT 0x20U // Node post-built
-#define NODE_FLG_IN_CACHE   0x40U
-#define NODE_FLG_IN_SRC     0x80U
-#define NODE_FLG_NO_CWD     0x100U
-#define NODE_FLG_NEGATE     0x200U
+#define NODE_FLG_BUILT                0x10U // Node built
+#define NODE_FLG_POST_BUILT           0x20U // Node post-built
+#define NODE_FLG_IN_CACHE             0x40U
+#define NODE_FLG_IN_SRC               0x80U
+#define NODE_FLG_NO_CWD               0x100U
+#define NODE_FLG_NEGATE               0x200U
+#define NODE_FLG_PREFER_SRC_RESOLVING 0x400U // Prefer resolving files in sources
 
 #define NODE_FLG_IN_ANY (NODE_FLG_IN_SRC | NODE_FLG_IN_CACHE | NODE_FLG_NO_CWD)
 
@@ -56,7 +58,7 @@
 #define node_is_built(n__)        (((n__)->flags & NODE_FLG_BUILT) != 0)
 #define node_is_post_built(n__)   (((n__)->flags & NODE_FLG_POST_BUILT) != 0)
 #define node_is_value(n__)        ((n__)->type == NODE_TYPE_VALUE)
-#define node_is_can_be_value(n__) ((n__)->type >= NODE_TYPE_VALUE && (n__)->type <= NODE_TYPE_FIND)
+#define node_is_can_be_value(n__) ((n__)->type >= NODE_TYPE_VALUE && (n__)->type <= NODE_TYPE_FETCH_URL)
 
 #define node_is_rule(n__) !node_is_value(n__)
 
@@ -207,6 +209,12 @@ void node_info(struct node *n, const char *fmt, ...);
 void node_warn(struct node *n, const char *fmt, ...);
 
 int node_error(int rc, struct node *n, const char *fmt, ...);
+
+#define node_check(node__, exp__)                    \
+        do {                                         \
+          int e = (exp__);                           \
+          if (e) node_fatal(e, node__, Q(exp__), 0); \
+        } while (0)
 
 
 struct node* node_clone_and_register(struct node*);

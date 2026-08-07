@@ -14,11 +14,12 @@
 #define TAG_SETUP 2
 #define TAG_BUILD 3
 
-#define AUTARK_CACHE  "autark-cache"
-#define AUTARK_SCRIPT "Autark"
-
+#define AUTARK_SCRIPT            "Autark"
+#define AUTARK_CACHE             "autark-cache"
 #define AUTARK_CACHE_OVERLAY_DIR ".overlay"
-#define AUTARK_SOURCE_DISTR_DIR  ".source-distr"
+#define AUTARK_FETCHED_REG       ".autark-fetched"
+#define AUTARK_FETCHED_REG_DIST  ".autark-fetched-dist"
+#define AUTARK_FETCH_DEP         ".autark-fetch-dep"
 
 #define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
 #define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
@@ -31,8 +32,8 @@
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
 #define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
 
-#define DISTR_FLG_PACK      0x01U // Source distribution package enabled.
-#define DISTR_FLG_WITH_DEPS 0x02U // Provide distribution with dependencies.
+#define INSTALL_FLG_SRC_WITH_DEPS        0x01U // Provide distribution with dependencies.
+#define INSTALL_FLG_SRC_OVERLAYS_APPLIED 0x02U // Source overlays installed
 
 struct unit_env_item {
   const char  *val;
@@ -83,11 +84,9 @@ struct env {
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.
+    unsigned    flags;       // INSTALL_FLG_XXX
     bool enabled;            // True if install operation should be performed.
   } install;
-  struct {
-    unsigned flags;   // DISTR_FLG_XXX
-  } distr;
   struct {
     const char *extra_env_paths; // Extra PATH environment for any program spawn
   } spawn;

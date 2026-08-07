@@ -1,0 +1,24 @@
+check {
+  env.sh
+}
+
+cc {
+  libext.c
+}
+
+run {
+  exec {${AR} rcs libext.a ${CC_OBJS}}
+  produces {
+    libext.a
+  }
+}
+
+install {
+  ${INSTALL_LIB_DIR}
+  libext.a
+}
+
+install {
+  ^{${INSTALL_INCLUDE_DIR} /libext}
+  libext.h
+}

@@ -1,0 +1,6 @@
+{
+  "venvPath": ".",
+  "venv": ".venv-gdb",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "basic"
+}

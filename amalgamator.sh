@@ -63,6 +63,7 @@ cat ./spawn.h >> ${F}
 cat ./paths.h >> ${F}
 cat ./env.h >> ${F}
 cat ./deps.h >> ${F}
+cat ./fetchreg.h >> ${F}
 cat ./nodes.h >> ${F}
 cat ./autark.h >> ${F}
 cat ./script.h >> ${F}
@@ -76,6 +77,7 @@ cat ./utils.c >> ${F}
 cat ./paths.c >> ${F}
 cat ./spawn.c >> ${F}
 cat ./deps.c >> ${F}
+cat ./fetchreg.c >> ${F}
 cat ./node_script.c >> ${F}
 cat ./node_check.c >> ${F}
 cat ./node_set.c >> ${F}
@@ -98,7 +100,7 @@ cat ./node_install.c >> ${F}
 cat ./node_find.c >> ${F}
 cat ./node_macro.c >> ${F}
 cat ./node_call.c >> ${F}
-cat ./node_source_distr.c >> ${F}
+cat ./node_fetch_url.c >> ${F}
 cat ./autark_core.c >> ${F}
 cat ./main.c >> ${F}
 

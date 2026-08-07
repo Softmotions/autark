@@ -56,6 +56,8 @@ int path_mkdirs_for(const char *path);
 
 int path_rm_cache(const char *path);
 
+int path_rm_dir_recursive(const char *path);
+
 int path_stat(const char *path, struct akpath_stat *stat);
 
 int path_stat_fd(int fd, struct akpath_stat *stat);
@@ -89,6 +91,10 @@ char* path_dirname(char *path);
 
 // Modifies its argument
 char* path_basename(char *path);
+
+AK_ALLOC char* path_join_path_alloc(const char *dir, const char *name, char **out);
+
+const char* path_join_path_pool(struct pool *pool, const char *dir, const char *name, const char **out);
 
 
 #endif
