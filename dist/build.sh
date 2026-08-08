@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.5
-META_REVISION=7d0f52b
+META_REVISION=9c8254c
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.5"
-#define META_REVISION "7d0f52b"
+#define META_REVISION "9c8254c"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -6927,7 +6927,11 @@ void autark_build_prepare(const char *script_path) {
     g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
     setenv(AUTARK_INSTALL_SRC_DEPS_ENV, "1", 0);
   }
-  if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_CACHE_OVERLAY_DIR_ENV)) {
+  const char* cache_overlay_dir = path_join_path_pool(g_env.pool, g_env.project.cache_dir, AUTARK_CACHE_OVERLAY_DIR, 0);
+  if (path_is_dir(cache_overlay_dir)) {
+    g_env.project.cache_overlay_dir = cache_overlay_dir;
+    setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
+  } else if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_CACHE_OVERLAY_DIR_ENV)) {
     g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
     setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
   }

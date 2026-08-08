@@ -405,7 +405,11 @@ void autark_build_prepare(const char *script_path) {
     setenv(AUTARK_INSTALL_SRC_DEPS_ENV, "1", 0);
   }
 
-  if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_CACHE_OVERLAY_DIR_ENV)) {
+  const char* cache_overlay_dir = path_join_path_pool(g_env.pool, g_env.project.cache_dir, AUTARK_CACHE_OVERLAY_DIR, 0);
+  if (path_is_dir(cache_overlay_dir)) {
+    g_env.project.cache_overlay_dir = cache_overlay_dir;
+    setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
+  } else if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_CACHE_OVERLAY_DIR_ENV)) {
     g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
     setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
   }
