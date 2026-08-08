@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.4"
-#define META_REVISION "d78ced4"
+#define META_REVISION "acd9ad1"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -4151,7 +4151,6 @@ void deps_prune_all(const char *path) {
   unlink(path);
 }
 
-#include <linux/limits.h>
 #ifndef _AMALGAMATE_
 #include "log.h"
 #include "fetchreg.h"

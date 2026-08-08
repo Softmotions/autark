@@ -1,5 +1,4 @@
 
-#include <linux/limits.h>
 #ifndef _AMALGAMATE_
 #include "log.h"
 #include "fetchreg.h"
