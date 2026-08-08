@@ -66,11 +66,7 @@ int main(void) {
   test_reinit(true);
   g_env.install.enabled = true;
   g_env.install.prefix_dir = install_dir;
-  g_env.install.bin_dir = "bin";
   g_env.install.lib_dir = "lib";
-  g_env.install.data_dir = "shared";
-  g_env.install.include_dir = "include";
-  g_env.install.pkgconf_dir = "pkgconf";
 
   rc = script_open("../../tests/data/test7/Autark", &sctx);
   akassert(rc == 0);

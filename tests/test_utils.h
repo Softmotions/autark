@@ -49,10 +49,14 @@ static inline void test_init(bool cleanup) {
   g_env.project.cleanup = cleanup;
   autark_init();
   g_env.spawn.extra_env_paths = path_normalize_pool("./..", g_env.pool);
+  g_env.install.lib_dir = env_libdir();
+  g_env.install.bin_dir = "bin";
+  g_env.install.data_dir = "shared";
+  g_env.install.include_dir = "include";
+  g_env.install.pkgconf_dir = "pkgconf";
 }
 
 static inline void test_reinit(bool cleanup) {
   autark_dispose();
   test_init(cleanup);
 }
-

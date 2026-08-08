@@ -20,11 +20,6 @@ int main(void) {
   g_env.project.cache_overlay_dir = overlay_dir;
   g_env.install.enabled = true;
   g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
-  g_env.install.lib_dir = env_libdir();
-  g_env.install.bin_dir = "bin";
-  g_env.install.data_dir = "shared";
-  g_env.install.include_dir = "include";
-  g_env.install.pkgconf_dir = "pkgconf";
 
   struct sctx *sctx;
   int rc = script_open("../../tests/data/test11/Autark", &sctx);
@@ -39,7 +34,8 @@ int main(void) {
   akassert(path_is_exist(_PCACHE "/include/libext/libext.h"));
   akassert(path_is_exist(_PCACHE "/shared/test11/test11-source-1.0.0/Autark"));
   akassert(path_is_exist(_PCACHE "/shared/test11/test11-source-1.0.0/autark-cache/.overlay/extern_libext/Autark"));
-  akassert(path_is_exist(_PCACHE "/shared/test11/test11-source-1.0.0/autark-cache/.overlay/extern_libext/.autark/env.sh"));
+  akassert(path_is_exist(
+             _PCACHE "/shared/test11/test11-source-1.0.0/autark-cache/.overlay/extern_libext/.autark/env.sh"));
   akassert(path_is_exist(_PCACHE "/shared/test11/test11-source-1.0.0/autark-cache/.overlay/" AUTARK_FETCHED_REG_DIST));
 
   fprintf(stderr, "\n\n");
@@ -47,11 +43,21 @@ int main(void) {
   g_env.install.enabled = false;
   g_env.install.flags = 0;
 
-  //rc = script_open(_PCACHE "/shared/test11/test11-source-1.0.0/Autark", &sctx);
-  //akassert(rc == 0);
-  //script_build(sctx);
-  //script_close(&sctx);
+  rc = script_open(_PCACHE "/shared/test11/test11-source-1.0.0/Autark", &sctx);
+  akassert(rc == 0);
+  script_build(sctx);
+  script_close(&sctx);
 
+  chdir(cwd_prev);
+  akassert(path_is_exist(_PCACHE "/shared/test11/test11-source-1.0.0/autark-cache/main"));
+
+  fprintf(stderr, "\n\n");
+  test_reinit(false);
+
+  rc = script_open(_PCACHE "/shared/test11/test11-source-1.0.0/Autark", &sctx);
+  akassert(rc == 0);
+  script_build(sctx);
+  script_close(&sctx);
 
   pool_destroy(pool);
   return 0;

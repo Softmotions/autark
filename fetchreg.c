@@ -60,20 +60,15 @@ bool fetchreg_find(
     for ( ; *rp; ++rp) {
       if (*rp == '\1') {
         *rp = '\0';
-        if (!e.target) {
-          if (strcmp(buf, url) != 0) {
-            break;
-          }
-          e.url = buf;
-          if (rp[1] != '\0' && rp[1] != '\n') {
-            e.target = rp + 1;
-            idxs[0] = e.target - buf;
-          } else {
-            break;
-          }
-        } else {
+        if (strcmp(buf, url) != 0) {
           break;
         }
+        e.url = buf;
+        if (rp[1] != '\0' && rp[1] != '\n') {
+          e.target = rp + 1;
+          idxs[0] = e.target - buf;
+        }
+        break;
       }
     }
 
@@ -87,6 +82,7 @@ bool fetchreg_find(
         if (rv) {
           target[rv - 1] = '\0';
         }
+        se.target = target;
       }
     }
   }

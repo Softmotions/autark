@@ -3,13 +3,14 @@
 #include "script.h"
 #include "paths.h"
 #include "fetchreg.h"
-#include "alloc.h"
 #endif
 
 static void _fetch_url_regcb(const struct fetcherg_entry *e, void *d) {
   struct node *n = d;
   if (e->target) {
-    n->impl = xstrdup(e->target);
+    struct xstr *xstr = xstr_create_empty();
+    xstr_printf(xstr, "dir://%s/%s", g_env.project.cache_overlay_dir, e->target);
+    n->impl = xstr_destroy_keep_ptr(xstr);
   }
 }
 

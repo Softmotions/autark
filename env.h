@@ -26,6 +26,9 @@
 #define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
+#define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
+
+
 #define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
