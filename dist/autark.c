@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.4"
-#define META_REVISION "acd9ad1"
+#define META_REVISION "a0e5f9c"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -6885,6 +6885,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       return;
     } else if (utils_endswith(src, "/" AUTARK_FETCHED_REG)) {
       snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST, target);
+      path_mkdirs_for(dst_buf);
       _install_file(n, src, dst_buf, &st);
       return;
     }
@@ -6898,6 +6899,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
   snprintf(dst_buf, sizeof(dst_buf), "%s/%s", target, path_basename(src_buf));
 
   if (S_ISREG(st.st_mode)) {
+    path_mkdirs_for(dst_buf);
     _install_file(n, src, dst_buf, &st);
   } else if (S_ISLNK(st.st_mode)) {
     _install_symlink(n, src, dst_buf, &st);
