@@ -62,6 +62,13 @@ struct spawn* spawn_create(const char *exec, void *user_data) {
   return s;
 }
 
+void spawn_visit_cmd(struct spawn *s, void *user_data, void (*visitor)(int num, const char *arg, void*)) {
+  for (int i = 0; i < s->args.num; ++i) {
+    const char *arg = *(const char**) ulist_get(&s->args, i);
+    visitor(i, arg, user_data);
+  }
+}
+
 static const char* _spawn_arg_add(struct spawn *s, const char *arg, int len) {
   if (!arg || *arg == '\0') {
     return "";

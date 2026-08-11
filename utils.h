@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdio.h>
 #endif
 
 #define Q_XSTR(s) Q_STR(s)
@@ -110,6 +111,8 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max);
 
 int utils_file_write_buf(const char *path, const char *buf, size_t len, bool append);
 
+int utils_copy_file_streams(FILE *src, FILE *dst);
+
 int utils_copy_file(const char *src, const char *dst);
 
 int utils_copy_dir(const char *src, const char *dst);
@@ -123,6 +126,8 @@ void utils_split_values_add(const char *v, struct xstr *xstr);
 int utils_fd_make_non_blocking(int fd);
 
 int64_t utils_current_time_ms(void);
+
+const char* utils_json_escape_str(const char *val, ssize_t len, struct xstr *xstr);
 
 //----------------------- Vlist
 

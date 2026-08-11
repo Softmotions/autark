@@ -1,6 +1,30 @@
 # Autark – A self-contained build system for C and C++
 
-## Quick links
+**Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
+It builds with only `/bin/sh` and a `C99` compiler.
+
+The goal of this project is to provide the community with a portable, cross-platform build environment
+that has **no external dependencies** and can be distributed **directly with the project’s source code**.
+It eliminates version compatibility issues common to traditional build systems,
+making software truly open and self-contained.
+
+The `build.sh` script automatically initializes the Autark build system, and then proceeds with your project build.
+Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
+Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
+
+## Key features
+
+- To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
+- The build process does not modify the project's source tree.
+- Build rules are described using a simple and clear declarative DSL, which is not a programming language.
+- The system provides extensive capabilities for extending the build process with custom rules.
+- Parallel compilation of C/C++ source files.
+- Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
+- Automatic generation of `compile_commands.json` database.
+- Project sources distribution generation with all source dependencies included usable for building in isolated
+  environments.
+
+## Quick refs
 
 - [meta](#meta-)
 - [option](#option-)
@@ -21,28 +45,9 @@
 - [cc/cxx](#cc-----cxx---)
 - [library](#library-)
 - [install](#install-)
+- [install-sources](#install-sources-)
 - [macros](#macros)
 
-**Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
-It builds with only `/bin/sh` and a `C99` compiler.
-
-The goal of this project is to provide the community with a portable, cross-platform build environment
-that has **no external dependencies** and can be distributed **directly with the project’s source code**.
-It eliminates version compatibility issues common to traditional build systems,
-making software truly open and self-contained.
-
-The `build.sh` script automatically initializes the Autark build system, and then proceeds with your project build.
-Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
-Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
-
-## Key features
-
-- To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
-- The build process does not modify the project's source tree.
-- Build rules are described using a simple and clear declarative DSL, which is not a programming language.
-- The system provides extensive capabilities for extending the build process with custom rules.
-- Parallel compilation of C/C++ source files is supported.
-- Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
 ## Articles
 
@@ -60,8 +65,7 @@ wget -O ./build.sh \
   https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
 chmod u+x ./build.sh
 
-
-# Write Autark script then
+# Write an Autark script then
 
 ./build.sh
 ```
@@ -72,25 +76,21 @@ or explore real-life projects that use Autark.
 Built artifacts are placed in `./autark-cache` dir by default.
 
 ```sh
-./build.sh -h
-Usage
+./build.sh -h                                                                                                                                                                                                                                                                                                                     http2 M
 
-Common options:
-    -V, --verbose               Outputs verbose execution info.
-    -v, --version               Prints version info.
-    -h, --help                  Prints usage help.
+autark [options] [sources_dir] | [command [options]]
 
-autark [sources_dir/command] [options]
   Build project in given sources dir.
     -H, --cache=<>              Project cache/build dir. Default: ./autark-cache
     -c, --clean                 Clean build cache dir.
     -l, --options               List of all available project options and their description.
     -J  --jobs=<>               Number of jobs used in c/cxx compilation tasks. Default: 4
     -D<option>[=<val>]          Set project build option.
+    -k, --compile-commands      Generates compile_commands.json database. Sets -c option implicitly.
     -I, --install               Install all built artifacts
     -R, --prefix=<>             Install prefix. Default: $HOME/.local
-        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin
-    ...
+    -S, --install-source-deps   Build autonomous source distribution package dir with all external project dependencies packed.
+   ...
 ```
 
 ## Brief overview of Autark
@@ -319,7 +319,7 @@ Initialization of the build process.
 During the `init` phase, the following steps occur:
 
 - Autark build script files are parsed.
-- Initialization logic for rules is executed in sequence so it makes sence order of `set`, `check`, `if`
+- Initialization logic for rules is executed in sequence so it makes sense order of `set`, `check`, `if`
   in build script.
 - Based on the current state of variables, *tree shaking* is applied to the syntax tree
   of the overall Autark build script.
@@ -632,7 +632,7 @@ set {
 }
 ```
 In this example, the output of `pkgconf --libs --static libcurl` is appended to the `LDFLAGS` list.
-**Note** what `..` in pkgconf instruction means what space separated output of pkgconf programm
+**Note** what `..` in pkgconf instruction means what space separated output of pkgconf program
 will be converted to list and merged with LDFLAGS list.
 
 # ^{...} Expressions concatenation
@@ -720,7 +720,7 @@ Otherwise, if an `else` block is provided, it will be replaced by `EXPR2`.
 
 ## Conditions
 
-Exclamation mark `!` means expression result negation, when trufly evaluated expressions became false.
+Exclamation mark `!` means expression result negation, when truthly evaluated expressions became false.
 
 `[!]${EXPR}`
 <br/>Evaluates as truthy in any of the following cases:
@@ -1115,7 +1115,7 @@ In this example:
 
 This approach enables clean, scalable test orchestration without hardcoding individual test names.
 
-# `cc { ... }` / `cxx { ... }`
+# cc { ... } / cxx { ... }
 
 This rule compiles C or C++ source files into object files,
 while automatically tracking all required dependencies including header files.
@@ -1182,13 +1182,19 @@ This ensures that the `configure` step is executed **before** compilation starts
 
 ---
 
-Source files compilation is performed in parallel.
+Source files compilation can be performed in parallel.
 By default, the parallelism level is set to `4`.
 You can change this using the `-J` option on the command line. For example:
 ```sh
 ./build.sh -J8
 ```
 This will run up to 8 compilation jobs in parallel.
+
+### JSON compilation database (compile_commands.json)
+
+Autark supports automatic generation of `compile_commands.json` compilation database.
+Just provide `-k, --compile-commands` option and all compile commands will be saved
+in `./autark-cache/compile-commands.json`. **Please note this option forces the full rebuild.**
 
 
 # library {...}
@@ -1302,7 +1308,7 @@ If `build.sh` is run with the `-I` or `--install` option (to install all built a
 or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
 then all `install` rules will be executed after the `build` phase completes.
 
-## Available variables when install is enabled
+## Available variables useful when installing artifacts
 
 - `INSTALL_PREFIX` – Absolute path to the installation prefix.
   **Default:** `$HOME/.local`
@@ -1320,11 +1326,11 @@ then all `install` rules will be executed after the `build` phase completes.
   **Default:** `share/man`
 
 ```cfg
-install { INSTAL_DIR_EXPR FILES... }
+install { INSTAL_TARGET_DIR FILES... }
 ```
 
 The install rule copies the specified files into the target directory
-`${INSTALL_PREFIX}/${INSTALL_DIR_EXPR}` (creating it if necessary).
+`${INSTALL_PREFIX}/${INSTALL_DATA_DIR}` (creating it if necessary).
 File permissions from the original files are preserved during the copy.
 
 Example:
@@ -1336,6 +1342,48 @@ install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }
 
 This will install `libiwnet.pc` into the appropriate pkgconfig directory,
 and public headers into the include directory under the chosen prefix.
+
+# install-sources {...}
+
+Installs project source code into target dir specified by `--prefix`.
+This directive operates in project source code dir.
+
+Good practice is to place source code files into
+`<install_prefix>/share/<project_name>/<project_name>-sources-<version>`
+
+```cfg
+install-sources { INSTAL_TARGET_DIR FILES... }
+```
+
+Example of `install-sources` configuration for iwnet project:
+
+```cfg
+install-sources {
+   ^{${INSTALL_DATA_DIR} / ${META_NAME} / ${META_NAME} -sources- ${META_VERSION}}
+  .autark/
+ .ignore
+ Autark
+ Changelog
+ LICENSE
+ README.md
+ build.sh
+ src/
+ tools/
+}
+```
+
+## Autonomous source distributions
+
+If your project depends on other projects downloaded by network you may
+provide source distribution suitable for building in network isolated environments (launchpad.net, chatgpt, etc..)
+with all external dependencies included in project source tree. All you need is `-S, --install-source-deps` option
+for `build.sh` script: `./build.sh --install-source-deps --prefix=...`
+
+You may find external projects usage showcase and source distribution configuration
+in [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
+
+**NOTE:** autonomous source distribution mode requires at least one `install-sources` directive in your build config.
+
 
 # License
 

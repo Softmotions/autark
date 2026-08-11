@@ -122,7 +122,10 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       }
       return;
     } else if (utils_endswith(src, "/" AUTARK_FETCHED_REG)) {
-      snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST, target);
+      snprintf(dst_buf,
+               sizeof(dst_buf),
+               "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST,
+               target);
       path_mkdirs_for(dst_buf);
       _install_file(n, src, dst_buf, &st);
       return;
@@ -272,8 +275,10 @@ static void _install_post_build(struct node *n) {
   if (!ctx.n_target || !node_is_can_be_value(ctx.n_target)) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No target dir specified");
   }
-  if (!ctx.n_target->next || !node_is_can_be_value(ctx.n_target->next)) {
-    node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "At least one source file/dir should be specified");
+  if (n->type != NODE_TYPE_INSTALL_SOURCES) {
+    if (!ctx.n_target->next || !node_is_can_be_value(ctx.n_target->next)) {
+      node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "At least one source file/dir should be specified");
+    }
   }
   struct node_resolve r = {
     .n = n,

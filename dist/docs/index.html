@@ -289,29 +289,6 @@
 </header>
 <h1 id="autark--a-self-contained-build-system-for-c-and-c">Autark – A
 self-contained build system for C and C++</h1>
-<h2 id="quick-links">Quick links</h2>
-<ul>
-<li><a href="#meta-">meta</a></li>
-<li><a href="#option-">option</a></li>
-<li><a href="#check-">check</a></li>
-<li><a href="#set--let-">set|let</a></li>
-<li><a href="#env-">env</a></li>
-<li><a href="#-variable-evaluation">${}</a></li>
-<li><a href="#-program-output-evaluation">@{}</a></li>
-<li><a href="#-expressions-concatenation">^{}</a></li>
-<li><a href="#if--condition">if</a></li>
-<li><a href="#echo-">echo</a></li>
-<li><a href="#configure-">configure</a></li>
-<li><a href="#s--ss--c--cc---path-helpers">path helpers</a></li>
-<li><a href="#run-">run</a></li>
-<li><a href="#in-sources-">in-sources</a></li>
-<li><a href="#run-on-install-">run-on-install</a></li>
-<li><a href="#foreach-">foreach</a></li>
-<li><a href="#cc-----cxx---">cc/cxx</a></li>
-<li><a href="#library-">library</a></li>
-<li><a href="#install-">install</a></li>
-<li><a href="#macros">macros</a></li>
-</ul>
 <p><strong>Autark</strong> is a vendored, self-bootstrapping C/C++ build
 system for portable source distributions. It builds with only
 <code>/bin/sh</code> and a <code>C99</code> compiler.</p>
@@ -336,9 +313,37 @@ is required except a C99-compliant compiler.</li>
 which is not a programming language.</li>
 <li>The system provides extensive capabilities for extending the build
 process with custom rules.</li>
-<li>Parallel compilation of C/C++ source files is supported.</li>
+<li>Parallel compilation of C/C++ source files.</li>
 <li>Support of an external project dependencies. Take a look on <a
 href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a></li>
+<li>Automatic generation of <code>compile_commands.json</code>
+database.</li>
+<li>Project sources distribution generation with all source dependencies
+included usable for building in isolated environments.</li>
+</ul>
+<h2 id="quick-refs">Quick refs</h2>
+<ul>
+<li><a href="#meta-">meta</a></li>
+<li><a href="#option-">option</a></li>
+<li><a href="#check-">check</a></li>
+<li><a href="#set--let-">set|let</a></li>
+<li><a href="#env-">env</a></li>
+<li><a href="#-variable-evaluation">${}</a></li>
+<li><a href="#-program-output-evaluation">@{}</a></li>
+<li><a href="#-expressions-concatenation">^{}</a></li>
+<li><a href="#if--condition">if</a></li>
+<li><a href="#echo-">echo</a></li>
+<li><a href="#configure-">configure</a></li>
+<li><a href="#s--ss--c--cc---path-helpers">path helpers</a></li>
+<li><a href="#run-">run</a></li>
+<li><a href="#in-sources-">in-sources</a></li>
+<li><a href="#run-on-install-">run-on-install</a></li>
+<li><a href="#foreach-">foreach</a></li>
+<li><a href="#cc-----cxx---">cc/cxx</a></li>
+<li><a href="#library-">library</a></li>
+<li><a href="#install-">install</a></li>
+<li><a href="#install-sources-">install-sources</a></li>
+<li><a href="#macros">macros</a></li>
 </ul>
 <h2 id="articles">Articles</h2>
 <ul>
@@ -355,34 +360,29 @@ Autark:</p>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> u+x ./build.sh</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Write Autark script then</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span></span></code></pre></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Write an Autark script then</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span></span></code></pre></div>
 <p>The best way to get started is to look at the <a
 href="https://github.com/Softmotions/autark-sample-project">Autark
 sample project</a> or explore real-life projects that use Autark.</p>
 <p>Built artifacts are placed in <code>./autark-cache</code> dir by
 default.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-h</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Usage</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Common</span> options:</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-V,</span> <span class="at">--verbose</span>               Outputs verbose execution info.</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-v,</span> <span class="at">--version</span>               Prints version info.</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-h,</span> <span class="at">--help</span>                  Prints usage help.</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ex">autark</span> <span class="pp">[</span><span class="ss">sources_dir/command</span><span class="pp">]</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">Build</span> project in given sources dir.</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-H,</span> <span class="at">--cache</span><span class="op">=&lt;&gt;</span>              Project cache/build dir. Default: ./autark-cache</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-c,</span> <span class="at">--clean</span>                 Clean build cache dir.</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-l,</span> <span class="at">--options</span>               List of all available project options and their description.</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-J</span>  <span class="at">--jobs</span><span class="op">=&lt;&gt;</span>               Number of jobs used in c/cxx compilation tasks. Default: 4</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-D</span><span class="op">&lt;</span>option<span class="op">&gt;</span>[=<span class="op">&lt;</span>val<span class="op">&gt;</span>]          Set project build option.</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-I,</span> <span class="at">--install</span>               Install all built artifacts</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-R,</span> <span class="at">--prefix</span><span class="op">=&lt;&gt;</span>             Install prefix. Default: <span class="va">$HOME</span>/.local</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="ex">--bindir=</span><span class="op">&lt;&gt;</span>             Path to <span class="st">&#39;bin&#39;</span> dir relative to a <span class="kw">`</span><span class="ex">prefix</span><span class="kw">`</span> dir. Default: bin</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="ex">...</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-h</span>                                                                                                                                                                                                                                                                                                                     http2 M</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">autark</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span> <span class="pp">[</span><span class="ss">sources_dir</span><span class="pp">]</span> <span class="kw">|</span> <span class="ex">[command</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">Build</span> project in given sources dir.</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-H,</span> <span class="at">--cache</span><span class="op">=&lt;&gt;</span>              Project cache/build dir. Default: ./autark-cache</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-c,</span> <span class="at">--clean</span>                 Clean build cache dir.</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-l,</span> <span class="at">--options</span>               List of all available project options and their description.</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-J</span>  <span class="at">--jobs</span><span class="op">=&lt;&gt;</span>               Number of jobs used in c/cxx compilation tasks. Default: 4</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-D</span><span class="op">&lt;</span>option<span class="op">&gt;</span>[=<span class="op">&lt;</span>val<span class="op">&gt;</span>]          Set project build option.</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-k,</span> <span class="at">--compile-commands</span>      Generates compile_commands.json database. Sets <span class="at">-c</span> option implicitly.</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-I,</span> <span class="at">--install</span>               Install all built artifacts</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-R,</span> <span class="at">--prefix</span><span class="op">=&lt;&gt;</span>             Install prefix. Default: <span class="va">$HOME</span>/.local</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-S,</span> <span class="at">--install-source-deps</span>   Build autonomous source distribution package dir with all external project dependencies packed.</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>   <span class="ex">...</span></span></code></pre></div>
 <h2 id="brief-overview-of-autark">Brief overview of Autark</h2>
 <p>Autark build artifacts, as well as rules dependency metadata, are
 stored in a separate directory called the <em>autark-cache</em>. By
@@ -608,7 +608,7 @@ resolved correctly.</p>
 <ul>
 <li>Autark build script files are parsed.</li>
 <li>Initialization logic for rules is executed in sequence so it makes
-sence order of <code>set</code>, <code>check</code>, <code>if</code> in
+sense order of <code>set</code>, <code>check</code>, <code>if</code> in
 build script.</li>
 <li>Based on the current state of variables, <em>tree shaking</em> is
 applied to the syntax tree of the overall Autark build script. As a
@@ -869,8 +869,8 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb23-1"><a href="#
 <p>In this example, the output of
 <code>pkgconf --libs --static libcurl</code> is appended to the
 <code>LDFLAGS</code> list. <strong>Note</strong> what <code>..</code> in
-pkgconf instruction means what space separated output of pkgconf
-programm will be converted to list and merged with LDFLAGS list.</p>
+pkgconf instruction means what space separated output of pkgconf program
+will be converted to list and merged with LDFLAGS list.</p>
 <h1 id="-expressions-concatenation">^{...} Expressions
 concatenation</h1>
 <div class="sourceCode" id="cb24"><pre
@@ -936,7 +936,7 @@ Otherwise, if an <code>else</code> block is provided, it will be
 replaced by <code>EXPR2</code>.</p>
 <h2 id="conditions">Conditions</h2>
 <p>Exclamation mark <code>!</code> means expression result negation,
-when trufly evaluated expressions became false.</p>
+when truthly evaluated expressions became false.</p>
 <p><code>[!]${EXPR}</code> <br/>Evaluates as truthy in any of the
 following cases:</p>
 <ul>
@@ -1271,8 +1271,7 @@ object file path (e.g., <code>main.o =&gt; main</code>).</li>
 </ul>
 <p>This approach enables clean, scalable test orchestration without
 hardcoding individual test names.</p>
-<h1 id="cc-----cxx---"><code>cc { ... }</code> /
-<code>cxx { ... }</code></h1>
+<h1 id="cc-----cxx---">cc { ... } / cxx { ... }</h1>
 <p>This rule compiles C or C++ source files into object files, while
 automatically tracking all required dependencies including header files.
 Compilation is parallelized to speed up the build process.</p>
@@ -1329,12 +1328,19 @@ the <code>cc</code> compilation rule.</p>
 list it here. This ensures that the <code>configure</code> step is
 executed <strong>before</strong> compilation starts.</p>
 <hr />
-<p>Source files compilation is performed in parallel. By default, the
-parallelism level is set to <code>4</code>. You can change this using
-the <code>-J</code> option on the command line. For example:</p>
+<p>Source files compilation can be performed in parallel. By default,
+the parallelism level is set to <code>4</code>. You can change this
+using the <code>-J</code> option on the command line. For example:</p>
 <div class="sourceCode" id="cb56"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
 <p>This will run up to 8 compilation jobs in parallel.</p>
+<h3 id="json-compilation-database-compile_commandsjson">JSON compilation
+database (compile_commands.json)</h3>
+<p>Autark supports automatic generation of
+<code>compile_commands.json</code> compilation database. Just provide
+<code>-k, --compile-commands</code> option and all compile commands will
+be saved in <code>./autark-cache/compile-commands.json</code>.
+<strong>Please note this option forces the full rebuild.</strong></p>
 <h1 id="library-">library {...}</h1>
 <p>Search for a library file by name.</p>
 <p>This simple rule looks for the specified <code>LIB_FILES</code>
@@ -1434,8 +1440,8 @@ href="https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark">htt
 install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
-<h2 id="available-variables-when-install-is-enabled">Available variables
-when install is enabled</h2>
+<h2 id="available-variables-useful-when-installing-artifacts">Available
+variables useful when installing artifacts</h2>
 <ul>
 <li><code>INSTALL_PREFIX</code> – Absolute path to the installation
 prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
@@ -1461,9 +1467,9 @@ prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
 <code>share/man</code></li>
 </ul>
 <div class="sourceCode" id="cb63"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_DIR_EXPR FILES... }</span></span></code></pre></div>
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_TARGET_DIR FILES... }</span></span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
-<code>${INSTALL_PREFIX}/${INSTALL_DIR_EXPR}</code> (creating it if
+<code>${INSTALL_PREFIX}/${INSTALL_DATA_DIR}</code> (creating it if
 necessary). File permissions from the original files are preserved
 during the copy.</p>
 <p>Example:</p>
@@ -1473,6 +1479,43 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb64-1"><a href="#
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
 the chosen prefix.</p>
+<h1 id="install-sources-">install-sources {...}</h1>
+<p>Installs project source code into target dir specified by
+<code>--prefix</code>. This directive operates in project source code
+dir.</p>
+<p>Good practice is to place source code files into
+<code>&lt;install_prefix&gt;/share/&lt;project_name&gt;/&lt;project_name&gt;-sources-&lt;version&gt;</code></p>
+<div class="sourceCode" id="cb65"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install-sources { INSTAL_TARGET_DIR FILES... }</span></span></code></pre></div>
+<p>Example of <code>install-sources</code> configuration for iwnet
+project:</p>
+<div class="sourceCode" id="cb66"><pre
+class="sourceCode cfg"><code class="sourceCode ini"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install-sources {</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   ^{${INSTALL_DATA_DIR} / ${META_NAME} / ${META_NAME} -sources- ${META_VERSION}}</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  .autark/</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="dt"> .ignore</span></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a><span class="dt"> Autark</span></span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> Changelog</span></span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a><span class="dt"> LICENSE</span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a><span class="dt"> README.md</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a><span class="dt"> build.sh</span></span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a><span class="dt"> src/</span></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="dt"> tools/</span></span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<h2 id="autonomous-source-distributions">Autonomous source
+distributions</h2>
+<p>If your project depends on other projects downloaded by network you
+may provide source distribution suitable for building in network
+isolated environments (launchpad.net, chatgpt, etc..) with all external
+dependencies included in project source tree. All you need is
+<code>-S, --install-source-deps</code> option for <code>build.sh</code>
+script: <code>./build.sh --install-source-deps --prefix=...</code></p>
+<p>You may find external projects usage showcase and source distribution
+configuration in <a
+href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a></p>
+<p><strong>NOTE:</strong> autonomous source distribution mode requires
+at least one <code>install-sources</code> directive in your build
+config.</p>
 <h1 id="license">License</h1>
 <pre><code>
 MIT License

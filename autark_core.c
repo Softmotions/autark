@@ -279,14 +279,12 @@ static int _usage_va(
     vfprintf(stderr, err, ap);
     fprintf(stderr, "\n\n");
   }
-  fprintf(stderr, "Usage\n");
-  fprintf(stderr, "\nCommon options:\n"
-          "    -V, --verbose               Outputs verbose execution info.\n"
+  fprintf(stderr,
+          "\nautark [options] [sources_dir] | [command [options]]\n");
+  fprintf(stderr,
+          "\n    -V, --verbose               Outputs verbose execution info.\n"
           "    -v, --version               Prints version info.\n"
           "    -h, --help                  Prints usage help.\n");
-  fprintf(stderr,
-          "\nautark [sources_dir/command] [options]\n"
-          "  Build project in given sources dir.\n");
   fprintf(stderr,
           "    -H, --cache=<>              Project cache/build dir. Default: ./" AUTARK_CACHE "\n");
   fprintf(stderr,
@@ -297,6 +295,8 @@ static int _usage_va(
           "    -J  --jobs=<>               Number of jobs used in c/cxx compilation tasks. Default: 4\n");
   fprintf(stderr,
           "    -D<option>[=<val>]          Set project build option.\n");
+  fprintf(stderr,
+          "    -k, --compile-commands      Generates compile_commands.json database. Sets -c option implicitly.\n");
   fprintf(stderr,
           "    -I, --install               Install all built artifacts\n");
   fprintf(stderr,
@@ -321,7 +321,7 @@ static int _usage_va(
           "        --pkgconfdir=<>         Path to 'pkgconfig' dir relative to prefix dir. Default: lib/pkgconfig");
 #endif
 
-  fprintf(stderr, "\nautark <cmd> [options]\n");
+  fprintf(stderr, "\n\nautark <cmd> [options]\n");
   fprintf(stderr, "  Execute a given command from check script.\n");
   fprintf(stderr,
           "\nautark set <key>=<value>\n"
@@ -405,13 +405,14 @@ void autark_build_prepare(const char *script_path) {
     setenv(AUTARK_INSTALL_SRC_DEPS_ENV, "1", 0);
   }
 
-  const char* cache_overlay_dir = path_join_path_pool(g_env.pool, g_env.project.cache_dir, AUTARK_CACHE_OVERLAY_DIR, 0);
+  const char *cache_overlay_dir = path_join_path_pool(g_env.pool, g_env.project.cache_dir, AUTARK_CACHE_OVERLAY_DIR, 0);
   if (path_is_dir(cache_overlay_dir)) {
     g_env.project.cache_overlay_dir = cache_overlay_dir;
     setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
   } else if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_CACHE_OVERLAY_DIR_ENV)) {
-    g_env.project.cache_overlay_dir = pool_printf(g_env.pool, "%s/" AUTARK_CACHE_OVERLAY_DIR, g_env.project.cache_dir);
+    g_env.project.cache_overlay_dir = cache_overlay_dir;
     setenv(AUTARK_CACHE_OVERLAY_DIR_ENV, g_env.project.cache_overlay_dir, 1);
+    path_mkdirs(g_env.project.cache_overlay_dir);
   }
 
   if (g_env.project.cleanup) {
@@ -435,6 +436,13 @@ void autark_build_prepare(const char *script_path) {
 
   if (g_env.verbose) {
     setenv(AUTARK_VERBOSE_ENV, "1", 1);
+  }
+
+  if (g_env.project.compile_commands) {
+    snprintf(path_buf, sizeof(path_buf), "%s/" AUTARK_COMPILE_COMMANDS, g_env.project.cache_dir);
+    setenv(AUTARK_COMPILE_COMMANDS_ENV, path_buf, 0);
+  } else if (getenv(AUTARK_COMPILE_COMMANDS_ENV) != 0) {
+    g_env.project.compile_commands = true;
   }
 }
 
@@ -757,6 +765,7 @@ void autark_run(int argc, const char **argv) {
   static const struct option long_options[] = {
     { "cache", 1, 0, 'H' },
     { "clean", 0, 0, 'c' },
+    { "compile-commands", 0, 0, 'k' },
     { "help", 0, 0, 'h' },
     { "verbose", 0, 0, 'V' },
     { "version", 0, 0, 'v' },
@@ -779,7 +788,7 @@ void autark_run(int argc, const char **argv) {
   const char *cdir = 0;
   struct ulist options = { .usize = sizeof(char*) };
 
-  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:chVvlR:C:D:J:IS", long_options, 0)) != -1; ) {
+  for (int ch; (ch = getopt_long(argc, (void*) argv, "+H:ckhVvlR:C:D:J:IS", long_options, 0)) != -1; ) {
     switch (ch) {
       case 'H':
         g_env.project.cache_dir = pool_strdup(g_env.pool, optarg);
@@ -789,6 +798,10 @@ void autark_run(int argc, const char **argv) {
         break;
       case 'c':
         g_env.project.cleanup = true;
+        break;
+      case 'k':
+        g_env.project.compile_commands = true;
+        g_env.project.compile_commands_own = getenv(AUTARK_COMPILE_COMMANDS_ENV) == 0;
         break;
       case 'v':
         version = true;
@@ -863,6 +876,10 @@ void autark_run(int argc, const char **argv) {
     if (v && (*v == '1' || *v == 'y' || *v == 'Y')) {
       g_env.verbose = true;
     }
+  }
+
+  if (g_env.project.compile_commands) {
+    g_env.project.cleanup = true;
   }
 
   char buf[PATH_MAX];

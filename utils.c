@@ -78,6 +78,29 @@ int utils_file_write_buf(const char *path, const char *buf, size_t len, bool app
   return 0;
 }
 
+int utils_copy_file_streams(FILE *sf, FILE *df) {
+  char buf[8192];
+  size_t nr = 0;
+  while (1) {
+    nr = fread(buf, 1, sizeof(buf), sf);
+    if (nr) {
+      size_t offset = 0;
+      while (offset < nr) {
+        size_t nw = fwrite(buf + offset, 1, nr - offset, df);
+        if (!nw) {
+          return AK_ERROR_IO;
+        }
+        offset += nw;
+      }
+    } else if (feof(sf)) {
+      break;
+    } else if (ferror(sf)) {
+      return AK_ERROR_IO;
+    }
+  }
+  return 0;
+}
+
 int utils_copy_file(const char *src, const char *dst) {
   int rc = 0;
   char buf[8192];
@@ -516,4 +539,29 @@ int64_t utils_current_time_ms(void) {
   return (int64_t) tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #endif
   return (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+const char* utils_json_escape_str(const char *val, ssize_t len, struct xstr *xstr) {
+  if (!val || !xstr) {
+    return 0;
+  }
+  if (len < 0) {
+    len = strlen(val);
+  }
+  static const char *specials = "btnvfr";
+  xstr_cat2(xstr, "\"", 1);
+  for (size_t i = 0; i < len; ++i) {
+    uint8_t ch = (uint8_t) val[i];
+    if (ch == '"' || ch == '\'') {
+      xstr_cat2(xstr, "\\", 1);
+      xstr_cat2(xstr, &ch, 1);
+    } else if (ch >= '\b' && ch <= '\r') {
+      xstr_cat2(xstr, "\\", 1);
+      xstr_cat2(xstr, &specials[ch - '\b'], 1);
+    } else {
+      xstr_cat2(xstr, &ch, 1);
+    }
+  }
+  xstr_cat2(xstr, "\"", 1);
+  return xstr_ptr(xstr);
 }

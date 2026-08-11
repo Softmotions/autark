@@ -13,7 +13,15 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <stdio.h>
+#include <unistd.h>
 #endif
+
+/// Compilation database state.
+struct _cdb {
+  const char *path;
+  char _path[PATH_MAX];
+} _cdb;
 
 struct _cc_ctx {
   struct pool *pool;
@@ -26,10 +34,12 @@ struct _cc_ctx {
   struct node *n_consumes;
   struct node *n_objects;
   const char  *cc;
-  const char *objskey;
+  const char  *objskey;
   struct ulist consumes;    // sizeof(char*)
   int num_failed;
 };
+
+static void _cc_cdb_entry_add(struct node *n, struct spawn *s, const char *src, const char *tgt);
 
 static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   char buf[127];
@@ -154,6 +164,8 @@ static void _cc_on_build_source(
 
   spawn_arg_add(s, "-o");
   spawn_arg_add(s, obj);
+
+  _cc_cdb_entry_add(n, s, src, obj);
 
   int rc = spawn_do(s);
   if (rc) {
@@ -323,9 +335,114 @@ static void _cc_on_resolve_init(struct node_resolve *r) {
   }
 }
 
+static void _cc_cdb_init(struct node *n) {
+  if (!g_env.project.compile_commands) {
+    return;
+  }
+  const char *path = getenv(AUTARK_COMPILE_COMMANDS_ENV);
+  if (!path) {
+    return;
+  }
+  if (g_env.project.compile_commands_own) {
+    unlink(path);
+  }
+  utils_strncpy(_cdb._path, path, sizeof(_cdb._path));
+  _cdb.path = _cdb._path;
+}
+
+struct _cc_cdb_arg_ctx {
+  FILE *file;
+  struct xstr *xstr;
+};
+
+static void _cc_cdb_arg_add(int num, const char *arg, void *d) {
+  struct _cc_cdb_arg_ctx *ctx = d;
+  xstr_clear(ctx->xstr);
+  utils_json_escape_str(arg, -1, ctx->xstr);
+  if (num) {
+    fprintf(ctx->file, ",\n      %s", xstr_ptr(ctx->xstr));
+  } else {
+    fprintf(ctx->file, "\n      %s", xstr_ptr(ctx->xstr));
+  }
+}
+
+static void _cc_cdb_entry_add(struct node *n, struct spawn *s, const char *src, const char *tgt) {
+  if (!_cdb.path) {
+    return;
+  }
+  FILE *f = fopen(_cdb.path, "a");
+  if (!f) {
+    node_fatal(errno, n, "Error opening file for writing: %s", _cdb.path);
+  }
+  long int pos = ftell(f);
+  if (pos == -1) {
+    node_fatal(errno, n, "File: %s", _cdb.path);
+  }
+
+  struct xstr *xstr = xstr_create_empty();
+  if (pos > 0) {
+    fprintf(f, ",\n  {\n");
+  } else {
+    fprintf(f, "\n  {\n");
+  }
+  fprintf(f, "    \"arguments\": [");
+  spawn_visit_cmd(s, &(struct _cc_cdb_arg_ctx) { f, xstr }, _cc_cdb_arg_add);
+  fprintf(f, "\n    ],\n");
+
+  struct unit *unit = unit_peek();
+  xstr_clear(xstr);
+  utils_json_escape_str(unit->cache_dir, -1, xstr);
+  fprintf(f, "    \"directory\": %s,\n", xstr_ptr(xstr));
+
+  xstr_clear(xstr);
+  utils_json_escape_str(src, -1, xstr);
+  fprintf(f, "    \"file\": %s,\n", xstr_ptr(xstr));
+
+  xstr_clear(xstr);
+  utils_json_escape_str(tgt, -1, xstr);
+  fprintf(f, "    \"output\": %s\n", xstr_ptr(xstr));
+
+  fprintf(f, "  }");
+  xstr_destroy(xstr);
+  fclose(f);
+}
+
+static void _cc_post_build(struct node *n) {
+  int rc = 0;
+  if (!_cdb.path || !g_env.project.compile_commands_own) {
+    return;
+  }
+  const char *path = _cdb.path;
+  _cdb.path = 0;
+
+  FILE *sf = fopen(path, "r");
+  if (!sf) {
+    return;
+  }
+  unlink(path);
+  path = _cdb._path;
+  snprintf(_cdb._path, sizeof(_cdb._path), "%s/compile_commands.json", g_env.project.cache_dir);
+  FILE *tf = fopen(path, "w");
+  if (!tf) {
+    rc = errno;
+    fclose(sf);
+    node_fatal(rc, n, "Error opening file for writing: %s", path);
+  }
+  fputs("[", tf);
+  rc = utils_copy_file_streams(sf, tf);
+  if (rc) {
+    fclose(sf);
+    fclose(tf);
+    node_fatal(rc, n, "Error writing file: %s", path);
+  }
+  fputs("\n]", tf);
+  fclose(sf);
+  fclose(tf);
+  node_info(n, "Compilation database file created: %s", path);
+}
+
 static void _cc_build(struct node *n) {
   struct _cc_ctx *ctx = n->impl;
-
   char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, ctx->objskey, objs);
   free(objs);
@@ -404,6 +521,8 @@ static void _cc_source_add(struct node *n, const char *src) {
 }
 
 static void _cc_setup(struct node *n) {
+  _cc_cdb_init(n);
+
   struct _cc_ctx *ctx = n->impl;
   const char *val = node_value(ctx->n_sources);
   if (is_vlist(val)) {
@@ -510,6 +629,7 @@ int node_cc_setup(struct node *n) {
   n->init = _cc_init;
   n->setup = _cc_setup;
   n->build = _cc_build;
+  n->post_build = _cc_post_build;
   n->dispose = _cc_dispose;
   struct pool *pool = pool_create_empty();
   struct _cc_ctx *ctx = pool_alloc(pool, sizeof(*ctx));

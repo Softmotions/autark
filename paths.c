@@ -171,6 +171,7 @@ int path_mkdirs(const char *path) {
   if ((path[0] == '.' && path[1] == '\0') || path_is_exist(path)) {
     return 0;
   }
+
   int rc = 0;
   const size_t len = strlen(path);
   char buf[len + 1];

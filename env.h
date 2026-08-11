@@ -20,6 +20,7 @@
 #define AUTARK_FETCHED_REG       ".autark-fetched"
 #define AUTARK_FETCHED_REG_DIST  ".autark-fetched-dist"
 #define AUTARK_FETCH_DEP         ".autark-fetch-dep"
+#define AUTARK_COMPILE_COMMANDS  ".compile_commands"
 
 #define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
 #define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
@@ -27,6 +28,7 @@
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
+#define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 
 
 #define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
@@ -76,6 +78,8 @@ struct env {
     const char *cache_dir;          // Project artifacts cache dir. Not zero.
     const char *cache_overlay_dir;  // Overlay data dir for autark cache. Can be zero.
     bool cleanup;                   // Clean project cache before build
+    bool compile_commands;          // Generate compile_commands.json database.
+    bool compile_commands_own;      // We own compile commands file.
     bool prepared;                  // Autark build prepared
     struct xstr *options;           // Ask option values
   } project;

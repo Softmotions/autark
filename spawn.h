@@ -33,6 +33,8 @@ void spawn_set_stdout_handler(struct spawn*, void (*handler)(char *buf, size_t b
 
 void spawn_set_stderr_handler(struct spawn*, void (*handler)(char *buf, size_t buflen, struct spawn*));
 
+void spawn_visit_cmd(struct spawn*, void *user_data, void (*visitor)(int num, const char *arg, void*));
+
 void spawn_set_nowait(struct spawn*, bool nowait);
 
 void spawn_set_wstatus(struct spawn*, int wstatus);
