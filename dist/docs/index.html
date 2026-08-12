@@ -290,8 +290,8 @@
 <h1 id="autark--a-self-contained-build-system-for-c-and-c">Autark – A
 self-contained build system for C and C++</h1>
 <p><strong>Autark</strong> is a vendored, self-bootstrapping C/C++ build
-system for portable source distributions. It builds with only
-<code>/bin/sh</code> and a <code>C99</code> compiler.</p>
+system for portable source distributions. It builds itself with
+<code>C99</code> compiler then builds your project.</p>
 <p>The goal of this project is to provide the community with a portable,
 cross-platform build environment that has <strong>no external
 dependencies</strong> and can be distributed <strong>directly with the
@@ -306,20 +306,22 @@ defined using a specialized DSL in Autark files, which is mostly
 declarative in nature.</p>
 <h2 id="key-features">Key features</h2>
 <ul>
-<li>To initialize the project build system on the target system, nothing
-is required except a C99-compliant compiler.</li>
+<li>Fully transparent build system - its entire source code is part of
+the project, with no hidden build logic or prebuild binaries.</li>
+<li>Initializing the project build system on a target system requires
+nothing more than a C99-compliant compiler.</li>
 <li>The build process does not modify the project's source tree.</li>
 <li>Build rules are described using a simple and clear declarative DSL,
 which is not a programming language.</li>
-<li>The system provides extensive capabilities for extending the build
-process with custom rules.</li>
+<li>Support for extending the build process with custom rules.</li>
 <li>Parallel compilation of C/C++ source files.</li>
-<li>Support of an external project dependencies. Take a look on <a
-href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a></li>
+<li>Support of an external project dependencies. See <a
+href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a> for
+real-word example.</li>
 <li>Automatic generation of <code>compile_commands.json</code>
-database.</li>
-<li>Project sources distribution generation with all source dependencies
-included usable for building in isolated environments.</li>
+compilation database.</li>
+<li>Generation of project source distributions with all required source
+dependencies included, allowing builds in isolated environments.</li>
 </ul>
 <h2 id="quick-refs">Quick refs</h2>
 <ul>

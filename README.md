@@ -1,7 +1,7 @@
 # Autark – A self-contained build system for C and C++
 
 **Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
-It builds with only `/bin/sh` and a `C99` compiler.
+It builds itself with `C99` compiler then builds your project.
 
 The goal of this project is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
@@ -14,15 +14,16 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 
 ## Key features
 
-- To initialize the project build system on the target system, nothing is required except a C99-compliant compiler.
+- Fully transparent build system - its entire source code is part of the project, with no hidden build logic or prebuild binaries.
+- Initializing the project build system on a target system requires nothing more than a C99-compliant compiler.
 - The build process does not modify the project's source tree.
 - Build rules are described using a simple and clear declarative DSL, which is not a programming language.
-- The system provides extensive capabilities for extending the build process with custom rules.
+- Support for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files.
-- Support of an external project dependencies. Take a look on [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
-- Automatic generation of `compile_commands.json` database.
-- Project sources distribution generation with all source dependencies included usable for building in isolated
-  environments.
+- Support of an external project dependencies. See [Softmotions/iwnet](https://github.com/Softmotions/iwnet) for
+  real-word example.
+- Automatic generation of `compile_commands.json` compilation database.
+- Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
 
 ## Quick refs
 
