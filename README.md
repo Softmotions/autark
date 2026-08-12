@@ -1,9 +1,9 @@
 # Autark – A self-contained build system for C and C++
 
 **Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
-It builds itself with `C99` compiler then builds your project.
+It builds itself with `C99` compiler then builds your code.
 
-The goal of this project is to provide the community with a portable, cross-platform build environment
+The goal of Autark is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
 It eliminates version compatibility issues common to traditional build systems,
 making software truly open and self-contained.
