@@ -878,7 +878,7 @@ void autark_run(int argc, const char **argv) {
     }
   }
 
-  if (g_env.project.compile_commands) {
+  if (g_env.project.compile_commands || (g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS)) {
     g_env.project.cleanup = true;
   }
 

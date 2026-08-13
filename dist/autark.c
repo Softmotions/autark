@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.8"
-#define META_REVISION "b6f13a0"
+#define META_REVISION "2fbde32"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -8578,7 +8578,7 @@ void autark_run(int argc, const char **argv) {
     }
   }
 
-  if (g_env.project.compile_commands) {
+  if (g_env.project.compile_commands || (g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS)) {
     g_env.project.cleanup = true;
   }
 
