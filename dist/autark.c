@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.8"
-#define META_REVISION "2fbde32"
+#define META_REVISION "742341d"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -7998,11 +7998,12 @@ static int _usage_va(
   fprintf(stderr,
           "    -k, --compile-commands      Generates compile_commands.json database. Sets -c option implicitly.\n");
   fprintf(stderr,
-          "    -I, --install               Install all built artifacts\n");
+          "    -I, --install               Installs all built artifacts\n");
   fprintf(stderr,
           "    -R, --prefix=<>             Install prefix. Default: $HOME/.local\n");
   fprintf(stderr,
-          "    -S, --install-source-deps   Build autonomous source distribution package dir with all external project dependencies packed.\n");
+          "    -S, --install-source-deps   Builds autonomous source distribution package dir with all external project dependencies packed.\n"
+          "                                Sets -c option implicitly.\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
