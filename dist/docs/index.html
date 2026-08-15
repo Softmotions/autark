@@ -322,6 +322,8 @@ real-word example.</li>
 compilation database.</li>
 <li>Generation of project source distributions with all required source
 dependencies included, allowing builds in isolated environments.</li>
+<li>Script syntax highlighting support for Vim8+, Neovim, VSCode with <a
+href="https://github.com/Softmotions/tree-sitter-autark">Softmotions/tree-sitter-autark</a></li>
 </ul>
 <h2 id="quick-refs">Quick refs</h2>
 <ul>
@@ -370,7 +372,7 @@ href="https://github.com/Softmotions/autark-sample-project">Autark
 sample project</a> or explore real-life projects that use Autark.</p>
 <p>Built artifacts are placed in <code>./autark-cache</code> dir by
 default.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-h</span>                                                                                                                                                                                                                                                                                                                     http2 M</span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-h</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">autark</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span> <span class="pp">[</span><span class="ss">sources_dir</span><span class="pp">]</span> <span class="kw">|</span> <span class="ex">[command</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span>]</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -421,7 +423,7 @@ LITERAL:
 <li>Rules form lists, similar to syntactic structures in Scheme or
 Lisp.</li>
 </ul>
-<p>More formal syntax decription can be found here: <a
+<p>More formal syntax description can be found here: <a
 href="https://github.com/Softmotions/autark/blob/master/scriptx.leg">https://github.com/Softmotions/autark/blob/master/scriptx.leg</a></p>
 <h2 id="sample-autark-script">Sample Autark script</h2>
 <p>Below is a demonstration of an Autark script from the demo project:

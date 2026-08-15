@@ -24,6 +24,7 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
   real-word example.
 - Automatic generation of `compile_commands.json` compilation database.
 - Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
+- Script syntax highlighting support for Vim8+, Neovim, VSCode with [Softmotions/tree-sitter-autark](https://github.com/Softmotions/tree-sitter-autark)
 
 ## Quick refs
 
@@ -77,7 +78,7 @@ or explore real-life projects that use Autark.
 Built artifacts are placed in `./autark-cache` dir by default.
 
 ```sh
-./build.sh -h                                                                                                                                                                                                                                                                                                                     http2 M
+./build.sh -h
 
 autark [options] [sources_dir] | [command [options]]
 
@@ -128,7 +129,7 @@ LITERAL:
 - Every rule has a body enclosed in curly braces `{}`.
 - Rules form lists, similar to syntactic structures in Scheme or Lisp.
 
-More formal syntax decription can be found here: https://github.com/Softmotions/autark/blob/master/scriptx.leg
+More formal syntax description can be found here: https://github.com/Softmotions/autark/blob/master/scriptx.leg
 
 ## Sample Autark script
 
