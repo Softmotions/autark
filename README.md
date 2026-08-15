@@ -20,8 +20,7 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - Build rules are described using a simple and clear declarative DSL, which is not a programming language.
 - Support for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files.
-- Support of an external project dependencies. See [Softmotions/iwnet](https://github.com/Softmotions/iwnet) for
-  real-word example.
+- Support of an external project dependencies.
 - Automatic generation of `compile_commands.json` compilation database.
 - Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
 - Script syntax highlighting support for Vim8+, Neovim, VSCode with [Softmotions/tree-sitter-autark](https://github.com/Softmotions/tree-sitter-autark)
@@ -137,9 +136,7 @@ Below is a demonstration of an Autark script from the demo project:
 https://github.com/Softmotions/autark-sample-project
 Take a look and try building it!
 
-You can also explore the following real-life C projects that use Autark:
-- https://github.com/Softmotions/iwnet
-- https://github.com/Softmotions/ejdb
+Also see [Softmotions/iwnet](https://github.com/Softmotions/iwnet) or [Softmotions/protobuf-c](https://github.com/Softmotions/protobuf-c) for good real-word examples.
 
 ```
 git clone https://github.com/Softmotions/autark-sample-project
