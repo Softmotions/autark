@@ -117,7 +117,6 @@ The syntax is simple and can be informally described as follows:
 - A rule follows this syntax:
 
 ```
-
 RULE:
 
   rule_name { RULE | LITERAL ... }
@@ -125,7 +124,6 @@ RULE:
 LITERAL:
 
   word | 'single quoted words' | "double quoted words"
-
 ```
 
 - Rules and literals are separated by `whitespaces`.
@@ -148,7 +146,7 @@ cd ./autark-sample-project
 ./build.sh
 ```
 
-```autark
+```cfg
 # https://github.com/Softmotions/autark-sample-project
 # This is a sample project demonstrating the Autark build system.
 
