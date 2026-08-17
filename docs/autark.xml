@@ -41,6 +41,8 @@
       <item>contains</item>
     </list>
     <list name="properties">
+      <item>parent</item>
+      <item>root</item>
       <item>consumes</item>
       <item>produces</item>
       <item>objects</item>

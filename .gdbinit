@@ -2,9 +2,9 @@ source ./.gdb/auto-inferior.py
 
 cd ./autark-cache/tests
 file ./test11
+
 #file ./autark-cache/autark
-#set args /home/adam/Projects/softmotions/iwnet
-#set args --prefix /home/adam/Projects/softmotions/iwnet/install /home/adam/Projects/softmotions/iwnet/autark-cache/extern_iowow
+#set args --compile-commands /home/adam/Projects/softmotions/iowow
 
 #set detach-on-fork off
 #catch exec
