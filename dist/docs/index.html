@@ -194,25 +194,42 @@
         -khtml-user-select: none; -moz-user-select: none;
         -ms-user-select: none; user-select: none;
         padding: 0 4px; width: 4em;
+        background-color: #3c3f41;
+        color: #bdae9d;
       }
-    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #bdae9d;  padding-left: 4px; }
     div.sourceCode
-      {   }
+      { color: #bdae9d; background-color: #333537; }
     @media screen {
     pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
     }
-    code span.al { font-weight: bold; } /* Alert */
-    code span.an { font-style: italic; } /* Annotation */
-    code span.cf { font-weight: bold; } /* ControlFlow */
-    code span.co { font-style: italic; } /* Comment */
-    code span.cv { font-style: italic; } /* CommentVar */
-    code span.do { font-style: italic; } /* Documentation */
+    code span.al { color: #ffff00; } /* Alert */
+    code span.an { color: #0066ff; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { } /* Attribute */
+    code span.bn { color: #44aa43; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #43a8ed; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #049b0a; } /* Char */
+    code span.cn { } /* Constant */
+    code span.co { color: #0066ff; font-weight: bold; font-style: italic; } /* Comment */
+    code span.do { color: #0066ff; font-style: italic; } /* Documentation */
     code span.dt { text-decoration: underline; } /* DataType */
-    code span.er { font-weight: bold; } /* Error */
-    code span.in { font-style: italic; } /* Information */
-    code span.kw { font-weight: bold; } /* Keyword */
+    code span.dv { color: #44aa43; } /* DecVal */
+    code span.er { color: #ffff00; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #44aa43; } /* Float */
+    code span.fu { color: #ff9358; font-weight: bold; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #0066ff; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #43a8ed; font-weight: bold; } /* Keyword */
+    code span.op { } /* Operator */
     code span.pp { font-weight: bold; } /* Preprocessor */
-    code span.wa { font-style: italic; } /* Warning */
+    code span.sc { color: #049b0a; } /* SpecialChar */
+    code span.ss { color: #049b0a; } /* SpecialString */
+    code span.st { color: #049b0a; } /* String */
+    code span.va { } /* Variable */
+    code span.vs { color: #049b0a; } /* VerbatimString */
+    code span.wa { color: #ffff00; font-weight: bold; } /* Warning */
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
 
@@ -255,8 +272,11 @@
     text-decoration: underline;
   }
 
+  div.sourceCode {
+    border-radius: 4px;
+  }
+
   code {
-    background-color: #3c3f41;
     color: #a9b7c6;
     padding: 0.2em 0.4em;
     border-radius: 4px;
@@ -265,10 +285,10 @@
   }
 
   pre {
-    background-color: #3c3f41;
+    background-color: #333537;
     color: #a9b7c6;
     padding: 1em;
-    border-radius: 6px;
+    border-radius: 4px;
     overflow-x: auto;
     font-family: "Fira Code", monospace;
     font-size: 0.95em;
@@ -437,161 +457,160 @@ Take a look and try building it!</p>
 href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a> or <a
 href="https://github.com/Softmotions/protobuf-c">Softmotions/protobuf-c</a>
 for good real-word examples.</p>
-<pre><code>git clone https://github.com/Softmotions/autark-sample-project
-cd ./autark-sample-project
-./build.sh</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/Softmotions/autark-sample-project</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ./autark-sample-project</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># https://github.com/Softmotions/autark-sample-project</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># This is a sample project demonstrating the Autark build system.</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># `meta` is a generic rule that sets all specified key/value pairs under the META_ prefix (except the `let` clause).</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># You can use any variables set in the meta section anywhere in your build scripts.</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="dt">meta {</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Available in the script context under the META_NAME key.</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="dt">  name { Hello }</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  artifact { hello }</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dt">  description { Sample project demonstrating the Autark build system. }</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="dt">  website { https://github.com/Softmotions/autark-sample-project }</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  sources { https://github.com/Softmotions/autark-sample-project.git }</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="dt">  license { MIT }</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="dt">  version { 1.0.0 }</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Option is a small description of build switch which can be set by system env and or -D flag:</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># ENABLE_DEBINFO=1 ./build.sh</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># or ./build.sh -DENABLE_DEBINFO=1</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="dt">option { ENABLE_DEBINFO           Generate debuginfo even in release mode }</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="dt">option { HELLO_MSG                Hello message provided by libhello }</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># The `check` rule takes a list of script files that should be located in the `.autark/` directory relative to</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># the current Autark script file. A check script is a dash shell (`sh`) script that runs during the early stage</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># of the build process (`init` phase). It verifies system requirements, locates required software or libraries,</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># and sets variables that will be available in the Autark script. Check scripts typically use `autark set` to</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># define variables used in the build process. You may specify multiple check rules.</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="dt">  system.sh</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Sets the BUILD_TYPE variable, using a previously defined value if available,</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># or falling back to the default value &#39;Release&#39;.</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: Variables set by this rule are only available within the current Autark script and its included scripts.</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: `set` rules are evaluated lazily.</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="dt">  BUILD_TYPE</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Looks up the value of BUILD_TYPE in the current context, then in parent contexts,</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># and finally in system environment variables.</span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># If not found, &#39;Release&#39; will be used as the default.</span></span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${BUILD_TYPE Release}</span></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined { HELLO_MSG }</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { HELLO_MSG &#39;Hello from libhello!&#39; }</span></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="dt">echo {</span></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># This message is printed in &#39;build&#39; phase</span></span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="dt">  Building my hello app...</span></span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Printed in first build &#39;init&#39; stage</span></span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#init {</span></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#  Project build initialized</span></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#}</span></span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span></span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Just build the compiler flag like: -DBUILD_TYPE=Release</span></span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># ^{...} is a string join rule.</span></span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Note: the space after: &#39;-DBUILD_TYPE=&#39; is required by syntax rules of Autark script.</span></span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="dt">  ^{-DBUILD_TYPE</span><span class="ot">=</span><span class="st"> ${BUILD_TYPE}}</span></span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Conditions can be placed anywhere in the build script.</span></span>
-<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># This effectively performs tree shaking on the build script&#39;s syntax tree.</span></span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="dt">  if { prefix { ${BUILD_TYPE} Release }</span></span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="dt">    -O2</span></span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="dt">    </span><span class="co"># The condition if { ${...} } evaluates to true if and only if</span></span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="dt">    </span><span class="co"># the argument is not an empty string and is not equal to &quot;0&quot;.</span></span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a><span class="dt">    if { ${ENABLE_DEBINFO}</span></span>
-<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="dt">      -g</span></span>
-<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="dt">  } else {</span></span>
-<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a><span class="dt">    -DDEBUG</span><span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="dt">    -O0</span></span>
-<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a><span class="dt">    -g</span></span>
-<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Merge this set of flags with any previously defined CFLAGS if any.</span></span>
-<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Note: The `..` prefix indicates that the elements of ${CFLAGS}</span></span>
-<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># will be added to this set, similar to spread syntax in JavaScript.</span></span>
-<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${CFLAGS}</span></span>
-<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="co"># Note LDFLAGS can be specified in system env variable: `LDFLAGS=... ./build.sh`</span></span>
-<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span></span>
-<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${LDFLAGS}</span></span>
-<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a><span class="dt">  SOURCES</span></span>
-<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a><span class="dt">  main.c</span></span>
-<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="dt">  utils.c</span></span>
-<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="co"># Now let&#39;s define a rule for compiling C source files.</span></span>
-<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="co"># The generic form of the `cc` rule:</span></span>
-<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a><span class="co"># cc {</span></span>
-<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a><span class="co">#   SOURCES</span></span>
-<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="co">#   [FLAGS]</span></span>
-<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="co">#   [COMPILER]</span></span>
-<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="co">#   [consumes { ... }]  Outputs of other rules this one depends on</span></span>
-<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="co">#   [objects { NAME }]  Defines the variable name where the list of compiled object files is stored. Defaults to CC_OBJS.</span></span>
-<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a><span class="co"># }</span></span>
-<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="co"># This rule compiles the given source files and produces a set of object (.o) files.</span></span>
-<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="dt">cc {</span></span>
-<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${SOURCES}</span></span>
-<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Here we intentionally show an anonymous `set {..}` using `_` as a placeholder for the variable name.</span></span>
-<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># This is used to extend CFLAGS with additional arguments directly in-place.</span></span>
-<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { _ ${CFLAGS} -I ./libhello }</span></span>
-<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Note: CC is set by system.sh check script.</span></span>
-<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC}</span></span>
-<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
-<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a><span class="dt">    </span><span class="co"># The output of the &#39;configure&#39; rule applied to hello.h.in</span></span>
-<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a><span class="dt">    libhello/hello.h</span></span>
-<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a><span class="co"># Include the scipt which build libhello.a static library</span></span>
-<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a><span class="dt">include { libhello/Autark }</span></span>
-<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a><span class="co"># Now link the final executable application.</span></span>
-<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: LIBHELLO_A variable is set by child &#39;libhello/Autark&#39;</span></span>
-<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a><span class="co"># The generic form of the `run` rule:</span></span>
-<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a><span class="co"># run {</span></span>
-<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a><span class="co">#   [always]</span></span>
-<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a><span class="co">#   [exec  {...}] ...</span></span>
-<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a><span class="co">#   [shell {...}] ...</span></span>
-<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="co">#   [consumes{...}]</span></span>
-<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a><span class="co">#   [produces{...}]</span></span>
-<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="co"># }</span></span>
-<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a><span class="dt">  exec { ${CC} -static ${LDFLAGS} -o ${META_ARTIFACT} ${CC_OBJS} ${LIBHELLO_A} }</span></span>
-<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
-<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
-<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${LIBHELLO_A}</span></span>
-<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a><span class="dt">  produces {</span></span>
-<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${META_ARTIFACT}</span></span>
-<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="co"># Installs executable artifact to the INSTALL_BIN_DIR relative to installation prefix.</span></span>
-<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a><span class="dt">install {</span></span>
-<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${INSTALL_BIN_DIR}</span></span>
-<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${META_ARTIFACT}</span></span>
-<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># https://github.com/Softmotions/autark-sample-project</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This is a sample project demonstrating the Autark build system.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># `meta` is a generic rule that sets all specified key/value pairs under the META_ prefix (except the `let` clause).</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># You can use any variables set in the meta section anywhere in your build scripts.</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">meta</span> {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Available in the script context under the META_NAME key.</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">name</span> { Hello }</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  artifact { hello }</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">description</span> { Sample project demonstrating the Autark <span class="kw">build</span> system. }</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">website</span> { https://github.com/Softmotions/autark-sample-project }</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">sources</span> { https://github.com/Softmotions/autark-sample-project.git }</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">license</span> { MIT }</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">version</span> { 1.0.0 }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Option is a small description of build switch which can be set by system env and or -D flag:</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ENABLE_DEBINFO=1 ./build.sh</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># or ./build.sh -DENABLE_DEBINFO=1</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { ENABLE_DEBINFO           Generate debuginfo even in release mode }</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { HELLO_MSG                Hello message provided by libhello }</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># The `check` rule takes a list of script files that should be located in the `.autark/` directory relative to</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># the current Autark script file. A check script is a dash shell (`sh`) script that runs during the early stage</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># of the build process (`init` phase). It verifies system requirements, locates required software or libraries,</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># and sets variables that will be available in the Autark script. Check scripts typically use `autark set` to</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># define variables used in the build process. You may specify multiple check rules.</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  system.sh</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Sets the BUILD_TYPE variable, using a previously defined value if available,</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># or falling back to the default value &#39;Release&#39;.</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: Variables set by this rule are only available within the current Autark script and its included scripts.</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: `set` rules are evaluated lazily.</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  BUILD_TYPE</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Looks up the value of BUILD_TYPE in the current context, then in parent contexts,</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and finally in system environment variables.</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># If not found, &#39;Release&#39; will be used as the default.</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{BUILD_TYPE Release}</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { !<span class="cf">defined</span> { HELLO_MSG }</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  <span class="kw">set</span> { HELLO_MSG <span class="st">&#39;Hello from libhello!&#39;</span> }</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="kw">echo</span> {</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This message is printed in &#39;build&#39; phase</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>  Building my hello app...</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Printed in first build &#39;init&#39; stage</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>  <span class="co">#init {</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>  <span class="co">#  Project build initialized</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>  <span class="co">#}</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  CFLAGS</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Just build the compiler flag like: -DBUILD_TYPE=Release</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ^{...} is a string join rule.</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Note: the space after: &#39;-DBUILD_TYPE=&#39; is required by syntax rules of Autark script.</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  <span class="bu">^</span>{-DBUILD_TYPE= <span class="bu">$</span>{BUILD_TYPE}}</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Conditions can be placed anywhere in the build script.</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This effectively performs tree shaking on the build script&#39;s syntax tree.</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> { <span class="cf">prefix</span> { <span class="bu">$</span>{BUILD_TYPE} Release }</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>    -O2</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The condition if { ${...} } evaluates to true if and only if</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the argument is not an empty string and is not equal to &quot;0&quot;.</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> { <span class="bu">$</span>{ENABLE_DEBINFO}</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>      -g</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>    -DDEBUG=1</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>    -O0</span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>    -g</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Merge this set of flags with any previously defined CFLAGS if any.</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Note: The `..` prefix indicates that the elements of ${CFLAGS}</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>  <span class="co"># will be added to this set, similar to spread syntax in JavaScript.</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{CFLAGS}</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="co"># Note LDFLAGS can be specified in system env variable: `LDFLAGS=... ./build.sh`</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>  LDFLAGS</span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{LDFLAGS}</span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>  SOURCES</span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>  main.c</span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>  utils.c</span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="co"># Now let&#39;s define a rule for compiling C source files.</span></span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="co"># The generic form of the `cc` rule:</span></span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="co"># cc {</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a><span class="co">#   SOURCES</span></span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a><span class="co">#   [FLAGS]</span></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="co">#   [COMPILER]</span></span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="co">#   [consumes { ... }]  Outputs of other rules this one depends on</span></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="co">#   [objects { NAME }]  Defines the variable name where the list of compiled object files is stored. Defaults to CC_OBJS.</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="co"># }</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="co"># This rule compiles the given source files and produces a set of object (.o) files.</span></span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span> {</span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{SOURCES}</span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Here we intentionally show an anonymous `set {..}` using `_` as a placeholder for the variable name.</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This is used to extend CFLAGS with additional arguments directly in-place.</span></span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a>  <span class="kw">set</span> { _ <span class="bu">$</span>{CFLAGS} -I ./libhello }</span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Note: CC is set by system.sh check script.</span></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CC}</span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> {</span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The output of the &#39;configure&#39; rule applied to hello.h.in</span></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a>    libhello/hello.h</span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a><span class="co"># Include the scipt which build libhello.a static library</span></span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span> { libhello/Autark }</span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Now link the final executable application.</span></span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: LIBHELLO_A variable is set by child &#39;libhello/Autark&#39;</span></span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a><span class="co"># The generic form of the `run` rule:</span></span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a><span class="co"># run {</span></span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a><span class="co">#   [always]</span></span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a><span class="co">#   [exec  {...}] ...</span></span>
+<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a><span class="co">#   [shell {...}] ...</span></span>
+<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a><span class="co">#   [consumes{...}]</span></span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="co">#   [produces{...}]</span></span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a><span class="co"># }</span></span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{CC} -static <span class="bu">$</span>{LDFLAGS} -o <span class="bu">$</span>{META_ARTIFACT} <span class="bu">$</span>{CC_OBJS} <span class="bu">$</span>{LIBHELLO_A} }</span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> {</span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{CC_OBJS}</span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{LIBHELLO_A}</span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> {</span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{META_ARTIFACT}</span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a><span class="co"># Installs executable artifact to the INSTALL_BIN_DIR relative to installation prefix.</span></span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> {</span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{INSTALL_BIN_DIR}</span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{META_ARTIFACT}</span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p><a
 href="https://github.com/Softmotions/autark-sample-project">https://github.com/Softmotions/autark-sample-project</a></p>
 <h2 id="autark-concepts-and-build-lifecycle">Autark concepts and build
@@ -665,26 +684,25 @@ project or take as examples for writing your own checks.</p>
 code blocks, you can use <a
 href="https://github.com/Softmotions/autark/blob/master/check_scripts/test_blocks.sh">test_blocks.sh</a>:</p>
 <div class="sourceCode" id="cb6"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  test_blocks.sh { CODE_BLOCKS }</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  test_blocks.sh { CODE_BLOCKS }</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>If code blocks are supported, the script sets
 <code>CODE_BLOCKS=1</code>. You can then test this condition in your
 build script or in <a href="#configure-">preprocessed files</a> in
 various ways.</p>
 <p>For example:</p>
 <div class="sourceCode" id="cb7"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  CFLAGS</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  ...</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  if { ${CODE_BLOCKS}</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="dt">    -fblocks</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    -DCODE_BLOCKS</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> { <span class="bu">$</span>{CODE_BLOCKS}</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    -fblocks</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    -DCODE_BLOCKS</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>There is also a dedicated <a href="#library-">library</a> rule for
 detecting system libraries.</p>
 <h2 id="how-to-use-pkgconf-in-my-project">How to use pkgconf in my
@@ -692,27 +710,27 @@ project?</h2>
 <p>The following example shows how to use <code>pkgconf</code> to obtain
 compiler and linker flags for an external dependency:</p>
 <div class="sourceCode" id="cb8"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># Generic system check script that also sets the `PKGCONF`</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># variable to the name of the pkgconf-compatible executable.</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  system.sh</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generic system check script that also sets the `PKGCONF`</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># variable to the name of the pkgconf-compatible executable.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  system.sh</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  CXXFLAGS</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${CXXFLAGS}</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..@@{ ${PKGCONF} --cflags protobuf }</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  CXXFLAGS</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{CXXFLAGS}</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..@@</span>{ <span class="bu">$</span>{PKGCONF} --cflags protobuf }</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${LDFLAGS}</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..@@{ ${PKGCONF} --libs protobuf }</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="dt">  -lprotoc</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  LDFLAGS</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{LDFLAGS}</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..@@</span>{ <span class="bu">$</span>{PKGCONF} --libs protobuf }</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  -lprotoc</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Use CXXFLAGS and LDFLAGS in subsequent build rules.</span></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="dt">...</span></span></code></pre></div>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>...</span></code></pre></div>
 <p>The <code>system.sh</code> check script detects a pkgconf-compatible
 executable and stores its name in the <code>PKGCONF</code> variable.
 Then you can then use <code>${PKGCONF} --cflags &lt;package&gt;</code>
@@ -725,16 +743,16 @@ sources?</h2>
 <p>You can obtain the current Git revision and store it in a
 variable:</p>
 <div class="sourceCode" id="cb9"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  META_REVISION</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  @{ git rev-parse --short HEAD }</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  META_REVISION</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">@</span>{ git rev-parse --short HEAD }</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>You can then persist the value of <code>META_REVISION</code> in a
 generated configuration file:</p>
 <div class="sourceCode" id="cb10"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>For example, <code>config.h.in</code> may contain:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MYPROJECT_GIT_REVISION </span><span class="st">&quot;@META_REVISION@&quot;</span></span></code></pre></div>
 <p>The generated <code>config.h</code> will then contain the Git
@@ -757,40 +775,40 @@ a separate file, for example <code>extproject.autark</code>, and include
 it from the main <code>Autark</code> script. This keeps the main build
 script easier to read and maintain.</p>
 <div class="sourceCode" id="cb12"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">include { extproject.autark }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span> { extproject.autark }</span></code></pre></div>
 <p>Define the URL of the external project's source archive as a build
 option:</p>
 <div class="sourceCode" id="cb13"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">option { EXTPROJECT_URL External project source archive URL }</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { EXTPROJECT_URL External project source archive URL }</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined { EXTPROJECT_URL } }</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  set {</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    EXTPROJECT_URL</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="dt">    https://github.com/....</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { !<span class="cf">defined</span> { EXTPROJECT_URL } }</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">set</span> {</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    EXTPROJECT_URL</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    https://github.com/....</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Then define a check step that fetches the external project sources
 before the build:</p>
 <div class="sourceCode" id="cb14"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  fetch_resource.sh { ${EXTPROJECT_URL} C{extern_extproject} EXTPROJECT_SRC_DIR }</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  fetch_resource.sh { <span class="bu">$</span>{EXTPROJECT_URL} <span class="bu">C</span>{extern_extproject} EXTPROJECT_SRC_DIR }</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>After this step, <code>${EXTPROJECT_SRC_DIR}</code> points to the
 directory containing the external project's sources. The project can
 then be built using any suitable method.</p>
 <p>For example, if the external project is also built with Autark:</p>
 <div class="sourceCode" id="cb15"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  shell { ^{BUILD_TYPE</span><span class="ot">=</span><span class="st"> ${BUILD_TYPE}} autark --prefix C{} ${EXTPROJECT_SRC_DIR} }</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">shell</span> { <span class="bu">^</span>{BUILD_TYPE= <span class="bu">$</span>{BUILD_TYPE}} autark --prefix <span class="bu">C</span>{} <span class="bu">$</span>{EXTPROJECT_SRC_DIR} }</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${EXTPROJECT_SRC_DIR}</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> {</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{EXTPROJECT_SRC_DIR}</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  produces {</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    ... # External project artifacts to track</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> {</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    ... # External project artifacts to track</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The <code>consumes</code> block declares the fetched sources as an
 input to the build rule, while <code>produces</code> should list the
 artifacts generated by the external project. This allows Autark to track
@@ -807,16 +825,16 @@ information, etc.</p>
 <p>These meta-variables are especially convenient to use in
 <code>configure</code> rules.</p>
 <div class="sourceCode" id="cb16"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="dt">meta {</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[&lt;VARNAME SUFFIX&gt; { ... }]</span><span class="dt"> ...</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  let { &lt;VARNAME&gt; ... }</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">meta</span> {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  [&lt;VARNAME SUFFIX&gt; { ... }] ...</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> { &lt;VARNAME&gt; ... }</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>If variable is defined using the <code>let</code> clause inside
 <code>meta</code>, the <code>META_</code> prefix is not added to its
 name.</p>
 <h1 id="option-">option {...}</h1>
 <div class="sourceCode" id="cb17"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="dt">option { &lt;OPTION NAME&gt; </span><span class="kw">[OPTION DESCRIPTION]</span><span class="dt"> }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { &lt;OPTION NAME&gt; [OPTION DESCRIPTION] }</span></code></pre></div>
 <p>This rule declares a build option. Build options are variables set at
 the start of the build to configure the desired output. These variables
 can be defined either as environment variables:</p>
@@ -845,9 +863,9 @@ of dependencies are changed. (This is handled by invoking the
 href="https://github.com/Softmotions/autark/tree/master/check_scripts">https://github.com/Softmotions/autark/tree/master/check_scripts</a>
 Feel free to copy any scripts that are relevant to your project.</p>
 <div class="sourceCode" id="cb21"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[SCRIPT]</span><span class="dt"> ...</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  [SCRIPT] ...</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Check scripts must be located in the <code>./autark</code> directory
 relative to the script that references them, or in similar directories
 of parent scripts.</p>
@@ -908,14 +926,14 @@ variables but in project header templates, such as
 <code>config.h.in</code>. This is typically done via
 <code>configure</code> rules in the Autark script:</p>
 <div class="sourceCode" id="cb24"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="dt">check {</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  test_symbol.sh { CLOCK_MONOTONIC time.h IW_HAVE_CLOCK_MONOTONIC }</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="dt">...</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  test_symbol.sh { CLOCK_MONOTONIC time.h IW_HAVE_CLOCK_MONOTONIC }</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>...</span>
 <span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Autark will replace <code>//autarkdef</code> lines with the
 appropriate #define or comment them out, depending on whether the
 variable is defined or not.</p>
@@ -924,13 +942,13 @@ variable is defined or not.</p>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="op">...</span></span></code></pre></div>
 <p>Or you may use variable directly in CFLAGS</p>
 <div class="sourceCode" id="cb26"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="dt"> CFLAGS</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="dt"> if { ${IW_HAVE_CLOCK_MONOTONIC}</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   -DIW_HAVE_CLOCK_MONOTONIC</span><span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> ...</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a> CFLAGS</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a> <span class="cf">if</span> { <span class="bu">$</span>{IW_HAVE_CLOCK_MONOTONIC}</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>   -DIW_HAVE_CLOCK_MONOTONIC=1</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a> }</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a> ...</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h1 id="set--let-">set | let {...}</h1>
 <p>The <code>set</code> rule assigns a value to a variable in the build
 script. The expression value is registered during the <code>init</code>
@@ -941,14 +959,14 @@ example, inside <a href="#macros">macros</a>) the <code>let</code>
 directive is more appropriate, as it is evaluated every time it is
 accessed in every build phase.</p>
 <div class="sourceCode" id="cb27"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set | let {</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   | NAME</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   | _</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   | parent { NAME }</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="dt">   | root { NAME }</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> | <span class="kw">let</span> {</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>   | NAME</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>   | _</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>   | parent { NAME }</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>   | root { NAME }</span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[VALUES]</span><span class="dt"> ...</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>   [VALUES] ...</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The most common form is <code>set { NAME [VALUES]... }</code></p>
 <p>Note that in Autark, all variables are either strings or lists. A
 list is just a string internally, encoded in a special form:
@@ -961,11 +979,11 @@ a list, encoded as <code>\1bar\1baz</code>.</p>
 <p><code>Set</code> is an expression actually and can be used inline in
 other constructs. For example:</p>
 <div class="sourceCode" id="cb28"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc {</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${SOURCES}</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { _ ${CFLAGS} -I./libhello }</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span> {</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{SOURCES}</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">set</span> { _ <span class="bu">$</span>{CFLAGS} -I./libhello }</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Here, <code>CFLAGS</code> is extended with an additional flag
 <code>-I./libhello</code> directly in-place using an anonymous set where
 <code>_</code> used in place of variable name.</p>
@@ -975,20 +993,20 @@ current Autark script and any child scripts included by
 <p>To define or modify a variable in the parent's script context,
 use:</p>
 <div class="sourceCode" id="cb29"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  parent {</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    NAME</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ... # values</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  parent {</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    NAME</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  ... # values</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>To define a variable in the root script context:</p>
 <div class="sourceCode" id="cb30"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  root {</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    NAME</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ... # values</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  root {</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    NAME</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  ... # values</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h1 id="env-">env {...}</h1>
 <p>Similar to <code>set</code>, but sets an <strong>environment
 variable</strong> for the build process using <code>setenv(3)</code> at
@@ -998,7 +1016,7 @@ time it is executed, which happens during the <code>setup</code> phase
 of the build.</p>
 <h1 id="-variable-evaluation">${...} Variable evaluation</h1>
 <div class="sourceCode" id="cb31"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="dt">${VARIABLE </span><span class="kw">[DEFAULT]</span><span class="dt">}`</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">$</span>{VARIABLE [DEFAULT]}`</span></code></pre></div>
 <p>The expression <code>${VARIABLE [DEFAULT]}</code> is used when the
 value of a variable needs to be passed as an argument to another rule.
 If the variable is not defined in the current script context, the
@@ -1006,22 +1024,22 @@ If the variable is not defined in the current script context, the
 <h1 id="-program-output-evaluation">@{...} Program output
 evaluation</h1>
 <div class="sourceCode" id="cb32"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program every build</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="dt">@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program every build</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="bu">@</span>{PROGRAM [ARG1 ARG2 ...]}</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run program once and cache its output between builds</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="dt">@@{PROGRAM </span><span class="kw">[ARG1 ARG2 ...]</span><span class="dt">}</span></span></code></pre></div>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="bu">@@</span>{PROGRAM [ARG1 ARG2 ...]}</span></code></pre></div>
 <p>Invokes the specified program <code>PROGRAM</code> and returns its
 standard output as a string. The <code>@@</code> form caches the
 program’s output and reuses it in subsequent builds, which is useful for
 time-consuming invocations such as <code>pkg-config</code>.</p>
 <h2 id="example">Example:</h2>
 <div class="sourceCode" id="cb33"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..@@{${PKGCONF pkgconf} --libs --static libcurl}</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${LDFLAGS}</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  LDFLAGS</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..@@</span>{<span class="bu">$</span>{PKGCONF pkgconf} --libs --static libcurl}</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{LDFLAGS}</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>In this example, the output of
 <code>pkgconf --libs --static libcurl</code> is appended to the
 <code>LDFLAGS</code> list. <strong>Note</strong> what <code>..</code> in
@@ -1030,15 +1048,15 @@ will be converted to list and merged with LDFLAGS list.</p>
 <h1 id="-expressions-concatenation">^{...} Expressions
 concatenation</h1>
 <div class="sourceCode" id="cb34"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{EXPR1 </span><span class="kw">[EXPR2]</span><span class="dt">...}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="bu">^</span>{EXPR1 [EXPR2]...}</span></code></pre></div>
 <p>Concatenates expressions output. Here we encounter an important
 syntactic rule in Autark scripts: all rules must be separated by
 whitespace. Because of this, the following code is invalid:</p>
 <div class="sourceCode" id="cb35"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="dt"> CFLAGS</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="dt"> -DBUILD_TYPE</span><span class="ot">=</span><span class="st">${BUILD_TYPE} # Wrong!</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a> CFLAGS</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a> -DBUILD_TYPE=<span class="bu">$</span>{BUILD_TYPE} # Wrong!</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>In this case, the Autark interpreter treats
 <code>-DBUILD_TYPE=$</code> as a rule name, which is not what we
 intend.</p>
@@ -1046,9 +1064,9 @@ intend.</p>
 <code>-DBUILD_TYPE=${BUILD_TYPE}</code> using the variable value from
 the script context, you must use the string concatenation rule:</p>
 <div class="sourceCode" id="cb36"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ^{-DBUILD_TYPE</span><span class="ot">=</span><span class="st"> ${BUILD_TYPE}}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  CFLAGS</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">^</span>{-DBUILD_TYPE= <span class="bu">$</span>{BUILD_TYPE}}</span></code></pre></div>
 <p>Note: the space between <code>-DBUILD_TYPE=</code> and
 <code>${BUILD_TYPE}</code> is required.</p>
 <h2 id="-special-forms">^{...} Special forms</h2>
@@ -1057,34 +1075,34 @@ two elements passed as arguments and the only one of them represents a
 list.</p>
 <p><strong>Add prefix to every element of collection:</strong></p>
 <div class="sourceCode" id="cb37"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{&quot;prefix&quot; ${list}}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="bu">^</span>{<span class="st">&quot;prefix&quot;</span> <span class="bu">$</span>{list}}</span></code></pre></div>
 <p><strong>Add suffix to every element of collection:</strong></p>
 <div class="sourceCode" id="cb38"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="dt">^{${list} &quot;suffix&quot;}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="bu">^</span>{<span class="bu">$</span>{list} <span class="st">&quot;suffix&quot;</span>}</span></code></pre></div>
 <h1 id="if--condition">if {...} condition</h1>
 <p>Conditional directive.</p>
 <div class="sourceCode" id="cb39"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="dt">    CONDITION_RULE</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    EXPR1</span></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  } </span><span class="kw">[  else { EXPR2 } ]</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> {</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    CONDITION_RULE</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    EXPR1</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  } [  <span class="cf">else</span> { EXPR2 } ]</span></code></pre></div>
 <p>Examples:</p>
 <div class="sourceCode" id="cb40"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} }</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  include { bindings/Autark }</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="cf">or</span> { <span class="bu">$</span>{BUILD_BINDING_JNI} <span class="bu">$</span>{BUILD_BINDING_NODEJS} }</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">include</span> { bindings/Autark }</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="dt">...</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>...</span>
 <span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${EJDB_BUILD_SHARED_LIBS}</span></span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  if {!defined {SYSTEM_DARWIN}</span></span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    set {</span></span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a><span class="dt">      LIBEJDB_SO_BASE</span></span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a><span class="dt">      libejdb2.so</span></span>
-<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="bu">$</span>{EJDB_BUILD_SHARED_LIBS}</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> {!<span class="cf">defined</span> {SYSTEM_DARWIN}</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> {</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>      LIBEJDB_SO_BASE</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>      libejdb2.so</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>If the condition <code>CONDITION_RULE</code> evaluates to a
 <code>truthy</code> value, the entire <code>if</code> expression is
 replaced by <code>EXPR1</code> in the Autark script’s instruction tree.
@@ -1122,19 +1140,19 @@ expressions inside the directive are truthy.</p>
 report error</h1>
 <p>Typical example <code>error</code> directive usage:</p>
 <div class="sourceCode" id="cb41"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { !defined{ PTHREAD_LFLAG }</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Pthreads implementation is not found! }</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { !<span class="cf">defined</span>{ PTHREAD_LFLAG }</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">error</span> { Pthreads implementation is not found! }</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h1 id="echo-">echo {...}</h1>
 <p>Prints arbitrary information to the console (standard output,
 <code>stdout</code>).</p>
 <div class="sourceCode" id="cb42"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="dt"> echo {</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | build { ... }</span></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | setup { ... }</span></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  | init  { ... }</span></span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a> <span class="kw">echo</span> {</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">build</span> { ... }</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">setup</span> { ... }</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">init</span>  { ... }</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a> }</span></code></pre></div>
 <p>You can optionally specify the build phase (<code>init</code>,
 <code>setup</code>, or <code>build</code>) during which the output of
 the echo directive should appear. By default, it is printed during the
@@ -1144,10 +1162,10 @@ are lazy evaluated, so by using <code>echo</code> you may indirectly
 change behaviour and effectiveness of your build process</em></p>
 <p>Example:</p>
 <div class="sourceCode" id="cb43"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="dt">echo {</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  CFLAGS</span><span class="ot">=</span><span class="st"> ${CFLAGS}</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LDFLAGS</span><span class="ot">=</span><span class="st"> ${LDFLAGS}</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">echo</span> {</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  CFLAGS= <span class="bu">$</span>{CFLAGS}</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  LDFLAGS= <span class="bu">$</span>{LDFLAGS}</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>This will print the current values of the CFLAGS and LDFLAGS
 variables.</p>
 <h1 id="configure-">configure {...}</h1>
@@ -1155,28 +1173,28 @@ variables.</p>
 and C/C++ source templates, replacing specific sections with values of
 variables from the current script context.</p>
 <div class="sourceCode" id="cb44"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Autark tracks all variables used during the substitution process. If
 any of those variables change, <strong>the entire</strong> configure
 rule will be re-executed. This is why it's recommended to configure each
 file in a separate configure rule whenever possible.</p>
 <p>Incorrect:</p>
 <div class="sourceCode" id="cb45"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Correct:</p>
 <div class="sourceCode" id="cb46"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  mylib.pc.in</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="dt">configure {</span></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  config.h.in</span></span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="-substitutions">@...@ Substitutions</h2>
 <p>Text fragments enclosed in <code>@</code> symbols are interpreted as
 variable names and replaced with their corresponding values. If a
@@ -1223,11 +1241,11 @@ location of the project's source code.</p>
 relative to the <strong>project root</strong>. If multiple arguments are
 provided, they are be converted to list of paths.</p>
 <div class="sourceCode" id="cb54"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co"># &lt;project root&gt;/foo</span></span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># &lt;project root&gt;/foo</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">S</span>{foo}</span>
 <span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
-<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  S{foo bar baz}</span></span></code></pre></div>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">S</span>{foo bar baz}</span></code></pre></div>
 <h2 id="ss-">SS {...}</h2>
 <p>Same as <code>S</code>, but relative to the directory where the
 current script is located.</p>
@@ -1243,13 +1261,13 @@ build artifacts.</p>
 <p>Returns the <code>basename</code> of the given filename changing its
 extension optionally.</p>
 <div class="sourceCode" id="cb55"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="dt">%{ PATH </span><span class="kw">[ NEW_FILE_EXT ]</span><span class="dt"> }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="bu">%</span>{ PATH [ NEW_FILE_EXT ] }</span></code></pre></div>
 <div class="sourceCode" id="cb56"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;main&#39;</span></span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="dt">%{main.o}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;main&#39;</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="bu">%</span>{main.o}</span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns &#39;hello.c&#39;</span></span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="dt">%{hello.x .c}</span></span></code></pre></div>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="bu">%</span>{hello.x .c}</span></code></pre></div>
 <h1 id="run-">run {...}</h1>
 <p>The <code>run</code> rule is the most powerful construct in the
 Autark system. It allows you to define custom build actions and their
@@ -1258,13 +1276,13 @@ dependency chains.</p>
 and dynamic libraries, executables, and other artifacts - but it can
 support virtually any custom pipeline.</p>
 <div class="sourceCode" id="cb57"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[always]</span></span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[exec  { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[shell { CMD [CMD_ARGS...]</span><span class="dt"> }] ...</span></span>
-<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[consumes{ CONSUMED_FILES... }]</span></span>
-<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  </span><span class="kw">[produces{ PRODUCED_FILES... }]</span></span>
-<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">always</span>]</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">exec</span>  { CMD [CMD_ARGS...] }] ...</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">shell</span> { CMD [CMD_ARGS...] }] ...</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">consumes</span>{ CONSUMED_FILES... }]</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">produces</span>{ PRODUCED_FILES... }]</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The <code>consumes</code> section defines the <strong>input
 dependencies</strong> that must be satisfied before the <code>run</code>
 rule is executed. If any of the consumed files or variables change, the
@@ -1289,15 +1307,15 @@ commands.</p>
 useful, for example, when running test cases or side-effectful
 operations.</p>
 <div class="sourceCode" id="cb58"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run {</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  exec { ${AR} rcs libhello.a ${CC_OBJS} }</span></span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  consumes {</span></span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
-<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  produces {</span></span>
-<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    libhello.a</span></span>
-<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{AR} rcs libhello.a <span class="bu">$</span>{CC_OBJS} }</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> {</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{CC_OBJS}</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> {</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>    libhello.a</span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h1 id="in-sources-">in-sources {...}</h1>
 <p>By default, most Autark rules are executed inside the
 <strong>autark-cache dir</strong> corresponding to the current build
@@ -1308,9 +1326,9 @@ tree.</p>
 context of the actual project source directory. For this purpose, Autark
 provides the <code>in-sources</code> rule.</p>
 <div class="sourceCode" id="cb59"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in-sources {</span></span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">in-sources</span> {</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="example-appending-glob-matched-source-files">Example: Appending
 glob-matched source Files</h2>
 <p>In the example below, the <code>SOURCES</code> variable is extended
@@ -1318,24 +1336,24 @@ with the output of a glob-matching command executed in the source
 directory. The result is assigned merged with <code>SOURCES</code>
 variable in the parent script:</p>
 <div class="sourceCode" id="cb60"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  parent {</span></span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    SOURCES</span></span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  ..${SOURCES}</span></span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
-<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{autark -C .. glob &#39;json/*.c&#39;}</span></span>
-<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>  parent {</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>    SOURCES</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">..$</span>{SOURCES}</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in-sources</span> {</span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">..@</span>{autark -C .. glob <span class="st">&#39;json/*.c&#39;</span>}</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="example-finding-java-source-files">Example: Finding Java Source
 Files</h2>
 <div class="sourceCode" id="cb61"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="dt">set {</span></span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  JAVA_SOURCES</span></span>
-<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  in-sources {</span></span>
-<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    ..@{ find src/main/java -name &#39;*.java&#39; -exec realpath &#39;{}&#39; ; }</span></span>
-<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  JAVA_SOURCES</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in-sources</span> {</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">..@</span>{ find src/main/java -name <span class="st">&#39;*.java&#39;</span> -exec realpath <span class="st">&#39;{}&#39;</span> ; }</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>This example populates <code>JAVA_SOURCES</code> with the full paths
 of all <code>.java</code> files under <code>src/main/java</code>,
 resolved from the script's source directory.</p>
@@ -1345,17 +1363,17 @@ rule that is executed during the <code>post-build</code> phase.</p>
 <p>A typical use case for this rule is to <strong>install artifacts from
 dependent projects</strong> that the current project relies on.</p>
 <div class="sourceCode" id="cb62"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="dt">run-on-install {</span></span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  shell {</span></span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="dt">    autark --prefix ${INSTALL_PREFIX}</span></span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    set { _</span></span>
-<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a><span class="dt">      if { ${IWNET_BUILD_SHARED_LIBS}</span></span>
-<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a><span class="dt">        -DIOWOW_BUILD_SHARED_LIBS</span><span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a><span class="dt">      }</span></span>
-<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${IOWOW_SRC_DIR}</span></span>
-<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run-on-install</span> {</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">shell</span> {</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>    autark --prefix <span class="bu">$</span>{INSTALL_PREFIX}</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> { _</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> { <span class="bu">$</span>{IWNET_BUILD_SHARED_LIBS}</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>        -DIOWOW_BUILD_SHARED_LIBS=1</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{IOWOW_SRC_DIR}</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>In this example, the project invokes Autark to install the dependent
 <code>iowow</code> project with the proper build flags and installation
 prefix.</p>
@@ -1368,13 +1386,13 @@ solution.</p>
 <p>Currently, <code>foreach</code> supports only the <code>run</code>
 rule as its body.</p>
 <div class="sourceCode" id="cb63"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
-<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  VAR_NAME</span></span>
-<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIST_EXPR</span></span>
-<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
-<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ...</span></span>
-<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="kw">foreach</span> {</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  VAR_NAME</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  LIST_EXPR</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">run</span> {</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p><code>foreach</code> iterates over all elements in
 <code>LIST_EXPR</code>, and for each element, it sets the variable
 <code>VAR_NAME</code> to the current item and evaluates the run
@@ -1383,39 +1401,39 @@ rule.</p>
 <p>A common use case for <code>foreach</code> is generating and running
 per-file executables, such as test cases. Here's an example:</p>
 <div class="sourceCode" id="cb64"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc {</span></span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${TESTS}</span></span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  set { _ ${CFLAGS} -I S{} }</span></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC}</span></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span> {</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{TESTS}</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">set</span> { _ <span class="bu">$</span>{CFLAGS} -I <span class="bu">S</span>{} }</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CC}</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="dt">foreach {</span></span>
-<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a><span class="dt">  OBJ</span></span>
-<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a><span class="dt">  ${CC_OBJS}</span></span>
-<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a><span class="dt">  run {</span></span>
-<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a><span class="dt">    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }</span></span>
-<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a><span class="dt">    produces {</span></span>
-<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a><span class="dt">      %{${OBJ}}</span></span>
-<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a><span class="dt">    consumes {</span></span>
-<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${LIBAUTARK}</span></span>
-<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a><span class="dt">      ${OBJ}</span></span>
-<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="kw">foreach</span> {</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>  OBJ</span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CC_OBJS}</span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">run</span> {</span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">exec</span> { <span class="bu">$</span>{CC} <span class="bu">$</span>{OBJ} <span class="bu">$</span>{LIBAUTARK} -o <span class="bu">%</span>{<span class="bu">$</span>{OBJ}} }</span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">produces</span> {</span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>      <span class="bu">%</span>{<span class="bu">$</span>{OBJ}}</span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">consumes</span> {</span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>      <span class="bu">$</span>{LIBAUTARK}</span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>      <span class="bu">$</span>{OBJ}</span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test cases</span></span>
-<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a><span class="dt">if { ${RUN_TESTS}</span></span>
-<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a><span class="dt">  foreach {</span></span>
-<span id="cb64-25"><a href="#cb64-25" aria-hidden="true" tabindex="-1"></a><span class="dt">    OBJ</span></span>
-<span id="cb64-26"><a href="#cb64-26" aria-hidden="true" tabindex="-1"></a><span class="dt">    ${CC_OBJS}</span></span>
-<span id="cb64-27"><a href="#cb64-27" aria-hidden="true" tabindex="-1"></a><span class="dt">    run {</span></span>
-<span id="cb64-28"><a href="#cb64-28" aria-hidden="true" tabindex="-1"></a><span class="dt">      always</span></span>
-<span id="cb64-29"><a href="#cb64-29" aria-hidden="true" tabindex="-1"></a><span class="dt">      shell { %{${OBJ}} }</span></span>
-<span id="cb64-30"><a href="#cb64-30" aria-hidden="true" tabindex="-1"></a><span class="dt">      consumes { %{${OBJ}} }</span></span>
-<span id="cb64-31"><a href="#cb64-31" aria-hidden="true" tabindex="-1"></a><span class="dt">    }</span></span>
-<span id="cb64-32"><a href="#cb64-32" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="bu">$</span>{RUN_TESTS}</span>
+<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a>  <span class="kw">foreach</span> {</span>
+<span id="cb64-25"><a href="#cb64-25" aria-hidden="true" tabindex="-1"></a>    OBJ</span>
+<span id="cb64-26"><a href="#cb64-26" aria-hidden="true" tabindex="-1"></a>    <span class="bu">$</span>{CC_OBJS}</span>
+<span id="cb64-27"><a href="#cb64-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">run</span> {</span>
+<span id="cb64-28"><a href="#cb64-28" aria-hidden="true" tabindex="-1"></a>      <span class="kw">always</span></span>
+<span id="cb64-29"><a href="#cb64-29" aria-hidden="true" tabindex="-1"></a>      <span class="kw">shell</span> { <span class="bu">%</span>{<span class="bu">$</span>{OBJ}} }</span>
+<span id="cb64-30"><a href="#cb64-30" aria-hidden="true" tabindex="-1"></a>      <span class="kw">consumes</span> { <span class="bu">%</span>{<span class="bu">$</span>{OBJ}} }</span>
+<span id="cb64-31"><a href="#cb64-31" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb64-32"><a href="#cb64-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>In this example:</p>
 <ul>
 <li><code>foreach</code> is used to build a separate binary for each
@@ -1432,13 +1450,13 @@ hardcoding individual test names.</p>
 automatically tracking all required dependencies including header files.
 Compilation is parallelized to speed up the build process.</p>
 <div class="sourceCode" id="cb65"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="dt">cc|cxx {</span></span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   SOURCES</span></span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_FLAGS]</span></span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[COMPILER_CMD]</span></span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[objects { NAME }]</span></span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a><span class="dt">   </span><span class="kw">[consumes { ... }]</span></span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span>|<span class="kw">cxx</span> {</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>   SOURCES</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>   [COMPILER_FLAGS]</span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>   [COMPILER_CMD]</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">objects</span> { NAME }]</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">consumes</span> { ... }]</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="sources">SOURCES</h2>
 <p>The first argument must be an expression that returns a list of
 source files. It can be a single string (for one file) or a list defined
@@ -1506,12 +1524,12 @@ subdirectories where shared or static libraries may be located (such as
 <code>lib</code>, <code>lib64</code>, etc., depending on the
 system).</p>
 <div class="sourceCode" id="cb67"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="dt">library {</span></span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  | VAR_NAME</span></span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  | parent { VAR_NAME }</span></span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  | root { VAR_NAME }</span></span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a><span class="dt">  LIB_FILES...</span></span>
-<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="kw">library</span> {</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  | VAR_NAME</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  | parent { VAR_NAME }</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  | root { VAR_NAME }</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  LIB_FILES...</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <ul>
 <li>The resulting absolute path to the first matched file will be stored
 in the specified variable.</li>
@@ -1521,11 +1539,11 @@ parent script (<code>parent { VAR_NAME }</code>), or root script
 </ul>
 <p>Example:</p>
 <div class="sourceCode" id="cb68"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="dt">if { library { LIB_M libm.a }</span></span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { ${LIB_M} }</span></span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="dt">} else {</span></span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="dt">  error { Library libm not found }</span></span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="kw">library</span> { LIB_M libm.a }</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { <span class="bu">$</span>{LIB_M} }</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">error</span> { Library libm not found }</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
@@ -1538,42 +1556,42 @@ few parameter values.</p>
 code directly, it rewrites and rebuilds the script’s AST (Abstract
 Syntax Tree) before the build script starts.</p>
 <div class="sourceCode" id="cb69"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
-<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ...</span></span>
-<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The body of a macro directive can contain any valid Autark script
 elements and may include argument placeholders for macro calls. These
 placeholders have the following format: <code>&amp;{N}</code>, where
 <code>N</code> is the argument number starting from one. A macro is
 invoked using the <code>call</code> directive:</p>
 <div class="sourceCode" id="cb70"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  MACRO_NAME</span></span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  ARGS...</span></span>
-<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  ARGS...</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Example:</p>
 <div class="sourceCode" id="cb71"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="dt">macro {</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  let {</span></span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a><span class="dt">    JOIN</span></span>
-<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a><span class="dt">    ^{&amp;{1} &#39; &#39; &amp;{2}}</span></span>
-<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a><span class="dt">  }</span></span>
-<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a><span class="dt">  echo { JOIN ${JOIN} }</span></span>
-<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> {</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    JOIN</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">^</span>{<span class="bu">&amp;</span>{1} <span class="st">&#39; &#39;</span> <span class="bu">&amp;</span>{2}}</span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { JOIN <span class="bu">$</span>{JOIN} }</span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;foo bar&#39;</span></span>
-<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a><span class="dt">  baz</span></span>
-<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;foo bar&#39;</span></span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>  baz</span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a><span class="dt">call {</span></span>
-<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a><span class="dt">  M_ECHO</span></span>
-<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a><span class="dt">  &#39;baz gaz&#39;</span></span>
-<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a><span class="dt">  last</span></span>
-<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;baz gaz&#39;</span></span>
+<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a>  last</span>
+<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Console output:</p>
 <pre><code>foo bar baz
 baz gaz last</code></pre>
@@ -1616,15 +1634,15 @@ prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
 <code>share/man</code></li>
 </ul>
 <div class="sourceCode" id="cb73"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { INSTAL_TARGET_DIR FILES... }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
 <code>${INSTALL_PREFIX}/${INSTALL_DATA_DIR}</code> (creating it if
 necessary). File permissions from the original files are preserved
 during the copy.</p>
 <p>Example:</p>
 <div class="sourceCode" id="cb74"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="dt">install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_INCLUDE_DIR} <span class="bu">$</span>{PUB_HDRS} }</span></code></pre></div>
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
 the chosen prefix.</p>
@@ -1635,22 +1653,22 @@ dir.</p>
 <p>Good practice is to place source code files into
 <code>&lt;install_prefix&gt;/share/&lt;project_name&gt;/&lt;project_name&gt;-sources-&lt;version&gt;</code></p>
 <div class="sourceCode" id="cb75"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install-sources { INSTAL_TARGET_DIR FILES... }</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>Example of <code>install-sources</code> configuration for iwnet
 project:</p>
 <div class="sourceCode" id="cb76"><pre
-class="sourceCode cfg"><code class="sourceCode ini"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="dt">install-sources {</span></span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="dt">   ^{${INSTALL_DATA_DIR} / ${META_NAME} / ${META_NAME} -sources- ${META_VERSION}}</span></span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a><span class="dt">  .autark/</span></span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="dt"> .ignore</span></span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a><span class="dt"> Autark</span></span>
-<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a><span class="dt"> Changelog</span></span>
-<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a><span class="dt"> LICENSE</span></span>
-<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a><span class="dt"> README.md</span></span>
-<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a><span class="dt"> build.sh</span></span>
-<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a><span class="dt"> src/</span></span>
-<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a><span class="dt"> tools/</span></span>
-<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> {</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>   <span class="bu">^</span>{<span class="bu">$</span>{INSTALL_DATA_DIR} / <span class="bu">$</span>{META_NAME} / <span class="bu">$</span>{META_NAME} -sources- <span class="bu">$</span>{META_VERSION}}</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>  .autark/</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a> .ignore</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a> Autark</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a> Changelog</span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a> LICENSE</span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a> README.md</span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">build</span>.sh</span>
+<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a> src/</span>
+<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a> tools/</span>
+<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="autonomous-source-distributions">Autonomous source
 distributions</h2>
 <p>If your project depends on other projects downloaded by network you

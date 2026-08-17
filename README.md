@@ -142,15 +142,14 @@ Take a look and try building it!
 
 Also see [Softmotions/iwnet](https://github.com/Softmotions/iwnet) or [Softmotions/protobuf-c](https://github.com/Softmotions/protobuf-c) for good real-word examples.
 
-```
+```sh
 git clone https://github.com/Softmotions/autark-sample-project
 cd ./autark-sample-project
 ./build.sh
 ```
 
-```cfg
+```autark
 # https://github.com/Softmotions/autark-sample-project
-#
 # This is a sample project demonstrating the Autark build system.
 
 # `meta` is a generic rule that sets all specified key/value pairs under the META_ prefix (except the `let` clause).
@@ -392,7 +391,6 @@ set {
     -fblocks
     -DCODE_BLOCKS
   }
-
   ...
 }
 ```

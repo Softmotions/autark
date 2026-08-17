@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<language name="Autark"
+          version="1"
+          kateversion="5.0"
+          section="Sources"
+          extensions="*.autark;Autark"
+          mimetype="text/x-autark"
+          casesensitive="1">
+  <highlighting>
+    <list name="directives">
+      <item>meta</item>
+      <item>cc</item>
+      <item>cxx</item>
+      <item>run</item>
+      <item>run-on-install</item>
+      <item>echo</item>
+      <item>check</item>
+      <item>include</item>
+      <item>configure</item>
+      <item>in-sources</item>
+      <item>install-sources</item>
+      <item>install</item>
+      <item>error</item>
+      <item>env</item>
+      <item>option</item>
+      <item>macro</item>
+      <item>foreach</item>
+      <item>call</item>
+      <item>set</item>
+      <item>let</item>
+      <item>library</item>
+    </list>
+    <list name="conditions">
+      <item>if</item>
+      <item>else</item>
+      <item>and</item>
+      <item>or</item>
+      <item>defined</item>
+      <item>eq</item>
+      <item>prefix</item>
+      <item>contains</item>
+    </list>
+    <list name="properties">
+      <item>consumes</item>
+      <item>produces</item>
+      <item>objects</item>
+      <item>exec</item>
+      <item>shell</item>
+      <item>always</item>
+      <item>build</item>
+      <item>setup</item>
+      <item>init</item>
+      <item>name</item>
+      <item>version</item>
+      <item>version_major</item>
+      <item>version_minor</item>
+      <item>version_patch</item>
+      <item>description</item>
+      <item>website</item>
+      <item>author</item>
+      <item>vendor</item>
+      <item>maintainer</item>
+      <item>sources</item>
+      <item>license</item>
+    </list>
+    <contexts>
+      <context name="Normal"
+               attribute="Normal Text"
+               lineEndContext="#stay">
+        <!-- Comments -->
+        <DetectChar attribute="Comment"
+                    context="Comment"
+                    char="#"
+                    firstNonSpace="true" />
+        <!-- Strings -->
+        <DetectChar attribute="String"
+                    context="SingleString"
+                    char="'" />
+        <DetectChar attribute="String"
+                    context="DoubleString"
+                    char="&quot;" />
+        <!--
+          Special forms:
+
+          ${...}
+          @ {...}
+          @@{...}
+          ^{...}
+          %{...}
+          S{...}
+          SS{...}
+          C{...}
+          CC{...}
+
+          including ..${...}, !${...}, etc.
+        -->
+        <RegExpr attribute="Builtin"
+                 context="#stay"
+                 String="(\.\.(@@|@|\$)|!(@@|@|\$|\^|%|SS|S|CC|C)|@@|@|\$|\^|%|SS|S|CC|C|&amp;)(?=[\s]*\{)" />
+        <!--
+          Modified rules:
+
+          ..set {
+          ..let {
+          !set {
+          !let {
+          !library {
+          !if {
+        -->
+        <RegExpr attribute="Directive"
+                 context="#stay"
+                 String="(\.\.(set|let)|!(set|let|library|if))(?=[\s]*\{)" />
+        <keyword attribute="Directive"
+                 context="#stay"
+                 String="directives" />
+        <keyword attribute="Control"
+                 context="#stay"
+                 String="conditions" />
+        <keyword attribute="Property"
+                 context="#stay"
+                 String="properties" />
+      </context>
+      <context name="Comment"
+               attribute="Comment"
+               lineEndContext="#pop" />
+      <context name="SingleString"
+               attribute="String"
+               lineEndContext="#stay">
+        <DetectChar attribute="String"
+                    context="#pop"
+                    char="'" />
+      </context>
+      <context name="DoubleString"
+               attribute="String"
+               lineEndContext="#stay">
+        <DetectChar attribute="String"
+                    context="#pop"
+                    char="&quot;" />
+      </context>
+    </contexts>
+    <itemDatas>
+      <itemData name="Normal Text"
+                defStyleNum="dsNormal" />
+      <itemData name="Directive"
+                defStyleNum="dsKeyword" />
+      <itemData name="Control"
+                defStyleNum="dsControlFlow" />
+      <itemData name="Property"
+                defStyleNum="dsKeyword" />
+      <itemData name="Builtin"
+                defStyleNum="dsBuiltIn" />
+      <itemData name="String"
+                defStyleNum="dsString" />
+      <itemData name="Comment"
+                defStyleNum="dsComment" />
+    </itemDatas>
+  </highlighting>
+  <general>
+    <comments>
+      <comment name="singleLine"
+               start="#" />
+    </comments>
+    <!-- Needed for identifiers such as run-on-install -->
+    <keywords casesensitive="1"
+              weakDeliminator="-" />
+  </general>
+</language>
