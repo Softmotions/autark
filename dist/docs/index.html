@@ -740,6 +740,15 @@ class="sourceCode cfg"><code class="sourceCode ini"><span id="cb10-1"><a href="#
 <p>The generated <code>config.h</code> will then contain the Git
 revision that was current when the configuration step was executed.</p>
 <h2
+id="how-to-get-json-compilation-database-compile_commandsjson-for-my-project">How
+to get JSON compilation database (compile_commands.json) for my
+project?</h2>
+<p>Autark supports automatic generation of
+<code>compile_commands.json</code> compilation database. Just provide
+<code>-k, --compile-commands</code> option and all compile commands will
+be saved in <code>./autark-cache/compile-commands.json</code>.
+<strong>Please note this option forces the full rebuild.</strong></p>
+<h2
 id="how-to-add-a-dependency-on-an-external-project-and-fetch-it-before-the-build">How
 to add a dependency on an external project and fetch it before the
 build?</h2>
@@ -1481,13 +1490,6 @@ using the <code>-J</code> option on the command line. For example:</p>
 <div class="sourceCode" id="cb66"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
 <p>This will run up to 8 compilation jobs in parallel.</p>
-<h3 id="json-compilation-database-compile_commandsjson">JSON compilation
-database (compile_commands.json)</h3>
-<p>Autark supports automatic generation of
-<code>compile_commands.json</code> compilation database. Just provide
-<code>-k, --compile-commands</code> option and all compile commands will
-be saved in <code>./autark-cache/compile-commands.json</code>.
-<strong>Please note this option forces the full rebuild.</strong></p>
 <h1 id="library-">library {...}</h1>
 <p>Search for a library file by name.</p>
 <p>This simple rule looks for the specified <code>LIB_FILES</code>

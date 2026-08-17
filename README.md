@@ -458,6 +458,13 @@ For example, `config.h.in` may contain:
 
 The generated `config.h` will then contain the Git revision that was current when the configuration step was executed.
 
+## How to get JSON compilation database (compile_commands.json) for my project?
+
+Autark supports automatic generation of `compile_commands.json` compilation database.
+Just provide `-k, --compile-commands` option and all compile commands will be saved
+in `./autark-cache/compile-commands.json`. **Please note this option forces the full rebuild.**
+
+
 ## How to add a dependency on an external project and fetch it before the build?
 
 It is recommended to keep the build logic for an external project in a separate file, for example `extproject.autark`,
@@ -1348,13 +1355,6 @@ You can change this using the `-J` option on the command line. For example:
 ./build.sh -J8
 ```
 This will run up to 8 compilation jobs in parallel.
-
-### JSON compilation database (compile_commands.json)
-
-Autark supports automatic generation of `compile_commands.json` compilation database.
-Just provide `-k, --compile-commands` option and all compile commands will be saved
-in `./autark-cache/compile-commands.json`. **Please note this option forces the full rebuild.**
-
 
 # library {...}
 
