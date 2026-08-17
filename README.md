@@ -324,6 +324,8 @@ During the `init` phase, the following steps occur:
 - Autark build script files are parsed.
 - Initialization logic for rules is executed in sequence so it makes sense order of `set`, `check`, `if`
   in build script.
+- Pre-build project system requirements checks are performed by [check](#check-) rule.
+
 - Based on the current state of variables, *tree shaking* is applied to the syntax tree
   of the overall Autark build script.
   As a result, all conditional `if` rules and certain helper rules such as `in-source` and `foreach`
@@ -357,6 +359,77 @@ It is primarily used for rules that install the built project artifacts.
   which can produce generic error reports for malformed input.
 
 # Cookbook
+
+## How to perform pre-build checks for compiler/system features, header files, executables?
+
+Major of configure-style checks are performed using [check](#check-) rules. A `check` rule accepts a set of shell scripts
+that perform project-specific checks on the host system.
+
+Check scripts reside in the `.autark/` directory at the root of your project. Autark also provides several [commonly
+used check scripts](https://github.com/Softmotions/autark/tree/master/check_scripts) that you can copy and use
+it directly in your project or take as examples for writing your own checks.
+
+For example, to test whether the system and compiler support Clang code blocks, you can use
+[test_blocks.sh](https://github.com/Softmotions/autark/blob/master/check_scripts/test_blocks.sh):
+
+```cfg
+check {
+  test_blocks.sh { CODE_BLOCKS }
+}
+```
+
+If code blocks are supported, the script sets `CODE_BLOCKS=1`. You can then test this condition in your build script or
+in [preprocessed files](#configure-) in various ways.
+
+For example:
+
+```cfg
+set {
+  CFLAGS
+  ...
+
+  if { ${CODE_BLOCKS}
+    -fblocks
+    -DCODE_BLOCKS
+  }
+
+  ...
+}
+```
+
+There is also a dedicated [library](#library-) rule for detecting system libraries.
+
+## How to use pkgconf in my project?
+
+The following example shows how to use `pkgconf` to obtain compiler and linker flags for an external dependency:
+
+```cfg
+check {
+  # Generic system check script that also sets the `PKGCONF`
+  # variable to the name of the pkgconf-compatible executable.
+  system.sh
+}
+
+set {
+  CXXFLAGS
+  ..${CXXFLAGS}
+  ..@@{ ${PKGCONF} --cflags protobuf }
+}
+
+set {
+  LDFLAGS
+  ..${LDFLAGS}
+  ..@@{ ${PKGCONF} --libs protobuf }
+  -lprotoc
+}
+
+# Use CXXFLAGS and LDFLAGS in subsequent build rules.
+...
+```
+
+The `system.sh` check script detects a pkgconf-compatible executable and stores its name in the `PKGCONF` variable.
+Then you can then use `${PKGCONF} --cflags <package>` and `${PKGCONF} --libs <package>` to obtain the compiler and
+linker flags required by your project.
 
 ## How to store the Git revision in a variable and persist it in the project sources?
 
