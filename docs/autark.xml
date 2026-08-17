@@ -53,6 +53,7 @@
       <item>setup</item>
       <item>init</item>
       <item>name</item>
+      <item>artifact</item>
       <item>version</item>
       <item>version_major</item>
       <item>version_minor</item>
