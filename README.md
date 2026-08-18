@@ -76,13 +76,13 @@ Autark build artifacts, as well as rules dependency metadata, are stored in a se
 called the *autark-cache*. By default, this is the `./autark-cache` directory at the root of your project,
 but it can be changed using the `-H` or `--cache` option.
 
-The directory structure within the autark-cache mirrors the structure of your project source tree.
-For all programs executed during the build process, the current working directory is set
+The directory structure within the `./autark-cache` mirrors the structure of project's source tree.
+For most programs executed during the build process, the current working directory is set
 to a corresponding location inside the autark-cache. This behavior can be overridden using the `in-source` directive.
 This approach reduces the risk of modifying original source files
 and makes it easier to access intermediate build artifacts during the various stages of the build pipeline.
 
-Autark script is a specialized DSL with modest capabilities, yet sufficient for writing concise and elegant build scripts.
+Autark script is a specialized DSL with modest capabilities, yet sufficient for writing good build scripts.
 The syntax is simple and can be informally described as follows:
 
 - A script consists of a set of rules and literals.
