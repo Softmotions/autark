@@ -1,8 +1,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+
 <style>
   :root {
     --autark-nav-width: 18rem;
-    --autark-nav-transition: 180ms ease;
+    --autark-nav-transition: 150ms ease;
   }
 
   #title-block-header {
@@ -122,6 +123,31 @@
 
   body.autark-nav-open #autark-nav {
     transform: translateX(0);
+  }
+
+  /* Subtle sidebar scrollbar */
+ * {
+    scrollbar-width: thin;
+    scrollbar-color: #4a4d50 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    min-height: 2.5rem;
+    border: 2px solid #252525;
+    border-radius: 999px;
+    background: #4a4d50;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #60666d;
   }
 
   #autark-nav-title {

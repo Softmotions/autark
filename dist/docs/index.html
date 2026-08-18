@@ -232,10 +232,11 @@
     code span.wa { color: #f5b83f; font-weight: bold; } /* Warning */
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --autark-nav-width: 18rem;
-      --autark-nav-transition: 180ms ease;
+      --autark-nav-transition: 150ms ease;
     }
 
     #title-block-header {
@@ -355,6 +356,31 @@
 
     body.autark-nav-open #autark-nav {
       transform: translateX(0);
+    }
+
+    /* Subtle sidebar scrollbar */
+   * {
+      scrollbar-width: thin;
+      scrollbar-color: #4a4d50 transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      min-height: 2.5rem;
+      border: 2px solid #252525;
+      border-radius: 999px;
+      background: #4a4d50;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: #60666d;
     }
 
     #autark-nav-title {
@@ -803,8 +829,9 @@ default.</p>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-k,</span> <span class="at">--compile-commands</span>      Generates compile_commands.json database. Sets <span class="at">-c</span> option implicitly.</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-I,</span> <span class="at">--install</span>               Install all built artifacts</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-R,</span> <span class="at">--prefix</span><span class="op">=&lt;&gt;</span>             Install prefix. Default: <span class="va">$HOME</span>/.local</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-S,</span> <span class="at">--install-source-deps</span>   Build autonomous source distribution package dir with all external project dependencies packed.</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>   <span class="ex">...</span></span></code></pre></div>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-S,</span> <span class="at">--install-source-deps</span>   Build autonomous source distribution package dir with all external</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                                <span class="ex">project</span> dependencies packed.</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>   <span class="ex">...</span></span></code></pre></div>
 <h2 id="brief-overview-of-autark">Brief overview of Autark</h2>
 <p>Autark build artifacts, as well as rules dependency metadata, are
 stored in a separate directory called the <em>autark-cache</em>. By

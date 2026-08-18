@@ -65,7 +65,8 @@ autark [options] [sources_dir] | [command [options]]
     -k, --compile-commands      Generates compile_commands.json database. Sets -c option implicitly.
     -I, --install               Install all built artifacts
     -R, --prefix=<>             Install prefix. Default: $HOME/.local
-    -S, --install-source-deps   Build autonomous source distribution package dir with all external project dependencies packed.
+    -S, --install-source-deps   Build autonomous source distribution package dir with all external
+                                project dependencies packed.
    ...
 ```
 
