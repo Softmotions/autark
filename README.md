@@ -370,6 +370,38 @@ set {
 }
 ```
 
+Another example from [iowow project](https://github.com/Softmotions/iowow):
+
+```cfg
+check {
+  test_qsort_r.sh
+  test_pthread.sh
+  test_symbol.sh { CLOCK_MONOTONIC time.h IW_HAVE_CLOCK_MONOTONIC }
+}
+```
+- Checking if we have `qsort_r` support by the following `test_qsort_r.sh` script:
+```sh
+#!/bin/sh
+cat > './test_qsort_r.c' << 'EOF'
+#include <stdlib.h>
+int main(int argc, char **argv) {
+  qsort_r(0, 0, 0, 0, 0);
+  return 0;
+}
+EOF
+
+${CC:=cc} ./test_qsort_r.c
+
+if [ "$?" -eq "0" ]; then
+  autark set "HAVE_QSORT_R=1"
+else
+  echo "No qsort_r found"
+fi
+```
+- Check for pthreads presence
+- Check for `CLOCK_MONOTONIC` symbol in `time.h` header.
+
+
 There is also a dedicated [library](#library-) rule for detecting system libraries.
 
 ## How to use pkgconf in my project?
