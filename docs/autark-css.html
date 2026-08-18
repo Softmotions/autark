@@ -17,6 +17,7 @@
   }
 
   body {
+    position: relative;
     box-sizing: border-box;
     background-color: #2b2b2b;
     color: #a9b7c6;
@@ -51,18 +52,12 @@
     }
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     color: #ffffff;
     margin-top: 1.5em;
   }
 
-  a,
-  a:visited {
+  a, a:visited {
     color: #589df6;
     text-decoration: none;
   }
@@ -100,6 +95,71 @@
   code span.co {
     color: #828d98 !important;
     font-style: normal;
+  }
+
+
+  /* GitHub stars badge above the main heading */
+  #autark-github-stars,
+  #autark-github-stars:visited {
+    position: absolute;
+    z-index: 2;
+    top: 0.85rem;
+    right: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.34rem 0.58rem;
+    border: 1px solid #4a4d50;
+    border-radius: 5px;
+    background: #333537;
+    color: #a9b7c6;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  #autark-github-stars:hover {
+    border-color: #66717c;
+    background: #3a3d40;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  #autark-github-stars:focus-visible {
+    outline: 2px solid #589df6;
+    outline-offset: 2px;
+  }
+
+  #autark-github-stars svg {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+  }
+
+  #autark-github-stars .autark-github-mark {
+    fill: currentColor;
+  }
+
+  #autark-github-stars .autark-github-star {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+  }
+
+  #autark-github-stars .autark-github-stars-separator {
+    width: 1px;
+    height: 1rem;
+    margin: 0 0.08rem;
+    background: #4a4d50;
   }
 
   /* Sidebar navigation */
@@ -340,11 +400,11 @@
   }
 
   @media print {
-
     #autark-nav,
     #autark-nav-toggle,
     #autark-nav-backdrop,
-    #autark-scroll-top {
+    #autark-scroll-top,
+    #autark-github-stars {
       display: none !important;
     }
   }
@@ -360,6 +420,50 @@
     if (!headings.length) {
       return;
     }
+
+
+    const mainHeading = headings[0];
+    const githubStars = document.createElement("a");
+    githubStars.id = "autark-github-stars";
+    githubStars.href = "https://github.com/Softmotions/autark";
+    githubStars.target = "_blank";
+    githubStars.rel = "noopener noreferrer";
+    githubStars.setAttribute("aria-label", "Autark on GitHub");
+    githubStars.setAttribute("title", "Autark on GitHub");
+    githubStars.innerHTML =
+      '<svg class="autark-github-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.165 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.014-1.7-2.782.604-3.369-1.341-3.369-1.341-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.071 1.532 1.031 1.532 1.031.892 1.529 2.341 1.087 2.91.831.091-.646.349-1.087.635-1.337-2.221-.253-4.555-1.111-4.555-4.944 0-1.091.39-1.984 1.03-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.833a9.57 9.57 0 0 1 2.504.337c1.909-1.294 2.748-1.025 2.748-1.025.545 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.337 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.337-.012 2.416-.012 2.744 0 .268.18.579.688.481A10.003 10.003 0 0 0 22 12c0-5.523-4.477-10-10-10Z"></path>' +
+      '</svg>' +
+      '<span>GitHub</span>' +
+      '<span class="autark-github-stars-separator" aria-hidden="true"></span>' +
+      '<svg class="autark-github-star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="m12 3.5 2.63 5.33 5.88.85-4.25 4.15 1 5.86L12 16.92l-5.26 2.77 1-5.86-4.25-4.15 5.88-.85L12 3.5Z"></path>' +
+      '</svg>' +
+      '<span id="autark-github-stars-count">Star</span>';
+    mainHeading.parentNode.insertBefore(githubStars, mainHeading);
+
+    fetch("https://api.github.com/repos/Softmotions/autark", {
+      headers: { "Accept": "application/vnd.github+json" }
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("GitHub API request failed");
+        }
+        return response.json();
+      })
+      .then(function (repo) {
+        if (typeof repo.stargazers_count === "number") {
+          document.getElementById("autark-github-stars-count").textContent =
+            "Star " + repo.stargazers_count.toLocaleString();
+          githubStars.setAttribute(
+            "aria-label",
+            "Autark on GitHub, " + repo.stargazers_count.toLocaleString() + " stars"
+          );
+        }
+      })
+      .catch(function () {
+        /* Keep the badge usable even if the GitHub API is unavailable. */
+      });
 
     const nav = document.createElement("nav");
     nav.id = "autark-nav";
