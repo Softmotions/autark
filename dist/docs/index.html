@@ -208,100 +208,523 @@
     code span.at { } /* Attribute */
     code span.bn { color: #44aa43; } /* BaseN */
     code span.bu { } /* BuiltIn */
-    code span.cf { color: #43a8ed; font-weight: bold; } /* ControlFlow */
+    code span.cf { color: #9dc4ff; font-weight: bold; } /* ControlFlow */
     code span.ch { color: #049b0a; } /* Char */
     code span.cn { } /* Constant */
-    code span.co { color: #0066ff; font-weight: bold; font-style: italic; } /* Comment */
-    code span.do { color: #0066ff; font-style: italic; } /* Documentation */
+    code span.co { color: #999999; font-weight: bold; font-style: italic; } /* Comment */
+    code span.do { color: #999999; font-style: italic; } /* Documentation */
     code span.dt { text-decoration: underline; } /* DataType */
-    code span.dv { color: #44aa43; } /* DecVal */
-    code span.er { color: #ffff00; font-weight: bold; } /* Error */
+    code span.dv { color: #ef586c; } /* DecVal */
+    code span.er { color: #ef586c; font-weight: bold; } /* Error */
     code span.ex { } /* Extension */
-    code span.fl { color: #44aa43; } /* Float */
+    code span.fl { color: #ef586c; } /* Float */
     code span.fu { color: #ff9358; font-weight: bold; } /* Function */
     code span.im { } /* Import */
     code span.in { color: #0066ff; font-weight: bold; font-style: italic; } /* Information */
-    code span.kw { color: #43a8ed; font-weight: bold; } /* Keyword */
+    code span.kw { color: #9dc4ff; font-weight: bold; } /* Keyword */
     code span.op { } /* Operator */
     code span.pp { font-weight: bold; } /* Preprocessor */
-    code span.sc { color: #049b0a; } /* SpecialChar */
-    code span.ss { color: #049b0a; } /* SpecialString */
-    code span.st { color: #049b0a; } /* String */
+    code span.sc { color: #89ddff; } /* SpecialChar */
+    code span.ss { color: #87af5f; } /* SpecialString */
+    code span.st { color: #55aa7f; } /* String */
     code span.va { } /* Variable */
-    code span.vs { color: #049b0a; } /* VerbatimString */
-    code span.wa { color: #ffff00; font-weight: bold; } /* Warning */
+    code span.vs { color: #55aa7f; } /* VerbatimString */
+    code span.wa { color: #f5b83f; font-weight: bold; } /* Warning */
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
-
   <style>
-  #title-block-header {
-    display: none;
-  }
-  html {
-    background-color: #202020;
-  }
-  body {
+    :root {
+      --autark-nav-width: 18rem;
+      --autark-nav-transition: 180ms ease;
+    }
+
+    #title-block-header {
+      display: none;
+    }
+
+    html {
+      background-color: #202020;
+      scroll-behavior: smooth;
+      scroll-padding-top: 1.5rem;
+    }
+
+    body {
+      box-sizing: border-box;
+      background-color: #2b2b2b;
+      color: #a9b7c6;
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      padding: 2em;
+      transition:
+        margin-left var(--autark-nav-transition),
+        margin-right var(--autark-nav-transition);
+    }
+
     @media (max-width: 800px) {
-      max-width: 100%;
+      body {
+        max-width: 100%;
+      }
     }
+
     @media (min-width: 801px) {
-      max-width: 80%;
+      body {
+        max-width: 80%;
+      }
     }
+
     @media (min-width: 1200px) {
-       max-width: 60%;
-     }
-  }
-  body {
-    background-color: #2b2b2b;
-    color: #a9b7c6;
-    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
-    line-height: 1.6;
-    padding: 2em;
-  }
+      body {
+        max-width: 60%;
+      }
 
-  h1, h2, h3, h4, h5, h6 {
-    color: #ffffff;
-    margin-top: 1.5em;
-  }
+      body.autark-nav-open {
+        margin-left: calc(var(--autark-nav-width) + 2.5rem);
+        margin-right: auto;
+      }
+    }
 
-  a,a:visited {
-    color: #589df6;
-    text-decoration: none;
-  }
-  a:hover {
-    text-decoration: underline;
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: #ffffff;
+      margin-top: 1.5em;
+    }
 
-  div.sourceCode {
-    border-radius: 4px;
-  }
+    a,
+    a:visited {
+      color: #589df6;
+      text-decoration: none;
+    }
 
-  code {
-    color: #a9b7c6;
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-family: "Fira Code", monospace;
-    font-size: 0.95em;
-  }
+    a:hover {
+      text-decoration: underline;
+    }
 
-  pre {
-    background-color: #333537;
-    color: #a9b7c6;
-    padding: 1em;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-family: "Fira Code", monospace;
-    font-size: 0.95em;
-  }
-  code span.dt {
-    text-decoration: none !important;
-  }
-  code span.co {
-    color: #828d98 !important;
-    font-style: normal;
+    div.sourceCode {
+      border-radius: 4px;
+    }
 
-  }
+    code {
+      color: #a9b7c6;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-family: "Fira Code", monospace;
+      font-size: 0.95em;
+    }
+
+    pre {
+      background-color: #333537;
+      color: #a9b7c6;
+      padding: 1em;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: "Fira Code", monospace;
+      font-size: 0.95em;
+    }
+
+    code span.dt {
+      text-decoration: none !important;
+    }
+
+    code span.co {
+      color: #828d98 !important;
+      font-style: normal;
+    }
+
+    /* Sidebar navigation */
+    #autark-nav {
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: var(--autark-nav-width);
+      box-sizing: border-box;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.9rem 0.75rem 1.5rem;
+      background: #252525;
+      border-right: 1px solid #3c3f41;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.18);
+      transform: translateX(-100%);
+      transition: transform var(--autark-nav-transition);
+    }
+
+    body.autark-nav-open #autark-nav {
+      transform: translateX(0);
+    }
+
+    #autark-nav-title {
+      box-sizing: border-box;
+      min-height: 2.5rem;
+      margin: 0 0 0.8rem;
+      padding: 0.45rem 0.5rem 0.55rem 3.15rem;
+      border-bottom: 1px solid #3c3f41;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    #autark-nav-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    #autark-nav-list li {
+      margin: 0;
+      padding: 0;
+    }
+
+    #autark-nav-list a,
+    #autark-nav-list a:visited {
+      display: block;
+      margin: 0.08rem 0;
+      padding: 0.38rem 0.55rem;
+      border-radius: 4px;
+      color: #a9b7c6;
+      font-size: 0.88rem;
+      line-height: 1.32;
+      text-decoration: none;
+      transition:
+        background-color 120ms ease,
+        color 120ms ease;
+    }
+
+    #autark-nav-list a.autark-nav-h1 {
+      margin-top: 0.3rem;
+      color: #d6dce2;
+      font-weight: 600;
+    }
+
+    #autark-nav-list a.autark-nav-h2 {
+      padding-left: 1.3rem;
+      font-size: 0.83rem;
+      color: #909ca8;
+    }
+
+    #autark-nav-list a:hover {
+      background: #333537;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    #autark-nav-list a.autark-nav-active {
+      background: #30373f;
+      color: #589df6;
+    }
+
+    #autark-nav-toggle,
+    #autark-scroll-top {
+      position: fixed;
+      z-index: 1002;
+      width: 2.35rem;
+      height: 2.35rem;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #4a4d50;
+      border-radius: 5px;
+      background: #333537;
+      color: #a9b7c6;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #autark-nav-toggle {
+      top: 0.85rem;
+      left: 0.85rem;
+      flex-direction: column;
+      gap: 0.28rem;
+    }
+
+    #autark-scroll-top {
+      right: 0.85rem;
+      bottom: 0.85rem;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(0.45rem);
+      transition:
+        opacity var(--autark-nav-transition),
+        transform var(--autark-nav-transition),
+        visibility 0s linear var(--autark-nav-transition);
+    }
+
+    #autark-scroll-top.autark-scroll-top-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+      transition-delay: 0s;
+    }
+
+    #autark-scroll-top svg {
+      width: 1.05rem;
+      height: 1.05rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #autark-nav-toggle:hover,
+    #autark-scroll-top:hover {
+      border-color: #66717c;
+      background: #3a3d40;
+    }
+
+    #autark-nav-toggle:focus-visible,
+    #autark-scroll-top:focus-visible,
+    #autark-nav-list a:focus-visible {
+      outline: 2px solid #589df6;
+      outline-offset: 2px;
+    }
+
+    .autark-nav-toggle-line {
+      width: 1.05rem;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      transform-origin: center;
+      transition:
+        transform var(--autark-nav-transition),
+        opacity var(--autark-nav-transition);
+    }
+
+    body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(1) {
+      transform: translateY(0.38rem) rotate(45deg);
+    }
+
+    body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(3) {
+      transform: translateY(-0.38rem) rotate(-45deg);
+    }
+
+    #autark-nav-backdrop {
+      position: fixed;
+      z-index: 999;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.38);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--autark-nav-transition);
+    }
+
+    @media (max-width: 1199px) {
+      #autark-nav {
+        width: min(var(--autark-nav-width), calc(100vw - 3rem));
+      }
+
+      body.autark-nav-open #autark-nav-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      body,
+      #autark-nav,
+      #autark-nav-backdrop,
+      #autark-scroll-top,
+      .autark-nav-toggle-line {
+        transition: none !important;
+      }
+    }
+
+    @media print {
+
+      #autark-nav,
+      #autark-nav-toggle,
+      #autark-nav-backdrop,
+      #autark-scroll-top {
+        display: none !important;
+      }
+    }
   </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const headings = Array.from(document.querySelectorAll("body h1[id], body h2[id]"))
+        .filter(function (heading) {
+          return !heading.closest("#title-block-header");
+        });
+
+      if (!headings.length) {
+        return;
+      }
+
+      const nav = document.createElement("nav");
+      nav.id = "autark-nav";
+      nav.setAttribute("aria-label", "Page navigation");
+
+      const navTitle = document.createElement("div");
+      navTitle.id = "autark-nav-title";
+      navTitle.textContent = "Contents";
+      nav.appendChild(navTitle);
+
+      const list = document.createElement("ul");
+      list.id = "autark-nav-list";
+
+      const linksById = new Map();
+
+      headings.forEach(function (heading) {
+        const item = document.createElement("li");
+        const link = document.createElement("a");
+
+        link.href = "#" + heading.id;
+        link.textContent = heading.textContent.replace(/\s+/g, " ").trim();
+        link.className = heading.tagName === "H1" ? "autark-nav-h1" : "autark-nav-h2";
+
+        item.appendChild(link);
+        list.appendChild(item);
+        linksById.set(heading.id, link);
+      });
+
+      nav.appendChild(list);
+      document.body.prepend(nav);
+
+      const button = document.createElement("button");
+      button.id = "autark-nav-toggle";
+      button.type = "button";
+      button.setAttribute("aria-controls", "autark-nav");
+      button.setAttribute("aria-label", "Toggle navigation");
+      button.innerHTML =
+        '<span class="autark-nav-toggle-line"></span>' +
+        '<span class="autark-nav-toggle-line"></span>' +
+        '<span class="autark-nav-toggle-line"></span>';
+      document.body.prepend(button);
+
+      const backdrop = document.createElement("div");
+      backdrop.id = "autark-nav-backdrop";
+      backdrop.setAttribute("aria-hidden", "true");
+      document.body.prepend(backdrop);
+
+      const scrollTopButton = document.createElement("button");
+      scrollTopButton.id = "autark-scroll-top";
+      scrollTopButton.type = "button";
+      scrollTopButton.setAttribute("aria-label", "Back to top");
+      scrollTopButton.setAttribute("title", "Back to top");
+      scrollTopButton.innerHTML =
+        '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+        '<path d="M3 7l5-5 5 5M8 2v12"></path>' +
+        '</svg>';
+      document.body.appendChild(scrollTopButton);
+
+      const desktop = window.matchMedia("(min-width: 1200px)");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      function setOpen(open) {
+        document.body.classList.toggle("autark-nav-open", open);
+        button.setAttribute("aria-expanded", open ? "true" : "false");
+        nav.setAttribute("aria-hidden", open ? "false" : "true");
+        nav.toggleAttribute("inert", !open);
+      }
+
+      function applyResponsiveDefault(event) {
+        setOpen(event.matches);
+      }
+
+      setOpen(desktop.matches);
+
+      button.addEventListener("click", function () {
+        setOpen(!document.body.classList.contains("autark-nav-open"));
+      });
+
+      backdrop.addEventListener("click", function () {
+        setOpen(false);
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && document.body.classList.contains("autark-nav-open")) {
+          setOpen(false);
+          button.focus();
+        }
+      });
+
+      list.addEventListener("click", function (event) {
+        if (!desktop.matches && event.target.closest("a")) {
+          setOpen(false);
+        }
+      });
+
+      if (desktop.addEventListener) {
+        desktop.addEventListener("change", applyResponsiveDefault);
+      } else {
+        desktop.addListener(applyResponsiveDefault);
+      }
+
+      scrollTopButton.addEventListener("click", function () {
+        window.scrollTo({
+          top: 0,
+          behavior: reducedMotion.matches ? "auto" : "smooth"
+        });
+      });
+
+      function updateScrollTopButton() {
+        const visible = window.scrollY >= window.innerHeight;
+        scrollTopButton.classList.toggle("autark-scroll-top-visible", visible);
+        scrollTopButton.setAttribute("aria-hidden", visible ? "false" : "true");
+      }
+
+      let scrollUpdatePending = false;
+
+      function updateActiveLink() {
+        scrollUpdatePending = false;
+
+        const marker = window.scrollY + 96;
+        let current = headings[0];
+
+        for (const heading of headings) {
+          if (heading.offsetTop <= marker) {
+            current = heading;
+          } else {
+            break;
+          }
+        }
+
+        linksById.forEach(function (link, id) {
+          const active = id === current.id;
+          link.classList.toggle("autark-nav-active", active);
+          if (active) {
+            link.setAttribute("aria-current", "location");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      }
+
+      function updateOnScroll() {
+        updateActiveLink();
+        updateScrollTopButton();
+      }
+
+      window.addEventListener("scroll", function () {
+        if (!scrollUpdatePending) {
+          scrollUpdatePending = true;
+          window.requestAnimationFrame(updateOnScroll);
+        }
+      }, { passive: true });
+
+      window.addEventListener("resize", updateScrollTopButton, { passive: true });
+
+      updateOnScroll();
+    });
+  </script>
 </head>
 <body>
 <header id="title-block-header">
@@ -343,34 +766,6 @@ dependencies included, allowing builds in isolated environments.</li>
 <li>Script syntax highlighting support for Vim8+, Neovim, VSCode,
 TextMate with <a
 href="https://github.com/Softmotions/tree-sitter-autark">Softmotions/tree-sitter-autark</a></li>
-</ul>
-<h2 id="references">References</h2>
-<ul>
-<li><strong><a href="#cookbook">Cookbook</a></strong></li>
-</ul>
-<hr />
-<ul>
-<li><a href="#meta-">meta</a></li>
-<li><a href="#option-">option</a></li>
-<li><a href="#check-">check</a></li>
-<li><a href="#set--let-">set|let</a></li>
-<li><a href="#env-">env</a></li>
-<li><a href="#-variable-evaluation">${}</a></li>
-<li><a href="#-program-output-evaluation">@{}</a></li>
-<li><a href="#-expressions-concatenation">^{}</a></li>
-<li><a href="#if--condition">if</a></li>
-<li><a href="#echo-">echo</a></li>
-<li><a href="#configure-">configure</a></li>
-<li><a href="#s--ss--c--cc---path-helpers">path helpers</a></li>
-<li><a href="#run-">run</a></li>
-<li><a href="#in-sources-">in-sources</a></li>
-<li><a href="#run-on-install-">run-on-install</a></li>
-<li><a href="#foreach-">foreach</a></li>
-<li><a href="#cc-----cxx---">cc/cxx</a></li>
-<li><a href="#library-">library</a></li>
-<li><a href="#install-">install</a></li>
-<li><a href="#install-sources-">install-sources</a></li>
-<li><a href="#macros">macros</a></li>
 </ul>
 <h2 id="articles">Articles</h2>
 <ul>
@@ -657,12 +1052,19 @@ previously executed.</p>
 <p>This phase is executed after the <code>build</code> phase has
 completed successfully. It is primarily used for rules that install the
 built project artifacts.</p>
-<h1 id="known-limitations">Known Limitations</h1>
+<h2 id="known-limitations">Known Limitations</h2>
 <ul>
 <li>If the syntax of an Autark script is invalid, the resulting error
 message may be vague or imprecise. This is due to the use of the
 <code>leg</code> PEG parser generator, which can produce generic error
-reports for malformed input.</li>
+messages for malformed input.</li>
+<li>Autark is primarily developed and tested on Linux, FreeBSD, and
+macOS. It should also work on other Unix-like systems. Windows Subsystem
+for Linux (WSL) is currently untested.</li>
+<li>Autark does not yet support C++20 modules. Support is a work in
+progress and is tracked in <a
+href="https://github.com/Softmotions/autark/issues/1">this
+issue</a>.</li>
 </ul>
 <h1 id="cookbook">Cookbook</h1>
 <h2
@@ -1031,7 +1433,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb32-1"><a h
 standard output as a string. The <code>@@</code> form caches the
 program’s output and reuses it in subsequent builds, which is useful for
 time-consuming invocations such as <code>pkg-config</code>.</p>
-<h2 id="example">Example:</h2>
+<h3 id="example">Example:</h3>
 <div class="sourceCode" id="cb33"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  LDFLAGS</span>
@@ -1067,7 +1469,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb36-1"><a h
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">^</span>{-DBUILD_TYPE= <span class="bu">$</span>{BUILD_TYPE}}</span></code></pre></div>
 <p>Note: the space between <code>-DBUILD_TYPE=</code> and
 <code>${BUILD_TYPE}</code> is required.</p>
-<h2 id="-special-forms">^{...} Special forms</h2>
+<h3 id="-special-forms">^{...} Special forms</h3>
 <p>Join operation has two special forms which are applicable only when
 two elements passed as arguments and the only one of them represents a
 list.</p>
@@ -1106,7 +1508,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb40-1"><a h
 replaced by <code>EXPR1</code> in the Autark script’s instruction tree.
 Otherwise, if an <code>else</code> block is provided, it will be
 replaced by <code>EXPR2</code>.</p>
-<h2 id="conditions">Conditions</h2>
+<h3 id="conditions">Conditions</h3>
 <p>Exclamation mark <code>!</code> means expression result negation,
 when truthly evaluated expressions became false.</p>
 <p><code>[!]${EXPR}</code> <br/>Evaluates as truthy in any of the
@@ -1193,7 +1595,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb46-1"><a h
 <span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
 <span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
 <span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<h2 id="-substitutions">@...@ Substitutions</h2>
+<h3 id="-substitutions">@...@ Substitutions</h3>
 <p>Text fragments enclosed in <code>@</code> symbols are interpreted as
 variable names and replaced with their corresponding values. If a
 variable is not defined, the expression is replaced with an empty
@@ -1213,7 +1615,7 @@ Requires: libiwnet
 Libs.private: @LDFLAGS_PKGCONF@
 Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir}
 Cflags.private: -DIW_STATIC</code></pre>
-<h2 id="autarkdef-for-cc-headers">//autarkdef for C/C++ Headers</h2>
+<h3 id="autarkdef-for-cc-headers">//autarkdef for C/C++ Headers</h3>
 <p>For C/C++ header files, the <code>//autarkdef</code> directive is a
 convenient way to conditionally generate <code>#define</code> statements
 based on variable presence.</p>
@@ -1234,7 +1636,7 @@ based on variable presence.</p>
 <p>These small helper rules are useful for computing file paths in build
 scripts. They help avoid hardcoding paths that may depend on the current
 location of the project's source code.</p>
-<h2 id="s-">S {...}</h2>
+<h3 id="s-">S {...}</h3>
 <p>Computes the <strong>absolute path</strong> of the given argument(s)
 relative to the <strong>project root</strong>. If multiple arguments are
 provided, they are be converted to list of paths.</p>
@@ -1244,18 +1646,18 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb54-1"><a h
 <span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">#&lt;src root&gt;/foo &lt;src root&gt;/bar &lt;src root&gt;/baz</span></span>
 <span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">S</span>{foo bar baz}</span></code></pre></div>
-<h2 id="ss-">SS {...}</h2>
+<h3 id="ss-">SS {...}</h3>
 <p>Same as <code>S</code>, but relative to the directory where the
 current script is located.</p>
-<h2 id="c-">C {...}</h2>
+<h3 id="c-">C {...}</h3>
 <p>Computes the <strong>absolute path</strong> to the argument(s)
 relative to the <strong>project-wide autark-cache dir</strong>.</p>
-<h2 id="cc-">CC {...}</h2>
+<h3 id="cc-">CC {...}</h3>
 <p>Computes the <strong>absolute path</strong> relative to the
 <strong>local cache directory</strong> of the current script. This is
 the default working directory for tools and commands that operate on
 build artifacts.</p>
-<h2 id="-">% {...}</h2>
+<h3 id="-">% {...}</h3>
 <p>Returns the <code>basename</code> of the given filename changing its
 extension optionally.</p>
 <div class="sourceCode" id="cb55"><pre
@@ -1327,8 +1729,8 @@ provides the <code>in-sources</code> rule.</p>
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">in-sources</span> {</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<h2 id="example-appending-glob-matched-source-files">Example: Appending
-glob-matched source Files</h2>
+<h3 id="example-appending-glob-matched-source-files">Example: Appending
+glob-matched source Files</h3>
 <p>In the example below, the <code>SOURCES</code> variable is extended
 with the output of a glob-matching command executed in the source
 directory. The result is assigned merged with <code>SOURCES</code>
@@ -1343,8 +1745,8 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb60-1"><a h
 <span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">..@</span>{autark -C .. glob <span class="st">&#39;json/*.c&#39;</span>}</span>
 <span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<h2 id="example-finding-java-source-files">Example: Finding Java Source
-Files</h2>
+<h3 id="example-finding-java-source-files">Example: Finding Java Source
+Files</h3>
 <div class="sourceCode" id="cb61"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> {</span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  JAVA_SOURCES</span>
@@ -1455,7 +1857,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb65-1"><a h
 <span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">objects</span> { NAME }]</span>
 <span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">consumes</span> { ... }]</span>
 <span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<h2 id="sources">SOURCES</h2>
+<h3 id="sources">SOURCES</h3>
 <p>The first argument must be an expression that returns a list of
 source files. It can be a single string (for one file) or a list defined
 by a <code>set</code> rule.</p>
@@ -1466,12 +1868,12 @@ by a <code>set</code> rule.</p>
 <li>Paths relative to the cache directory corresponding to the script
 (this is useful when compiling generated sources from other rules)</li>
 </ul>
-<h2 id="compiler_flags">COMPILER_FLAGS</h2>
+<h3 id="compiler_flags">COMPILER_FLAGS</h3>
 <p>A list of compiler flags, typically defined using a set rule.</p>
 <p><strong>Note:</strong> the <code>-I.</code> flag is automatically
 added to the compiler flags, which includes the current cache directory
 in the include path for header files.</p>
-<h2 id="compiler_cmd">COMPILER_CMD</h2>
+<h3 id="compiler_cmd">COMPILER_CMD</h3>
 <p>The compiler to use.</p>
 <p>If not explicitly specified:</p>
 <ul>
@@ -1483,7 +1885,7 @@ in the include path for header files.</p>
 <p><strong>Note:</strong> The compiler must support dependency
 generation using the <code>-MMD</code> flag to allow Autark to correctly
 track header file dependencies.</p>
-<h2 id="objects--name-">objects { NAME }</h2>
+<h3 id="objects--name-">objects { NAME }</h3>
 <p>By default, the <code>cc</code> rule sets a variable named
 <code>CC_OBJS</code> containing the list of object files produced during
 compilation.</p>
@@ -1492,7 +1894,7 @@ script, you may want to assign different output variable names using the
 <code>objects { NAME }</code> directive.</p>
 <p>This allows you to manage multiple sets of object files
 independently.</p>
-<h2 id="consumes---">consumes { ... }</h2>
+<h3 id="consumes---">consumes { ... }</h3>
 <p>This section declares <strong>additional dependencies</strong> for
 the <code>cc</code> compilation rule.</p>
 <p>For example, if your code depends on a file generated by a
@@ -1545,7 +1947,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb68-1"><a h
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
-<h1 id="macros">Macros</h1>
+<h1 id="macro-">macro {...}</h1>
 <p>Macros provide a convenient way to reuse code for implementing
 repetitive elements in a project’s build script. They are especially
 useful for defining test cases where the build steps differ only by a
@@ -1605,8 +2007,8 @@ href="https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark">htt
 install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
-<h2 id="available-variables-useful-when-installing-artifacts">Available
-variables useful when installing artifacts</h2>
+<h3 id="available-variables-useful-when-installing-artifacts">Available
+variables useful when installing artifacts</h3>
 <ul>
 <li><code>INSTALL_PREFIX</code> – Absolute path to the installation
 prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>

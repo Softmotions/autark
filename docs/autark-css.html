@@ -1,71 +1,494 @@
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
-
 <style>
-#title-block-header {
-  display: none;
-}
-html {
-  background-color: #202020;
-}
-body {
+  :root {
+    --autark-nav-width: 18rem;
+    --autark-nav-transition: 180ms ease;
+  }
+
+  #title-block-header {
+    display: none;
+  }
+
+  html {
+    background-color: #202020;
+    scroll-behavior: smooth;
+    scroll-padding-top: 1.5rem;
+  }
+
+  body {
+    box-sizing: border-box;
+    background-color: #2b2b2b;
+    color: #a9b7c6;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    line-height: 1.6;
+    padding: 2em;
+    transition:
+      margin-left var(--autark-nav-transition),
+      margin-right var(--autark-nav-transition);
+  }
+
   @media (max-width: 800px) {
-    max-width: 100%;
+    body {
+      max-width: 100%;
+    }
   }
+
   @media (min-width: 801px) {
-    max-width: 80%;
+    body {
+      max-width: 80%;
+    }
   }
+
   @media (min-width: 1200px) {
-     max-width: 60%;
-   }
-}
-body {
-  background-color: #2b2b2b;
-  color: #a9b7c6;
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
-  line-height: 1.6;
-  padding: 2em;
-}
+    body {
+      max-width: 60%;
+    }
 
-h1, h2, h3, h4, h5, h6 {
-  color: #ffffff;
-  margin-top: 1.5em;
-}
+    body.autark-nav-open {
+      margin-left: calc(var(--autark-nav-width) + 2.5rem);
+      margin-right: auto;
+    }
+  }
 
-a,a:visited {
-  color: #589df6;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #ffffff;
+    margin-top: 1.5em;
+  }
 
-div.sourceCode {
-  border-radius: 4px;
-}
+  a,
+  a:visited {
+    color: #589df6;
+    text-decoration: none;
+  }
 
-code {
-  color: #a9b7c6;
-  padding: 0.2em 0.4em;
-  border-radius: 4px;
-  font-family: "Fira Code", monospace;
-  font-size: 0.95em;
-}
+  a:hover {
+    text-decoration: underline;
+  }
 
-pre {
-  background-color: #333537;
-  color: #a9b7c6;
-  padding: 1em;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-family: "Fira Code", monospace;
-  font-size: 0.95em;
-}
-code span.dt {
-  text-decoration: none !important;
-}
-code span.co {
-  color: #828d98 !important;
-  font-style: normal;
+  div.sourceCode {
+    border-radius: 4px;
+  }
 
-}
+  code {
+    color: #a9b7c6;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: "Fira Code", monospace;
+    font-size: 0.95em;
+  }
+
+  pre {
+    background-color: #333537;
+    color: #a9b7c6;
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: "Fira Code", monospace;
+    font-size: 0.95em;
+  }
+
+  code span.dt {
+    text-decoration: none !important;
+  }
+
+  code span.co {
+    color: #828d98 !important;
+    font-style: normal;
+  }
+
+  /* Sidebar navigation */
+  #autark-nav {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--autark-nav-width);
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.9rem 0.75rem 1.5rem;
+    background: #252525;
+    border-right: 1px solid #3c3f41;
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.18);
+    transform: translateX(-100%);
+    transition: transform var(--autark-nav-transition);
+  }
+
+  body.autark-nav-open #autark-nav {
+    transform: translateX(0);
+  }
+
+  #autark-nav-title {
+    box-sizing: border-box;
+    min-height: 2.5rem;
+    margin: 0 0 0.8rem;
+    padding: 0.45rem 0.5rem 0.55rem 3.15rem;
+    border-bottom: 1px solid #3c3f41;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  #autark-nav-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  #autark-nav-list li {
+    margin: 0;
+    padding: 0;
+  }
+
+  #autark-nav-list a,
+  #autark-nav-list a:visited {
+    display: block;
+    margin: 0.08rem 0;
+    padding: 0.38rem 0.55rem;
+    border-radius: 4px;
+    color: #a9b7c6;
+    font-size: 0.88rem;
+    line-height: 1.32;
+    text-decoration: none;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  #autark-nav-list a.autark-nav-h1 {
+    margin-top: 0.3rem;
+    color: #d6dce2;
+    font-weight: 600;
+  }
+
+  #autark-nav-list a.autark-nav-h2 {
+    padding-left: 1.3rem;
+    font-size: 0.83rem;
+    color: #909ca8;
+  }
+
+  #autark-nav-list a:hover {
+    background: #333537;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  #autark-nav-list a.autark-nav-active {
+    background: #30373f;
+    color: #589df6;
+  }
+
+  #autark-nav-toggle,
+  #autark-scroll-top {
+    position: fixed;
+    z-index: 1002;
+    width: 2.35rem;
+    height: 2.35rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #4a4d50;
+    border-radius: 5px;
+    background: #333537;
+    color: #a9b7c6;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  #autark-nav-toggle {
+    top: 0.85rem;
+    left: 0.85rem;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  #autark-scroll-top {
+    right: 0.85rem;
+    bottom: 0.85rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(0.45rem);
+    transition:
+      opacity var(--autark-nav-transition),
+      transform var(--autark-nav-transition),
+      visibility 0s linear var(--autark-nav-transition);
+  }
+
+  #autark-scroll-top.autark-scroll-top-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+
+  #autark-scroll-top svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  #autark-nav-toggle:hover,
+  #autark-scroll-top:hover {
+    border-color: #66717c;
+    background: #3a3d40;
+  }
+
+  #autark-nav-toggle:focus-visible,
+  #autark-scroll-top:focus-visible,
+  #autark-nav-list a:focus-visible {
+    outline: 2px solid #589df6;
+    outline-offset: 2px;
+  }
+
+  .autark-nav-toggle-line {
+    width: 1.05rem;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform-origin: center;
+    transition:
+      transform var(--autark-nav-transition),
+      opacity var(--autark-nav-transition);
+  }
+
+  body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(1) {
+    transform: translateY(0.38rem) rotate(45deg);
+  }
+
+  body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.autark-nav-open #autark-nav-toggle .autark-nav-toggle-line:nth-child(3) {
+    transform: translateY(-0.38rem) rotate(-45deg);
+  }
+
+  #autark-nav-backdrop {
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--autark-nav-transition);
+  }
+
+  @media (max-width: 1199px) {
+    #autark-nav {
+      width: min(var(--autark-nav-width), calc(100vw - 3rem));
+    }
+
+    body.autark-nav-open #autark-nav-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    body,
+    #autark-nav,
+    #autark-nav-backdrop,
+    #autark-scroll-top,
+    .autark-nav-toggle-line {
+      transition: none !important;
+    }
+  }
+
+  @media print {
+
+    #autark-nav,
+    #autark-nav-toggle,
+    #autark-nav-backdrop,
+    #autark-scroll-top {
+      display: none !important;
+    }
+  }
 </style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const headings = Array.from(document.querySelectorAll("body h1[id], body h2[id]"))
+      .filter(function (heading) {
+        return !heading.closest("#title-block-header");
+      });
+
+    if (!headings.length) {
+      return;
+    }
+
+    const nav = document.createElement("nav");
+    nav.id = "autark-nav";
+    nav.setAttribute("aria-label", "Page navigation");
+
+    const navTitle = document.createElement("div");
+    navTitle.id = "autark-nav-title";
+    navTitle.textContent = "Contents";
+    nav.appendChild(navTitle);
+
+    const list = document.createElement("ul");
+    list.id = "autark-nav-list";
+
+    const linksById = new Map();
+
+    headings.forEach(function (heading) {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+
+      link.href = "#" + heading.id;
+      link.textContent = heading.textContent.replace(/\s+/g, " ").trim();
+      link.className = heading.tagName === "H1" ? "autark-nav-h1" : "autark-nav-h2";
+
+      item.appendChild(link);
+      list.appendChild(item);
+      linksById.set(heading.id, link);
+    });
+
+    nav.appendChild(list);
+    document.body.prepend(nav);
+
+    const button = document.createElement("button");
+    button.id = "autark-nav-toggle";
+    button.type = "button";
+    button.setAttribute("aria-controls", "autark-nav");
+    button.setAttribute("aria-label", "Toggle navigation");
+    button.innerHTML =
+      '<span class="autark-nav-toggle-line"></span>' +
+      '<span class="autark-nav-toggle-line"></span>' +
+      '<span class="autark-nav-toggle-line"></span>';
+    document.body.prepend(button);
+
+    const backdrop = document.createElement("div");
+    backdrop.id = "autark-nav-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.prepend(backdrop);
+
+    const scrollTopButton = document.createElement("button");
+    scrollTopButton.id = "autark-scroll-top";
+    scrollTopButton.type = "button";
+    scrollTopButton.setAttribute("aria-label", "Back to top");
+    scrollTopButton.setAttribute("title", "Back to top");
+    scrollTopButton.innerHTML =
+      '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+      '<path d="M3 7l5-5 5 5M8 2v12"></path>' +
+      '</svg>';
+    document.body.appendChild(scrollTopButton);
+
+    const desktop = window.matchMedia("(min-width: 1200px)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function setOpen(open) {
+      document.body.classList.toggle("autark-nav-open", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+      nav.setAttribute("aria-hidden", open ? "false" : "true");
+      nav.toggleAttribute("inert", !open);
+    }
+
+    function applyResponsiveDefault(event) {
+      setOpen(event.matches);
+    }
+
+    setOpen(desktop.matches);
+
+    button.addEventListener("click", function () {
+      setOpen(!document.body.classList.contains("autark-nav-open"));
+    });
+
+    backdrop.addEventListener("click", function () {
+      setOpen(false);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && document.body.classList.contains("autark-nav-open")) {
+        setOpen(false);
+        button.focus();
+      }
+    });
+
+    list.addEventListener("click", function (event) {
+      if (!desktop.matches && event.target.closest("a")) {
+        setOpen(false);
+      }
+    });
+
+    if (desktop.addEventListener) {
+      desktop.addEventListener("change", applyResponsiveDefault);
+    } else {
+      desktop.addListener(applyResponsiveDefault);
+    }
+
+    scrollTopButton.addEventListener("click", function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reducedMotion.matches ? "auto" : "smooth"
+      });
+    });
+
+    function updateScrollTopButton() {
+      const visible = window.scrollY >= window.innerHeight;
+      scrollTopButton.classList.toggle("autark-scroll-top-visible", visible);
+      scrollTopButton.setAttribute("aria-hidden", visible ? "false" : "true");
+    }
+
+    let scrollUpdatePending = false;
+
+    function updateActiveLink() {
+      scrollUpdatePending = false;
+
+      const marker = window.scrollY + 96;
+      let current = headings[0];
+
+      for (const heading of headings) {
+        if (heading.offsetTop <= marker) {
+          current = heading;
+        } else {
+          break;
+        }
+      }
+
+      linksById.forEach(function (link, id) {
+        const active = id === current.id;
+        link.classList.toggle("autark-nav-active", active);
+        if (active) {
+          link.setAttribute("aria-current", "location");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+    }
+
+    function updateOnScroll() {
+      updateActiveLink();
+      updateScrollTopButton();
+    }
+
+    window.addEventListener("scroll", function () {
+      if (!scrollUpdatePending) {
+        scrollUpdatePending = true;
+        window.requestAnimationFrame(updateOnScroll);
+      }
+    }, { passive: true });
+
+    window.addEventListener("resize", updateScrollTopButton, { passive: true });
+
+    updateOnScroll();
+  });
+</script>

@@ -25,35 +25,6 @@ Build rules are defined using a specialized DSL in Autark files, which is mostly
 - Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
 - Script syntax highlighting support for Vim8+, Neovim, VSCode, TextMate with [Softmotions/tree-sitter-autark](https://github.com/Softmotions/tree-sitter-autark)
 
-## References
-
-- **[Cookbook](#cookbook)**
-
-----
-
-- [meta](#meta-)
-- [option](#option-)
-- [check](#check-)
-- [set|let](#set--let-)
-- [env](#env-)
-- [${}](#-variable-evaluation)
-- [@{}](#-program-output-evaluation)
-- [^{}](#-expressions-concatenation)
-- [if](#if--condition)
-- [echo](#echo-)
-- [configure](#configure-)
-- [path helpers](#s--ss--c--cc---path-helpers)
-- [run](#run-)
-- [in-sources](#in-sources-)
-- [run-on-install](#run-on-install-)
-- [foreach](#foreach-)
-- [cc/cxx](#cc-----cxx---)
-- [library](#library-)
-- [install](#install-)
-- [install-sources](#install-sources-)
-- [macros](#macros)
-
-
 ## Articles
 
 - [Autark: Rethinking build systems – Integrate, Don’t Outsource](https://blog.annapurna.cc/posts/autark-intro/)
@@ -349,11 +320,16 @@ and the rule has been previously executed.
 This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
-# Known Limitations
+## Known Limitations
 
 * If the syntax of an Autark script is invalid, the resulting error message
   may be vague or imprecise. This is due to the use of the `leg` PEG parser generator,
-  which can produce generic error reports for malformed input.
+  which can produce generic error messages for malformed input.
+* Autark is primarily developed and tested on Linux, FreeBSD, and macOS.
+  It should also work on other Unix-like systems. Windows Subsystem for Linux (WSL)
+  is currently untested.
+* Autark does not yet support C++20 modules. Support is a work in progress and is
+  tracked in [this issue](https://github.com/Softmotions/autark/issues/1).
 
 # Cookbook
 
@@ -784,7 +760,7 @@ Invokes the specified program `PROGRAM` and returns its standard output as a str
 The `@@` form caches the program’s output and reuses it in subsequent builds,
 which is useful for time-consuming invocations such as `pkg-config`.
 
-## Example:
+### Example:
 
 ```cfg
 set {
@@ -828,7 +804,7 @@ set {
 
 Note: the space between `-DBUILD_TYPE=` and `${BUILD_TYPE}` is required.
 
-## ^{...} Special forms
+### ^{...} Special forms
 
 Join operation has two special forms which are applicable only when
 two elements passed as arguments and the only one of them represents a list.
@@ -880,7 +856,7 @@ If the condition `CONDITION_RULE` evaluates to a `truthy` value,
 the entire `if` expression is replaced by `EXPR1` in the Autark script’s instruction tree.
 Otherwise, if an `else` block is provided, it will be replaced by `EXPR2`.
 
-## Conditions
+### Conditions
 
 Exclamation mark `!` means expression result negation, when truthly evaluated expressions became false.
 
@@ -994,7 +970,7 @@ configure {
 }
 ```
 
-## @...@ Substitutions
+### @...@ Substitutions
 
 Text fragments enclosed in `@` symbols are interpreted as variable names
 and replaced with their corresponding values.
@@ -1018,7 +994,7 @@ Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir}
 Cflags.private: -DIW_STATIC
 ```
 
-## //autarkdef for C/C++ Headers
+### //autarkdef for C/C++ Headers
 
 For C/C++ header files, the `//autarkdef` directive is a convenient way
 to conditionally generate `#define` statements based on variable presence.
@@ -1054,7 +1030,7 @@ If `VAR_NAME` is defined, this becomes:
 These small helper rules are useful for computing file paths in build scripts.
 They help avoid hardcoding paths that may depend on the current location of the project's source code.
 
-## S {...}
+### S {...}
 Computes the **absolute path** of the given argument(s) relative to the **project root**.
 If multiple arguments are provided, they are be converted to list of paths.
 
@@ -1066,17 +1042,17 @@ If multiple arguments are provided, they are be converted to list of paths.
   S{foo bar baz}
 ```
 
-## SS {...}
+### SS {...}
 Same as `S`, but relative to the directory where the current script is located.
 
-## C {...}
+### C {...}
 Computes the **absolute path** to the argument(s) relative to the **project-wide autark-cache dir**.
 
-## CC {...}
+### CC {...}
 Computes the **absolute path** relative to the **local cache directory** of the current script.
 This is the default working directory for tools and commands that operate on build artifacts.
 
-## % {...}
+### % {...}
 Returns the `basename` of the given filename changing its extension optionally.
 
 ```cfg
@@ -1155,7 +1131,7 @@ in-sources {
 }
 ```
 
-## Example: Appending glob-matched source Files
+### Example: Appending glob-matched source Files
 In the example below, the `SOURCES` variable is extended with the output of a glob-matching command
 executed in the source directory. The result is assigned merged with `SOURCES` variable in the parent script:
 ```cfg
@@ -1170,7 +1146,7 @@ set {
 }
 ```
 
-## Example: Finding Java Source Files
+### Example: Finding Java Source Files
 ```cfg
 set {
   JAVA_SOURCES
@@ -1293,7 +1269,7 @@ cc|cxx {
 }
 ```
 
-## SOURCES
+### SOURCES
 
 The first argument must be an expression that returns a list of source files.
 It can be a single string (for one file) or a list defined by a `set` rule.
@@ -1305,14 +1281,14 @@ Paths to source files can be:
 - Paths relative to the cache directory corresponding to the script
   (this is useful when compiling generated sources from other rules)
 
-## COMPILER_FLAGS
+### COMPILER_FLAGS
 
 A list of compiler flags, typically defined using a set rule.
 
 **Note:** the `-I.` flag is automatically added to the compiler flags,
 which includes the current cache directory in the include path for header files.
 
-## COMPILER_CMD
+### COMPILER_CMD
 
 The compiler to use.
 
@@ -1324,7 +1300,7 @@ If not explicitly specified:
 **Note:** The compiler must support dependency generation using the `-MMD` flag
 to allow Autark to correctly track header file dependencies.
 
-## objects { NAME }
+### objects { NAME }
 
 By default, the `cc` rule sets a variable named `CC_OBJS`
 containing the list of object files produced during compilation.
@@ -1334,7 +1310,7 @@ you may want to assign different output variable names using the `objects { NAME
 
 This allows you to manage multiple sets of object files independently.
 
-## consumes { ... }
+### consumes { ... }
 
 This section declares **additional dependencies** for the `cc` compilation rule.
 
@@ -1393,7 +1369,7 @@ if { library { LIB_M libm.a }
 This will search for `libm.a`, and if found, store its absolute path in `LIB_M` and print it.
 If the library is not found, the script will terminate with an error.
 
-# Macros
+# macro {...}
 
 Macros provide a convenient way to reuse code for implementing repetitive elements in a project’s build script.
 They are especially useful for defining test cases where the build steps differ only by a few parameter values.
@@ -1463,7 +1439,7 @@ If `build.sh` is run with the `-I` or `--install` option (to install all built a
 or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
 then all `install` rules will be executed after the `build` phase completes.
 
-## Available variables useful when installing artifacts
+### Available variables useful when installing artifacts
 
 - `INSTALL_PREFIX` – Absolute path to the installation prefix.
   **Default:** `$HOME/.local`
