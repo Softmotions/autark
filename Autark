@@ -3,7 +3,7 @@ meta {
   description { Autark build system }
   author { Adamansky Anton (adamansky@gmail.com) }
   website { https://autark.dev }
-  sources { https://git.sr.ht/~adamansky/autark }
+  sources { https://github.com/Softmotions/autark }
   license { MIT }
   version { 0.9.8 }
 }
