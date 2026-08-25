@@ -1,3 +1,6 @@
+# [0.9.9-dev]
+- Added `in` test condition for `if` clause.
+
 # [0.9.8]
 
 - Parallel compilation of C/C++ source files.

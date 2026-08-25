@@ -916,15 +916,15 @@ Exclamation mark `!` means expression result negation, when truthly evaluated ex
 `[!]contains { EXPR1 EXPR2 }`
 <br/>Truthy if EXPR1 contains EXPR2 as a substring.
 
+`[!]in { EXPR1 EXPR2 ... EXPRN }`
+<br/>Truthy of EXPR1 equals to at least to one of its followers `EXPR2..EXPRN`
 
 `[!]or { EXPR1 ... EXPRN }`
 <br/>Truthy if any of the expressions inside the directive is truthy
 (according to the rules defined above).
 
-
 `[!]and { EXPR1 ... EXPRN }`
 <br/>Truthy if all expressions inside the directive are truthy.
-
 
 **Please Note:** Autark syntax does not support `else if` constructs.
 

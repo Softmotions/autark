@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.8"
-#define META_REVISION "c51510d"
+#define META_REVISION "9fcce06"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -4873,6 +4873,21 @@ static bool _if_contains_eval(struct node *mn) {
   }
 }
 
+static bool _if_in_eval(struct node *mn) {
+  if (mn->child) {
+    const char *val1 = node_value(mn->child);
+    for (struct node *nn = mn->child->next; nn; nn = nn->next) {
+      const char *val2 = node_value(nn);
+      if (val1 && val2) {
+        return strcmp(val1, val2) == 0;
+      } else if (val1 == 0 && val2 == 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 static bool _if_cond_eval(struct node *n, struct node *mn);
 
 static bool _if_OR_eval(struct node *n, struct node *mn) {
@@ -4912,6 +4927,8 @@ static bool _if_cond_eval(struct node *n, struct node *mn) {
     }
     if (strcmp(op, "eq") == 0) {
       eq = _if_matched_eval(mn);
+    } else if (strcmp(op, "in") == 0) {
+      eq = _if_in_eval(mn);
     } else if (strcmp(op, "defined") == 0) {
       eq = _if_defined_eval(mn);
     } else if (strcmp(op, "or") == 0) {
