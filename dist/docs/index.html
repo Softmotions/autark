@@ -1004,7 +1004,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb5-1"><a hr
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Option is a small description of build switch which can be set by system env and or -D flag:</span></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ENABLE_DEBINFO=1 ./build.sh</span></span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># or ./build.sh -DENABLE_DEBINFO=1</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { ENABLE_DEBINFO           Generate debuginfo even in release mode }</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { ENABLE_DEBINFO           Generate debuginfo even <span class="cf">in</span> release mode }</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span> { HELLO_MSG                Hello message provided by libhello }</span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># The `check` rule takes a list of script files that should be located in the `.autark/` directory relative to</span></span>
@@ -1315,7 +1315,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb11-1"><a h
 generated configuration file:</p>
 <div class="sourceCode" id="cb12"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  config.h.<span class="cf">in</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>For example, <code>config.h.in</code> may contain:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MYPROJECT_GIT_REVISION </span><span class="st">&quot;@META_REVISION@&quot;</span></span></code></pre></div>
@@ -1496,7 +1496,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb26-1"><a h
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>...</span>
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  config.h.<span class="cf">in</span></span>
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Autark will replace <code>//autarkdef</code> lines with the
 appropriate #define or comment them out, depending on whether the
@@ -1740,7 +1740,7 @@ and C/C++ source templates, replacing specific sections with values of
 variables from the current script context.</p>
 <div class="sourceCode" id="cb46"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.<span class="cf">in</span></span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Autark tracks all variables used during the substitution process. If
 any of those variables change, <strong>the entire</strong> configure
@@ -1749,17 +1749,17 @@ file in a separate configure rule whenever possible.</p>
 <p>Incorrect:</p>
 <div class="sourceCode" id="cb47"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.<span class="cf">in</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  config.h.<span class="cf">in</span></span>
 <span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Correct:</p>
 <div class="sourceCode" id="cb48"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.in</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  mylib.pc.<span class="cf">in</span></span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="kw">configure</span> {</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  config.h.in</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  config.h.<span class="cf">in</span></span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h3 id="-substitutions">@...@ Substitutions</h3>
 <p>Text fragments enclosed in <code>@</code> symbols are interpreted as

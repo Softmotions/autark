@@ -38,6 +38,7 @@
       <item>defined</item>
       <item>eq</item>
       <item>prefix</item>
+      <item>in</item>
       <item>contains</item>
     </list>
     <list name="properties">
