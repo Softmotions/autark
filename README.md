@@ -900,18 +900,14 @@ Exclamation mark `!` means expression result negation, when truthly evaluated ex
 - The result is a list with a single element that is not empty and not `"0"`.
  - The result is a list with more than one element, regardless of content.
 
-
 `[!]defined { VARIABLE [VARIABLE2 ...] }`
 <br/>Truthy if any of specified variables is defined in the current script context.
-
 
 `[!]eq { EXPR1 EXPR2 }`
 <br/>Truthy if the string value of `EXPR1` is equal to `EXPR2`.
 
-
 `[!]prefix { EXPR1 EXPR2 }`
 <br/>Truthy if the string value of EXPR2 is a prefix of EXPR1.
-
 
 `[!]contains { EXPR1 EXPR2 }`
 <br/>Truthy if EXPR1 contains EXPR2 as a substring.
@@ -927,7 +923,6 @@ Exclamation mark `!` means expression result negation, when truthly evaluated ex
 <br/>Truthy if all expressions inside the directive are truthy.
 
 **Please Note:** Autark syntax does not support `else if` constructs.
-
 
 # error {...} Abort build and report error
 
