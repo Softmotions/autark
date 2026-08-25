@@ -917,7 +917,7 @@ Exclamation mark `!` means expression result negation, when truthly evaluated ex
 <br/>Truthy if EXPR1 contains EXPR2 as a substring.
 
 `[!]in { EXPR1 EXPR2 ... EXPRN }`
-<br/>Truthy of EXPR1 equals to at least to one of its followers `EXPR2..EXPRN`
+<br/>Truthy if EXPR1 equals to at least to one of its followers `EXPR2..EXPRN`
 
 `[!]or { EXPR1 ... EXPRN }`
 <br/>Truthy if any of the expressions inside the directive is truthy
