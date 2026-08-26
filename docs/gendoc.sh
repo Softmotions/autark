@@ -9,5 +9,7 @@ cat ../README.md \
        --syntax-definition=./autark.xml \
        --highlight-style=./autark.theme \
        --metadata title=Autark \
+       --metadata 'pagetitle=Autark - Self-contained C/C++ Build System' \
+       --metadata lang=en \
        --include-in-header=./autark-css.html \
        -o ../dist/docs/index.html
