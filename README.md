@@ -198,7 +198,7 @@ set {
   }
   # Merge this set of flags with any previously defined CFLAGS if any.
   # Note: The `..` prefix indicates that the elements of ${CFLAGS}
-  # will be added to this set, similar to spread syntax in JavaScript.
+  # will be added to this set one by one, similar to spread syntax in JavaScript.
   ..${CFLAGS}
 }
 
@@ -487,7 +487,7 @@ option { EXTPROJECT_URL External project source archive URL }
 if { !defined { EXTPROJECT_URL } }
   set {
     EXTPROJECT_URL
-    https://github.com/....
+    https://github.com/...
   }
 }
 ```
@@ -777,6 +777,18 @@ ${VARIABLE [DEFAULT]}`
 The expression `${VARIABLE [DEFAULT]}` is used when the value of a variable needs to be passed
 as an argument to another rule.
 If the variable is not defined in the current script context, the `DEFAULT` value will be used if provided.
+
+There is one special form: `..${VARIABLE}`. if `VARIABLE` is string
+containing space separated values, those values are treated as collection of
+individual items. This is especially usefull in the context of `set` rule.
+For example:
+
+```cfg
+CXXFLAGS
+  ..${CXXFLAGS}
+  ..@@{ ${PKGCONF} --cflags protobuf }
+}
+```
 
 
 # @{...} Program output evaluation
