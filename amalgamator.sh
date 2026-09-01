@@ -175,7 +175,7 @@ fi
 
 COPTS="-O1"
 
-if ${COMPILER} --version | grep -iE 'clang|gcc'; then
+if ${COMPILER} --version | grep -i -E 'clang|gcc'; then
   COPTS="--std=c99 -O1 -march=native "
 fi
 
