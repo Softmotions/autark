@@ -2,7 +2,6 @@
 
 **Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
 It builds itself with `C99` compiler then builds your code.
-
 The goal of Autark is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
 It eliminates version compatibility issues common to traditional build systems,
@@ -13,7 +12,6 @@ compiles this source into a small (~180 KB) build executable and then uses it to
 
 Autark tracks both internal and external project dependencies precisely, avoiding much of the manual dependency
 bookkeeping typically required with Makefiles.
-
 Build rules are defined in Autark files using a specialized DSL that is declarative by design, while still providing the
 flexibility needed for non-trivial build workflows.
 
