@@ -173,6 +173,12 @@ else
   exit 1
 fi
 
+COPTS="-O1"
+
+if ${COMPILER} --version | grep -iE 'clang|gcc'; then
+  COPTS="--std=c99 -O1 -march=native "
+fi
+
 mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 EOF
@@ -185,7 +191,7 @@ if grep -E '^ID(_LIKE)?=.*debian' /etc/os-release >/dev/null; then
   CFLAGS="-DDEBIAN_MULTIARCH"
 fi
 
-(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native ${CFLAGS} -o ${AUTARK_HOME}/autark)
+(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c ${COPTS} ${CFLAGS} -o ${AUTARK_HOME}/autark)
 cp $(basename $0) ${AUTARK_HOME}/build.sh
 echo "Done"
 

@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.8
-META_REVISION=9fcce06
+META_REVISION=a06977e
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -57,12 +57,18 @@ else
   exit 1
 fi
 
+COPTS="-O1"
+
+if ${COMPILER} --version | grep -iE 'clang|gcc'; then
+  COPTS="--std=c99 -O1 -march=native "
+fi
+
 mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.8"
-#define META_REVISION "9fcce06"
+#define META_REVISION "a06977e"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -9476,7 +9482,7 @@ if grep -E '^ID(_LIKE)?=.*debian' /etc/os-release >/dev/null; then
   CFLAGS="-DDEBIAN_MULTIARCH"
 fi
 
-(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native ${CFLAGS} -o ${AUTARK_HOME}/autark)
+(set -x; ${COMPILER} ${AUTARK_HOME}/autark.c ${COPTS} ${CFLAGS} -o ${AUTARK_HOME}/autark)
 cp $(basename $0) ${AUTARK_HOME}/build.sh
 echo "Done"
 
