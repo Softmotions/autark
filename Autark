@@ -30,7 +30,6 @@ set {
 
 set {
   CFLAGS
-  -std=c99
   -D_XOPEN_SOURCE=700
   -D_POSIX_C_SOURCE=200809L
   -D_DEFAULT_SOURCE
