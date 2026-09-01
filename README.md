@@ -7,7 +7,7 @@ that has **no external dependencies** and can be distributed **directly with the
 It eliminates version compatibility issues common to traditional build systems,
 making software truly open and self-contained.
 
-The `build.sh` script contains the complete Autark build system as embedded `C` source code. When invoked, it automatically
+The [build.sh](https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh) script contains the complete Autark build system as embedded `C` source code. When invoked, it automatically
 compiles this source into a small (~180 KB) build executable and then uses it to build your project.
 
 Autark tracks both internal and external project dependencies precisely, avoiding much of the manual dependency

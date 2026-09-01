@@ -937,10 +937,12 @@ environment that has <strong>no external dependencies</strong> and can
 be distributed <strong>directly with the project’s source code</strong>.
 It eliminates version compatibility issues common to traditional build
 systems, making software truly open and self-contained.</p>
-<p>The <code>build.sh</code> script contains the complete Autark build
-system as embedded <code>C</code> source code. When invoked, it
-automatically compiles this source into a small (~180 KB) build
-executable and then uses it to build your project.</p>
+<p>The <a
+href="https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh">build.sh</a>
+script contains the complete Autark build system as embedded
+<code>C</code> source code. When invoked, it automatically compiles this
+source into a small (~180 KB) build executable and then uses it to build
+your project.</p>
 <p>Autark tracks both internal and external project dependencies
 precisely, avoiding much of the manual dependency bookkeeping typically
 required with Makefiles. Build rules are defined in Autark files using a
