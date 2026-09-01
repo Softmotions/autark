@@ -8,9 +8,14 @@ that has **no external dependencies** and can be distributed **directly with the
 It eliminates version compatibility issues common to traditional build systems,
 making software truly open and self-contained.
 
-The `build.sh` script automatically initializes the Autark build system, and then proceeds with your project build.
-Autark handles both internal and external project dependencies much more precisely and cleanly than is typically done with Makefiles by hands.
-Build rules are defined using a specialized DSL in Autark files, which is mostly declarative in nature.
+The `build.sh` script contains the complete Autark build system as embedded `C` source code. When invoked, it automatically
+compiles this source into a small (~180 KB) build executable and then uses it to build your project.
+
+Autark tracks both internal and external project dependencies precisely, avoiding much of the manual dependency
+bookkeeping typically required with Makefiles.
+
+Build rules are defined in Autark files using a specialized DSL that is declarative by design, while still providing the
+flexibility needed for non-trivial build workflows.
 
 ## Key features
 
