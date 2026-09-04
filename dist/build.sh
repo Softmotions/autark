@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.8
-META_REVISION=b82a078
+META_VERSION=0.9.9
+META_REVISION=54f7b3b
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -67,8 +67,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.8"
-#define META_REVISION "b82a078"
+#define META_VERSION "0.9.9"
+#define META_REVISION "54f7b3b"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -3412,6 +3412,10 @@ int spawn_do(struct spawn *s) {
       while (c > 0) {
         int ret = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
         if (ret == -1) {
+          if (errno == EINTR) {
+            continue;
+          }
+          rc = errno;
           break;
         }
         for (int i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i) {
@@ -3419,8 +3423,11 @@ int spawn_do(struct spawn *s) {
             continue;
           }
           short revents = fds[i].revents;
-          if (revents & POLLIN) {
-            ssize_t n = read(fds[i].fd, buf, sizeof(buf) - 1);
+          if (revents & (POLLIN | POLLHUP)) {
+            ssize_t n;
+            do {
+              n = read(fds[i].fd, buf, sizeof(buf) - 1);
+            } while (n == -1 && errno == EINTR);
             if (n > 0) {
               buf[n] = '\0';
               if (fds[i].fd == pipe_stdout[0]) {
@@ -3428,13 +3435,17 @@ int spawn_do(struct spawn *s) {
               } else {
                 s->stderr_handler(buf, n, s);
               }
-            } else if (n == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            } else if (n == 0) { // EOF
+              close(fds[i].fd);
+              fds[i].fd = -1;
+              --c;
+            } else if (errno != EAGAIN && errno != EWOULDBLOCK) {
               close(fds[i].fd);
               fds[i].fd = -1;
               --c;
             }
           }
-          if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
+          if (fds[i].fd != -1 && (revents & POLLNVAL)) {
             close(fds[i].fd);
             fds[i].fd = -1;
             --c;

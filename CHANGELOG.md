@@ -1,4 +1,5 @@
-# [0.9.9-dev]
+# [0.9.9]
+- Fix. Not all program output is handled by spawn. (spawn.c)
 - Added `in` test condition for `if` clause.
 
 # [0.9.8]
