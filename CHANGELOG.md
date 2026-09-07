@@ -1,5 +1,5 @@
 # [v0.9.10]
-- Better spread (..${}) values handling
+- Better handling of spread (..${}) values
 
 # [v0.9.9]
 - Fix. Not all program output is handled by spawn. (spawn.c)
