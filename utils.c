@@ -480,7 +480,6 @@ void utils_split_values_add(const char *v, struct xstr *xstr) {
   }
   char buf[strlen(v) + 1];
   const char *p = v;
-
   while (*p) {
     while (utils_char_is_space(*p)) ++p;
     if (*p == '\0') {
@@ -488,7 +487,6 @@ void utils_split_values_add(const char *v, struct xstr *xstr) {
     }
     char *w = buf;
     char q = 0;
-
     while (*p && (q || !utils_char_is_space(*p))) {
       if (*p == '\\') {
         ++p;

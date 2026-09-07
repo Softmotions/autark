@@ -1,8 +1,11 @@
-# [0.9.9]
+# [v0.9.10]
+- Better spread (..${}) values handling
+
+# [v0.9.9]
 - Fix. Not all program output is handled by spawn. (spawn.c)
 - Added `in` test condition for `if` clause.
 
-# [0.9.8]
+# [v0.9.8]
 
 - Parallel compilation of C/C++ source files.
 - Support of an external project dependencies.

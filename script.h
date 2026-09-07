@@ -61,6 +61,7 @@
 #define node_is_can_be_value(n__) ((n__)->type >= NODE_TYPE_VALUE && (n__)->type <= NODE_TYPE_FETCH_URL)
 
 #define node_is_rule(n__) !node_is_value(n__)
+#define node_is_spread(n__) ((n__)->value[0] == '.' && (n__)->value[1] == '.')
 
 #define NODE_PRINT_INDENT 2
 

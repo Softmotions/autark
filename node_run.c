@@ -50,6 +50,8 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
         }
         xstr_cat2(xstr, iter.item, iter.len);
       }
+    } else if (node_is_spread(nn)) {
+      utils_split_values_add(v, xstr);
     } else {
       xstr_cat(xstr, v);
     }
@@ -105,7 +107,14 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
 
   for (struct node *nn = ncmd->next; nn; nn = nn->next) {
     if (node_is_can_be_value(nn)) {
-      spawn_arg_add(s, node_value(nn));
+      if (node_is_spread(nn)) {
+        struct xstr *xstr = xstr_create_empty();
+        utils_split_values_add(node_value(nn), xstr);
+        spawn_arg_add(s, xstr_ptr(xstr));
+        xstr_destroy(xstr);
+      } else {
+        spawn_arg_add(s, node_value(nn));
+      }
     }
   }
 

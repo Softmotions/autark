@@ -27,6 +27,9 @@ static const char* _join_value(struct node *n) {
   }
 
   if (c == 2) {
+    // Check special cases:
+    //  ^{"prefix" ${list}}
+    //  ^{${list} "suffix"}
     const char *vpair[] = { node_value(pair[0]), node_value(pair[1]) };
     if ((vpair[0] && !is_vlist(vpair[0]) && is_vlist(vpair[1]))) {
       const char *prefix = vpair[0];
@@ -55,18 +58,17 @@ static const char* _join_value(struct node *n) {
     }
   }
 
-  bool list = n->value[0] == '.';
   for (struct node *nn = n->child; nn; nn = nn->next) {
-    if (list) {
-      xstr_cat(xstr, "\1");
-    }
     const char *val = node_value(nn);
     if (is_vlist(val)) {
       struct vlist_iter iter;
       vlist_iter_init(val, &iter);
+      xstr_cat(xstr, "\1");
       while (vlist_iter_next(&iter)) {
         xstr_cat2(xstr, iter.item, iter.len);
       }
+    } else if (node_is_spread(nn)) {
+      utils_split_values_add(val, xstr);
     } else {
       xstr_cat(xstr, val);
     }

@@ -122,7 +122,7 @@ static const char* _set_value_get(struct node *n) {
     if (!v) {
       v = "";
     }
-    if (nn->value[0] == '.' && nn->value[1] == '.') {
+    if (node_is_spread(nn)) {
       utils_split_values_add(v, xstr);
     } else {
       if (!is_vlist(v)) {
