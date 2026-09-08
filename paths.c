@@ -505,6 +505,9 @@ const char* path_is_prefix_for(const char *prefix, const char *path, const char 
     return 0;
   }
   const char *p = path + len;
+  if (*p == '\0') {
+    return p;
+  }
   if (*p == '/') {
     while (*p == '/') ++p;
     return p;

@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.11
-META_REVISION=fa37b24
+META_REVISION=37e83b2
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -68,7 +68,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.11"
-#define META_REVISION "fa37b24"
+#define META_REVISION "37e83b2"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -3019,6 +3019,9 @@ const char* path_is_prefix_for(const char *prefix, const char *path, const char 
     return 0;
   }
   const char *p = path + len;
+  if (*p == '\0') {
+    return p;
+  }
   if (*p == '/') {
     while (*p == '/') ++p;
     return p;
