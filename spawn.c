@@ -271,6 +271,18 @@ void spawn_set_wstatus(struct spawn *s, int wstatus) {
   s->wstatus = wstatus;
 }
 
+static void _spawn_close_fd(int *fd) {
+  if (*fd != -1) {
+    close(*fd);
+    *fd = -1;
+  }
+}
+
+static void _spawn_close_pipe(int pipefd[2]) {
+  _spawn_close_fd(&pipefd[0]);
+  _spawn_close_fd(&pipefd[1]);
+}
+
 int spawn_do(struct spawn *s) {
   int rc = 0;
   bool nowait = s->nowait;
@@ -319,48 +331,52 @@ int spawn_do(struct spawn *s) {
 
   if (!nowait) {
     if (pipe(pipe_stdout) == -1) {
-      return errno;
+      rc = errno;
+      goto fail;
     }
     if (pipe(pipe_stderr) == -1) {
-      return errno;
+      rc = errno;
+      goto fail;
     }
   }
 
   if (s->stdin_provider) {
     if (pipe(pipe_stdin) == -1) {
-      return errno;
+      rc = errno;
+      goto fail;
     }
   }
 
   s->pid = fork();
   if (s->pid == -1) {
-    return errno;
+    rc = errno;
+    goto fail;
   }
 
   if (s->pid == 0) {
     if (pipe_stdin[0] != -1) {
-      close(pipe_stdin[1]);
+      _spawn_close_fd(&pipe_stdin[1]);
       if (dup2(pipe_stdin[0], STDIN_FILENO) == -1) {
         perror("dup2");
         _exit(EXIT_FAILURE);
       }
-      close(pipe_stdin[0]);
+      _spawn_close_fd(&pipe_stdin[0]);
     }
 
     if (!nowait) {
-      close(pipe_stdout[0]);
+      _spawn_close_fd(&pipe_stdout[0]);
       if (dup2(pipe_stdout[1], STDOUT_FILENO) == -1) {
         perror("dup2");
         _exit(EXIT_FAILURE);
       }
-      close(pipe_stdout[1]);
+      _spawn_close_fd(&pipe_stdout[1]);
 
-      close(pipe_stderr[0]);
+      _spawn_close_fd(&pipe_stderr[0]);
       if (dup2(pipe_stderr[1], STDERR_FILENO) == -1) {
         perror("dup2");
         _exit(EXIT_FAILURE);
       }
-      close(pipe_stderr[1]);
+      _spawn_close_fd(&pipe_stderr[1]);
     }
 
     execve(file, args, envp);
@@ -369,12 +385,12 @@ int spawn_do(struct spawn *s) {
     _exit(EXIT_FAILURE);
   } else {
     if (!nowait) {
-      close(pipe_stdout[1]);
-      close(pipe_stderr[1]);
+      _spawn_close_fd(&pipe_stdout[1]);
+      _spawn_close_fd(&pipe_stderr[1]);
     }
 
     if (s->stdin_provider) {
-      close(pipe_stdin[0]);
+      _spawn_close_fd(&pipe_stdin[0]);
       ssize_t tow = 0;
       while ((tow = s->stdin_provider(buf, sizeof(buf), s)) > 0) {
         while (tow > 0) {
@@ -389,7 +405,7 @@ int spawn_do(struct spawn *s) {
           }
         }
       }
-      close(pipe_stdin[1]);
+      _spawn_close_fd(&pipe_stdin[1]);
     }
 
     if (!nowait) {
@@ -430,26 +446,27 @@ int spawn_do(struct spawn *s) {
                 s->stderr_handler(buf, n, s);
               }
             } else if (n == 0) { // EOF
-              close(fds[i].fd);
-              fds[i].fd = -1;
+              _spawn_close_fd(&fds[i].fd);
               --c;
             } else if (errno != EAGAIN && errno != EWOULDBLOCK) {
-              close(fds[i].fd);
-              fds[i].fd = -1;
+              _spawn_close_fd(&fds[i].fd);
               --c;
             }
           }
 
           if (fds[i].fd != -1 && (revents & POLLNVAL)) {
-            close(fds[i].fd);
-            fds[i].fd = -1;
+            _spawn_close_fd(&fds[i].fd);
             --c;
           }
         }
       }
 
-      if (waitpid(s->pid, &s->wstatus, 0) == -1) {
-        perror("waitpid");
+      int ret;
+      do {
+        ret = waitpid(s->pid, &s->wstatus, 0);
+      } while (ret == -1 && errno == EINTR);
+      if (ret == -1) {
+        rc = errno;
       }
     }
   }
@@ -457,6 +474,15 @@ int spawn_do(struct spawn *s) {
   if (rc) {
     akerror(rc, "Failed to spawn: %s", file);
   }
+  return rc;
+
+fail:
+  if (rc) {
+    akerror(rc, "Failed to spawn: %s", file);
+  }
+  _spawn_close_pipe(pipe_stdout);
+  _spawn_close_pipe(pipe_stderr);
+  _spawn_close_pipe(pipe_stdin);
   return rc;
 }
 

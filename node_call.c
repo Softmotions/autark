@@ -47,7 +47,7 @@ static int _call_macro_visit(struct node *n, int lvl, void *d) {
   }
 
   if (lvl < 0) {
-    ulist_pop(&call->nodes);
+    ulist_pop_no_realloc(&call->nodes);
     return 0;
   }
 

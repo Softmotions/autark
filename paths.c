@@ -71,6 +71,28 @@ const char* path_real_pool(const char *path, struct pool *pool) {
   }
 }
 
+static bool _path_needs_normalize(const char *path) {
+  const char *p = path;
+  while (*p) {
+    if (*p == '/') {
+      if (p[1] == '/') {
+        return true;
+      }
+      const char *s = p + 1;
+      if (s[0] == '.' && (s[1] == '/' || s[1] == '\0')) {
+        return true;
+      }
+      if (  s[0] == '.' && s[1] == '.'
+         && (s[2] == '/' || s[2] == '\0')) {
+        return true;
+      }
+    }
+    ++p;
+  }
+  size_t len = p - path;
+  return len > 1 && path[len - 1] == '/';
+}
+
 char* path_normalize(const char *path, char buf[PATH_MAX]) {
   char cwd[PATH_MAX];
   if (!getcwd(cwd, PATH_MAX)) {
@@ -82,10 +104,13 @@ char* path_normalize(const char *path, char buf[PATH_MAX]) {
 char* path_normalize_cwd(const char *path, const char *cwd, char buf[PATH_MAX]) {
   akassert(cwd);
   if (path[0] == '/') {
-    utils_strncpy(buf, path, PATH_MAX);
-    char *p = strchr(buf, '.');
-    if (  p == 0
-       || !(*(p - 1) == '/' && (p[1] == '/' || p[1] == '.' || p[1] == '\0'))) {
+    size_t len = strlen(path);
+    if (len >= PATH_MAX) {
+      errno = ENAMETOOLONG;
+      akfatal(errno, "Failed to normalize path, name is too long: %s", path);
+    }
+    memcpy(buf, path, len + 1);
+    if (!_path_needs_normalize(buf)) {
       return buf;
     }
   } else {

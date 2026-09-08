@@ -133,37 +133,3 @@ char* pool_printf(struct pool *pool, const char *fmt, ...) {
   return res;
 }
 
-const char** pool_split_string(
-  struct pool *pool,
-  const char  *haystack,
-  const char  *split_chars,
-  int          ignore_whitespace) {
-  size_t hsz = strlen(haystack);
-  const char **ret = (const char**) pool_alloc(pool, (hsz + 1) * sizeof(char*));
-  const char *sp = haystack;
-  const char *ep = sp;
-  int j = 0;
-  for (int i = 0; *ep; ++i, ++ep) {
-    const char ch = haystack[i];
-    const char *sch = strchr(split_chars, ch);
-    if ((ep >= sp) && (sch || (*(ep + 1) == '\0'))) {
-      if (!sch && (*(ep + 1) == '\0')) {
-        ++ep;
-      }
-      if (ignore_whitespace) {
-        while (utils_char_is_space(*sp)) ++sp;
-        while (utils_char_is_space(*(ep - 1))) --ep;
-      }
-      if (ep >= sp) {
-        char *s = pool_alloc(pool, ep - sp + 1);
-        memcpy(s, sp, ep - sp);
-        s[ep - sp] = '\0';
-        ret[j++] = s;
-        ep = haystack + i;
-      }
-      sp = haystack + i + 1;
-    }
-  }
-  ret[j] = 0;
-  return ret;
-}

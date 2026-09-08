@@ -25,7 +25,9 @@ cat <<'EOF' >> ${F}
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
 #define _POSIX_C_SOURCE 200809L
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#endif
 
 #include <assert.h>
 #include <errno.h>

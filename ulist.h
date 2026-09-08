@@ -39,6 +39,8 @@ void ulist_push(struct ulist*, const void *data);
 
 void ulist_pop(struct ulist*);
 
+void ulist_pop_no_realloc(struct ulist *list);
+
 void ulist_unshift(struct ulist*, const void *data);
 
 void ulist_shift(struct ulist*);

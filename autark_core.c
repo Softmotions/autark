@@ -43,6 +43,7 @@ void unit_env_set_val(struct unit *u, const char *key, const char *val) {
   }
   struct unit_env_item *item = xmalloc(len);
   item->n = 0;
+  item->tag = 0;
   if (len > sizeof(struct unit_env_item)) {
     char *wp = ((char*) item) + sizeof(struct unit_env_item);
     memcpy(wp, val, len - sizeof(struct unit_env_item));
@@ -197,7 +198,7 @@ void unit_push(struct unit *unit, struct node *n) {
 struct unit* unit_pop(void) {
   akassert(g_env.stack_units.num > 0);
   struct unit_ctx *ctx = (struct unit_ctx*) ulist_get(&g_env.stack_units, g_env.stack_units.num - 1);
-  ulist_pop(&g_env.stack_units);
+  ulist_pop_no_realloc(&g_env.stack_units);
   struct unit_ctx peek = unit_peek_ctx();
   if (peek.unit) {
     unit_ch_dir(&peek, 0);
@@ -671,8 +672,9 @@ static void _build(struct ulist *options) {
     if (p) {
       *p = '\0';
       char *val = p + 1;
-      for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
-        val[vlen - 1] = '\0';
+      size_t vlen = strlen(val);
+      while (vlen > 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r')) {
+        val[--vlen] = '\0';
       }
       unit_env_set_val(root, opt, val);
     } else {

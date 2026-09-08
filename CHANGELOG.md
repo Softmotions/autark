@@ -1,3 +1,8 @@
+# [v0.9.11]
+- Fixed several UB and memory corruption cases
+- Fixed incorrect behavior of tests in `if` condition.
+- Process spawn fixes and optimisation
+
 # [v0.9.10]
 - Better handling of spread (..${}) values
 

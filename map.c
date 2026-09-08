@@ -20,13 +20,13 @@ struct _map_entry {
 
 struct _map_bucket {
   struct _map_entry *entries;
-  uint32_t      used;
-  uint32_t      total;
+  uint32_t used;
+  uint32_t total;
 };
 
 struct map {
-  uint32_t       count;
-  uint32_t       buckets_mask;
+  uint32_t count;
+  uint32_t buckets_mask;
   struct _map_bucket *buckets;
 
   int      (*cmp_fn)(const void*, const void*);
@@ -91,8 +91,12 @@ static inline uint32_t _map_hash_uint64(uint64_t x) {
 }
 
 static inline uint32_t _map_hash_uint64_key(const void *key) {
+  return _map_hash_uint64((uintptr_t) key);
+}
+
+static inline uint32_t _map_hash_uint64_key_read(const void *key) {
   uint64_t lv = 0;
-  memcpy(&lv, key, sizeof(void*));
+  memcpy(&lv, key, sizeof(key));
   return _map_hash_uint64(lv);
 }
 
@@ -154,7 +158,7 @@ static struct _map_entry* _map_entry_find(struct map *hm, const void *key, uint3
 static void _map_rehash(struct map *hm, uint32_t num_buckets) {
   struct _map_bucket *buckets = xcalloc(num_buckets, sizeof(*buckets));
   struct _map_bucket *bucket,
-                *bucket_end = hm->buckets + _map_n_buckets(hm);
+                     *bucket_end = hm->buckets + _map_n_buckets(hm);
 
   struct map hm_copy = *hm;
   hm_copy.count = 0;
@@ -166,7 +170,9 @@ static void _map_rehash(struct map *hm, uint32_t num_buckets) {
     if (entry_old) {
       struct _map_entry *entry_old_end = entry_old + bucket->used;
       for ( ; entry_old < entry_old_end; ++entry_old) {
-        struct _map_entry *entry_new = _map_entry_add(&hm_copy, entry_old->key, entry_old->hash);
+        struct _map_entry *entry_new = _map_entry_add(&hm_copy,
+                                                      entry_old->key,
+                                                      entry_old->hash);
         entry_new->key = entry_old->key;
         entry_new->val = entry_old->val;
       }
@@ -200,7 +206,8 @@ static void _map_entry_remove(struct map *hm, struct _map_bucket *bucket, struct
     uint32_t steps_used = bucket->used / STEPS;
     uint32_t steps_total = bucket->total / STEPS;
     if (steps_used + 1 < steps_total) {
-      struct _map_entry *entries_new = realloc(bucket->entries, ((size_t) steps_used + 1) * STEPS * sizeof(entries_new[0]));
+      struct _map_entry *entries_new = realloc(bucket->entries,
+                                               ((size_t) steps_used + 1) * STEPS * sizeof(entries_new[0]));
       if (entries_new) {
         bucket->entries = entries_new;
         bucket->total = (steps_used + 1) * STEPS;
@@ -262,11 +269,16 @@ struct map* map_create_u64(void (*kv_free_fn)(void*, void*)) {
   if (!kv_free_fn) {
     kv_free_fn = _map_noop_uint64_kv_free;
   }
-  struct map *hm = map_create(_map_uint64_cmp, _map_hash_uint64_key, kv_free_fn);
+  int key_as_pointer = 0;
+  if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
+    key_as_pointer = 1;
+  }
+
+  struct map *hm = map_create(_map_uint64_cmp,
+                              key_as_pointer ? _map_hash_uint64_key : _map_hash_uint64_key_read,
+                              kv_free_fn);
   if (hm) {
-    if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
-      hm->int_key_as_pointer_value = 1;
-    }
+    hm->int_key_as_pointer_value = key_as_pointer;
   }
   return hm;
 }

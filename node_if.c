@@ -9,7 +9,7 @@
 static bool _if_defined_eval(struct node *mn) {
   struct node *n = mn->parent;
   for (struct node *nn = mn->child; nn; nn = nn->next) {
-    const char *val = node_value(mn->child);
+    const char *val = node_value(nn);
     if (val && *val != '\0' && node_env_get(n, val)) {
       return true;
     }
@@ -59,7 +59,9 @@ static bool _if_in_eval(struct node *mn) {
     for (struct node *nn = mn->child->next; nn; nn = nn->next) {
       const char *val2 = node_value(nn);
       if (val1 && val2) {
-        return strcmp(val1, val2) == 0;
+        if (strcmp(val1, val2) == 0) {
+          return true;
+        }
       } else if (val1 == 0 && val2 == 0) {
         return true;
       }
@@ -80,7 +82,7 @@ static bool _if_OR_eval(struct node *n, struct node *mn) {
 }
 
 static bool _if_AND_eval(struct node *n, struct node *mn) {
-  for (struct node *nn = mn->child; nn; nn = nn->child) {
+  for (struct node *nn = mn->child; nn; nn = nn->next) {
     if (!_if_cond_eval(n, nn)) {
       return false;
     }
@@ -89,9 +91,6 @@ static bool _if_AND_eval(struct node *n, struct node *mn) {
 }
 
 static bool _if_cond_eval(struct node *n, struct node *mn) {
-  if (node_is_value(mn)) {
-    return true;
-  }
   const char *op = mn->value;
   if (!op) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "Matching condition is not set");

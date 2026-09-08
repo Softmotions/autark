@@ -47,6 +47,7 @@ struct value utils_file_as_buf(const char *path, ssize_t buflen_max) {
   }
   ret.len = xstr_size(xstr);
   ret.buf = xstr_destroy_keep_ptr(xstr);
+  close(fd);
   return ret;
 }
 
@@ -550,7 +551,7 @@ const char* utils_json_escape_str(const char *val, ssize_t len, struct xstr *xst
   xstr_cat2(xstr, "\"", 1);
   for (size_t i = 0; i < len; ++i) {
     uint8_t ch = (uint8_t) val[i];
-    if (ch == '"' || ch == '\'') {
+    if (ch == '"' || ch == '\\') {
       xstr_cat2(xstr, "\\", 1);
       xstr_cat2(xstr, &ch, 1);
     } else if (ch >= '\b' && ch <= '\r') {

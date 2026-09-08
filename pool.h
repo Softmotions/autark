@@ -40,14 +40,4 @@ char* pool_printf_va(struct pool*, const char *format, va_list va);
 
 char* pool_printf(struct pool*, const char*, ...) __attribute__((format(__printf__, 2, 3)));
 
-const char** pool_split_string(
-  struct pool *pool,
-  const char  *haystack,
-  const char  *split_chars,
-  int          ignore_whitespace);
-
-const char** pool_split(
-  struct pool*, const char *split_chars, int ignore_ws, const char *fmt,
-  ...) __attribute__((format(__printf__, 4, 5)));
-
 #endif

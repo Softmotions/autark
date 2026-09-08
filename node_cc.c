@@ -42,17 +42,6 @@ struct _cc_ctx {
 static void _cc_cdb_entry_add(struct node *n, struct spawn *s, const char *src, const char *tgt);
 
 static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
-  char buf[127];
-  char *p = strrchr(item, '.');
-  if (!p || p[1] == '\0') {
-    return;
-  }
-  ++p;
-  char *ext = utils_strncpy(buf, p, sizeof(buf));
-  if (*ext == 'c' || *ext == 'C' || *ext == 'm') {
-    // Skip source files
-    return;
-  }
   deps_add_alias(deps, 's', src, item);
 }
 
@@ -169,6 +158,7 @@ static void _cc_on_build_source(
 
   int rc = spawn_do(s);
   if (rc) {
+    task->s = 0;
     spawn_destroy(s);
     node_error(rc, ctx->n, "%s", ctx->cc);
     return;
@@ -257,6 +247,10 @@ static void _cc_on_resolve(struct node_resolve *r) {
         ulist_push(&tasks, &task);
       }
       ++i;
+    }
+
+    if (tasks.num == 0) {
+      continue;
     }
 
     int wstatus = 0;

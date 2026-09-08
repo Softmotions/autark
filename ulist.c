@@ -142,6 +142,12 @@ void ulist_pop(struct ulist *list) {
   list->num = num;
 }
 
+void ulist_pop_no_realloc(struct ulist *list) {
+  if (list->num > 0) {
+    --list->num;
+  }
+}
+
 void ulist_unshift(struct ulist *list, const void *data) {
   if (!list->start) {
     if (list->num >= list->anum) {
@@ -185,7 +191,7 @@ struct ulist* ulist_clone(const struct ulist *list) {
   struct ulist *nlist = xmalloc(sizeof(*nlist));
   unsigned anum = list->num > _ALLOC_UNIT ? list->num : _ALLOC_UNIT;
   nlist->array = xmalloc(anum * list->usize);
-  memcpy(nlist->array, list->array + list->start, list->num * list->usize);
+  memcpy(nlist->array, list->array + (size_t) list->start * list->usize, list->num * list->usize);
   nlist->usize = list->usize;
   nlist->num = list->num;
   nlist->anum = anum;

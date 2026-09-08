@@ -290,7 +290,7 @@ static struct xnode* _rule(struct _yycontext *yy, struct xnode *key) {
       x->base.next = key->base.child;
       x->base.parent = &key->base;
       key->base.child = &x->base;
-      ulist_pop(s);
+      ulist_pop_no_realloc(s);
     } else {
       // Keep rule on the stack
       break;
@@ -308,7 +308,7 @@ static void _finish(struct _yycontext *yy) {
     x->base.next = root->base.child;
     x->base.parent = &root->base;
     root->base.child = &x->base;
-    ulist_pop(s);
+    ulist_pop_no_realloc(s);
   }
 }
 
@@ -1132,7 +1132,7 @@ void node_add_unit_deps(struct node *n, struct deps *deps) {
 void node_resolve(struct node_resolve *r) {
   akassert(r && r->path && r->n);
 
-  int rc;
+  int rc = 0;
   struct deps deps = { 0 };
   struct pool *pool = pool_create_empty();
   struct unit *unit = unit_peek();
@@ -1227,15 +1227,16 @@ void node_resolve(struct node_resolve *r) {
         if (p) {
           *p = '\0';
           char *val = p + 1;
-          for (int vlen = strlen(val); vlen >= 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r'); --vlen) {
-            val[vlen - 1] = '\0';
+          size_t vlen = strlen(val);
+          while (vlen > 0 && (val[vlen - 1] == '\n' || val[vlen - 1] == '\r')) {
+            val[--vlen] = '\0';
           }
           r->on_env_value(r, buf, val);
         }
       }
       fclose(f);
     } else {
-      akfatal(rc, "Failed to open env file: %s", env_path);
+      akfatal(errno, "Failed to open env file: %s", env_path);
     }
   }
 
