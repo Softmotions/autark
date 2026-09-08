@@ -112,11 +112,7 @@ bool deps_cur_is_outdated(struct node *n, struct deps *d) {
         return strcmp(val, d->resource) != 0;
       }
       case DEPS_TYPE_FILE_NOT_EXISTS: {
-        struct akpath_stat st;
-        if (path_stat(d->resource, &st) || st.ftype == AKPATH_NOT_EXISTS) {
-          return true;
-        }
-        break;
+        return !access(d->resource, F_OK);
       }
       case DEPS_TYPE_OUTDATED:
         return true;

@@ -1200,7 +1200,7 @@ void node_resolve(struct node_resolve *r) {
   bool env_created = false;
   if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num)) {
     if (g_env.check.log && r->n) {
-      xstr_printf(g_env.check.log, "%s: resolved outdated outdated=%d\n", r->n->name, r->resolve_outdated.num);
+      xstr_printf(g_env.check.log, "%s: resolved outdated outdated=%u\n", r->n->name, r->resolve_outdated.num);
     }
     r->on_resolve(r);
     if (access(deps_path_tmp, F_OK) == 0) {

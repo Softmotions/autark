@@ -85,12 +85,10 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
         break;
       }
       char *sp = p;
-      char *ep = sp;
       while (*p != '\0' && !utils_char_is_space(*p)) {
-        ep = p;
         ++p;
       }
-      if (ep > sp) {
+      if (p > sp) {
         if (*p != '\0') {
           *p = '\0';
           ++p;

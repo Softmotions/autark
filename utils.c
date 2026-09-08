@@ -547,18 +547,38 @@ const char* utils_json_escape_str(const char *val, ssize_t len, struct xstr *xst
   if (len < 0) {
     len = strlen(val);
   }
-  static const char *specials = "btnvfr";
   xstr_cat2(xstr, "\"", 1);
   for (size_t i = 0; i < len; ++i) {
     uint8_t ch = (uint8_t) val[i];
-    if (ch == '"' || ch == '\\') {
-      xstr_cat2(xstr, "\\", 1);
-      xstr_cat2(xstr, &ch, 1);
-    } else if (ch >= '\b' && ch <= '\r') {
-      xstr_cat2(xstr, "\\", 1);
-      xstr_cat2(xstr, &specials[ch - '\b'], 1);
-    } else {
-      xstr_cat2(xstr, &ch, 1);
+    switch (ch) {
+      case '"':
+      case '\\':
+        xstr_cat2(xstr, "\\", 1);
+        xstr_cat2(xstr, &ch, 1);
+        break;
+
+      case '\b':
+        xstr_cat(xstr, "\\b");
+        break;
+      case '\t':
+        xstr_cat(xstr, "\\t");
+        break;
+      case '\n':
+        xstr_cat(xstr, "\\n");
+        break;
+      case '\f':
+        xstr_cat(xstr, "\\f");
+        break;
+      case '\r':
+        xstr_cat(xstr, "\\r");
+        break;
+
+      default:
+        if (ch < 0x20) {
+          xstr_printf(xstr, "\\u%04x", ch);
+        } else {
+          xstr_cat2(xstr, &ch, 1);
+        }
     }
   }
   xstr_cat2(xstr, "\"", 1);

@@ -101,7 +101,10 @@ int fetchreg_register(struct fetchreg *r, const struct fetcherg_entry *entry) {
     return AK_ERROR_INVALID_ARGS;
   }
   long int old_pos = ftell(r->f);
-  if (fseek(r->f, SEEK_END, 0) == -1) {
+  if (old_pos < 0) {
+    return errno;
+  }
+  if (fseek(r->f, 0, SEEK_END) == -1) {
     return errno;
   }
   if (entry->target) {

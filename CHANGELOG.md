@@ -1,7 +1,11 @@
 # [v0.9.11]
-- Fixed several UB and memory corruption cases
+- Fixed several UB and memory corruption cases.
 - Fixed incorrect behavior of tests in `if` condition.
-- Process spawn fixes and optimisation
+- Process spawn fixes and optimisation.
+- Fixed incorrect DEPS_TYPE_FILE_NOT_EXISTS condition.
+- Fixed incorrect fseek() in fetchreg_register()
+- Fixed incorrect JSON escaping for compile_commands.json
+- Fixed wrong compiler headers dependency parsing.
 
 # [v0.9.10]
 - Better handling of spread (..${}) values
