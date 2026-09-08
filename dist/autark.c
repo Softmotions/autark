@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.11"
-#define META_REVISION "5352b5e"
+#define META_REVISION "4d375c3"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -3726,7 +3726,7 @@ static char* _file_resolve_in_path(struct spawn *s, const char *file, char pathb
       } else {
         snprintf(pathbuf, PATH_MAX, "%s%s", buf, file);
       }
-      if (!access(pathbuf, F_OK)) {
+      if (!access(pathbuf, X_OK)) {
         return pathbuf;
       }
     }
