@@ -1,3 +1,8 @@
+check {
+  checks.sh
+  changelog_md.sh { S{CHANGELOG.md} }
+}
+
 meta {
   name { Autark }
   description { Autark build system }
@@ -5,17 +10,13 @@ meta {
   website { https://autark.dev }
   sources { https://github.com/Softmotions/autark }
   license { MIT }
-  version { 0.9.11 }
+  version { ${CHANGELOG_VERSION} }
 }
 
 if { ${RUN_TESTS}
   set {
     BUILD_TESTS 1
   }
-}
-
-check {
-  checks.sh
 }
 
 set {

@@ -1219,7 +1219,7 @@ void node_resolve(struct node_resolve *r) {
   }
 
   if (r->on_env_value && (r->mode & NODE_RESOLVE_ENV_ALWAYS) && (env_created || !access(env_path, R_OK))) {
-    char buf[4096];
+    char buf[16384];
     FILE *f = fopen(env_path, "r");
     if (f) {
       while (fgets(buf, sizeof(buf), f)) {

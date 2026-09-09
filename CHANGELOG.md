@@ -1,3 +1,7 @@
+# [v0.9.12]
+- Added changelog processing check scripts.
+  GNU and Markdown styles are supported.
+
 # [v0.9.11]
 - Fixed several UB and memory corruption cases.
 - Fixed incorrect behavior of tests in `if` condition.
@@ -15,7 +19,6 @@
 - Added `in` test condition for `if` clause.
 
 # [v0.9.8]
-
 - Parallel compilation of C/C++ source files.
 - Support of an external project dependencies.
 - Automatic generation of `compile_commands.json` compilation database.

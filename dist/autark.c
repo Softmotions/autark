@@ -1,8 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define META_VERSION "0.9.11"
-#define META_REVISION "4d375c3"
+#define META_VERSION "0.9.12"
+#define META_REVISION "62885dd"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -10706,7 +10706,7 @@ void node_resolve(struct node_resolve *r) {
   }
 
   if (r->on_env_value && (r->mode & NODE_RESOLVE_ENV_ALWAYS) && (env_created || !access(env_path, R_OK))) {
-    char buf[4096];
+    char buf[16384];
     FILE *f = fopen(env_path, "r");
     if (f) {
       while (fgets(buf, sizeof(buf), f)) {
