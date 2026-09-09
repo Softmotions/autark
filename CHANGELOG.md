@@ -1,3 +1,6 @@
+# [v0.9.13-dev]
+- Added autark script `prepare` keyword as alias of `check`
+
 # [v0.9.12]
 - Added changelog processing check scripts.
   GNU and Markdown styles are supported.

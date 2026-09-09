@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.12
-META_REVISION=62885dd
+META_VERSION=0.9.13-dev
+META_REVISION=901e7a8
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -67,8 +67,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.12"
-#define META_REVISION "62885dd"
+#define META_VERSION "0.9.13-dev"
+#define META_REVISION "901e7a8"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -8453,7 +8453,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_JOIN;
   } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "let") == 0) {
     return NODE_TYPE_SET;
-  } else if (strcmp(key, "check") == 0) {
+  } else if (strcmp(key, "check") == 0 || strcmp(key, "prepare") == 0) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "include") == 0) {
     return NODE_TYPE_INCLUDE;

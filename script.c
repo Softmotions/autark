@@ -76,7 +76,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_JOIN;
   } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "let") == 0) {
     return NODE_TYPE_SET;
-  } else if (strcmp(key, "check") == 0) {
+  } else if (strcmp(key, "check") == 0 || strcmp(key, "prepare") == 0) {
     return NODE_TYPE_CHECK;
   } else if (strcmp(key, "include") == 0) {
     return NODE_TYPE_INCLUDE;
