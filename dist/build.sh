@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.13-dev
-META_REVISION=901e7a8
+META_REVISION=e224d22
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -68,7 +68,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.13-dev"
-#define META_REVISION "901e7a8"
+#define META_REVISION "e224d22"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_

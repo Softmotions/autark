@@ -1,4 +1,13 @@
 #!/bin/sh
+
+# GNU style changelog parser.
+#
+# Example:
+# 2026-09-09	Anton Adamansky  <adamansky@gmail.com>  [v1.3.2-dev]
+#	* Autark: Project versions now track Changelog.
+#	* src/Autark: macOS poller and shared-library builds - #11
+# ...
+
 set -eu
 
 [ "$#" -eq 1 ] || {
@@ -95,8 +104,14 @@ changelog=$(awk '
     if (out)
       printf "\\n"
 
-    gsub(/\\/, "\\\\", s)
-    printf "%s", s
+    for (i = 1; i <= length(s); i++) {
+      c = substr(s, i, 1)
+      if (c == "\\")
+        printf "\\\\"
+      else
+        printf "%s", c
+    }
+
     out = 1
   }
 ' "$f")

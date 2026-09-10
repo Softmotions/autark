@@ -10,6 +10,9 @@
 #    # [v0.9.11]
 #    - Fixed several UB and memory corruption cases.
 #    - Fixed incorrect behavior of tests in `if` condition.
+#
+#    # [1.1.2] - 2024-09-27
+#    ### Added - v1.1 German translation. - v1.1 Italian translation.
 #    ...
 
 set -eu
@@ -29,7 +32,7 @@ f=$1
 autark dep "$f"
 
 version=$(awk '
-  /^[[:space:]]*#[[:space:]]*/ &&
+  /^[[:space:]]*#[#]?[[:space:]]+/ &&
   match($0, /\[[vV]?[0-9][^]]*\]/) {
     s = substr($0, RSTART + 1, RLENGTH - 2)
     sub(/^[vV]/, "", s)
@@ -79,7 +82,7 @@ fi
 
 changelog=$(awk '
   function header() {
-    return $0 ~ /^[[:space:]]*#[[:space:]]*/ &&
+    return $0 ~ /^[[:space:]]*#[#]?[[:space:]]+/ &&
            match($0, /\[[vV]?[0-9][^]]*\]/)
   }
 
@@ -108,8 +111,14 @@ changelog=$(awk '
     if (out)
       printf "\\n"
 
-    gsub(/\\/, "\\\\", s)
-    printf "%s", s
+    for (i = 1; i <= length(s); i++) {
+      c = substr(s, i, 1)
+      if (c == "\\")
+        printf "\\\\"
+      else
+        printf "%s", c
+    }
+
     out = 1
   }
 ' "$f")
