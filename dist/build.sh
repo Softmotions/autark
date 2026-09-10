@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.13-dev
-META_REVISION=e224d22
+META_VERSION=0.9.13
+META_REVISION=6c1150c
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -67,8 +67,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.13-dev"
-#define META_REVISION "e224d22"
+#define META_VERSION "0.9.13"
+#define META_REVISION "6c1150c"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -2962,9 +2962,12 @@ bool path_is_exist(const char *path) {
   return st.ftype != AKPATH_NOT_EXISTS;
 }
 static inline int _path_num_segments(const char *path) {
+  if (path[0] == '/' && path[1] == '\0') {
+    return 0;
+  }
   int c = 0;
-  for (const char *rp = path; *rp != '\0'; ++rp) {
-    if (*rp == '/' || *rp == '\0') {
+  for (const char *rp = path; *rp; ++rp) {
+    if (*rp == '/') {
       ++c;
     }
   }
@@ -3007,7 +3010,16 @@ char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   if (*srp != '\0') {
     xstr_cat(xstr, srp + 1);
   }
-  return xstr_destroy_keep_ptr(xstr);
+  char *ret = xstr_destroy_keep_ptr(xstr);
+  if (*ret == '\0') {
+    free(ret);
+    return xstrdup(".");
+  }
+  size_t len = strlen(ret);
+  if (len > 1 && ret[len - 1] == '/') {
+    ret[len - 1] = '\0';
+  }
+  return ret;
 }
 char* path_dirname(char *path) {
   return dirname(path);

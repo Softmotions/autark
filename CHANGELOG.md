@@ -1,5 +1,8 @@
-# [v0.9.13-dev]
-- Added autark script `prepare` keyword as alias of `check`
+# [v0.9.13]
+- Added autark script `prepare` keyword as alias of `check`.
+- Fixed incorrect behaviour of `path_relativize_cwd()` for some edge cases.
+- Fixes ./check_scripts/changelog_md.sh changelog parser allowing optional timestamps.
+- Maked changelog parsers awk rules to be more portable.
 
 # [v0.9.12]
 - Added changelog processing check scripts.

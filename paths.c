@@ -421,9 +421,12 @@ bool path_is_exist(const char *path) {
 }
 
 static inline int _path_num_segments(const char *path) {
+  if (path[0] == '/' && path[1] == '\0') {
+    return 0;
+  }
   int c = 0;
-  for (const char *rp = path; *rp != '\0'; ++rp) {
-    if (*rp == '/' || *rp == '\0') {
+  for (const char *rp = path; *rp; ++rp) {
+    if (*rp == '/') {
       ++c;
     }
   }
@@ -471,7 +474,19 @@ char* path_relativize_cwd(const char *from_, const char *to_, const char *cwd) {
   if (*srp != '\0') {
     xstr_cat(xstr, srp + 1);
   }
-  return xstr_destroy_keep_ptr(xstr);
+
+  char *ret = xstr_destroy_keep_ptr(xstr);
+  if (*ret == '\0') {
+    free(ret);
+    return xstrdup(".");
+  }
+
+  size_t len = strlen(ret);
+  if (len > 1 && ret[len - 1] == '/') {
+    ret[len - 1] = '\0';
+  }
+
+  return ret;
 }
 
 char* path_dirname(char *path) {
