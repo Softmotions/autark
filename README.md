@@ -516,9 +516,9 @@ parts of the project whenever the version or description changes.
 A good practice to use `${CHANGELOG_...}` variables in [meta](#meta-) section. Like:
 
 ```cfg
-  meta {
-    version { ${CHANGELOG_VERSION} }
-  }
+meta {
+  version { ${CHANGELOG_VERSION} }
+}
 ```
 
 ## How to get JSON compilation database (compile_commands.json) for my project?
