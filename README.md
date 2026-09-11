@@ -470,7 +470,8 @@ For example, `config.h.in` may contain:
 The generated `config.h` will then contain the Git revision that was current when the configuration step was executed.
 
 
-## How to get version info from project's Changelog file
+## How to get version info from project's Changelog file?
+I’m constantly forgetting to keep the project version in the changelog in sync with the one in the build files.
 
 ```cfg
 check {

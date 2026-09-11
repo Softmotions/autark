@@ -1398,7 +1398,9 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb12-1"><a h
 <p>The generated <code>config.h</code> will then contain the Git
 revision that was current when the configuration step was executed.</p>
 <h2 id="how-to-get-version-info-from-projects-changelog-file">How to get
-version info from project's Changelog file</h2>
+version info from project's Changelog file?</h2>
+<p>I’m constantly forgetting to keep the project version in the
+changelog in sync with the one in the build files.</p>
 <div class="sourceCode" id="cb14"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">check</span> {</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  changelog_md.sh { <span class="bu">S</span>{ &lt;project_markdown_style_changelog_file&gt; } }</span>
