@@ -475,10 +475,10 @@ I’m constantly forgetting to keep the project version in the changelog in sync
 
 ```cfg
 check {
-  changelog_md.sh { S{ <project_markdown_style_changelog_file> } }
+  changelog_md.sh { <project_markdown_style_changelog_file> }
 
   # Or
-  changelog_gnu.sh { S{ <project_gnu_style_changelog_file> } }
+  changelog_gnu.sh { <project_gnu_style_changelog_file> }
 
   # Or you may write own changelog parser script
 }
