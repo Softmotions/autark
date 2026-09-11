@@ -1,6 +1,6 @@
 # Autark – A self-contained build system for C, C++ and others
 
-**Autark** is a vendored, self-bootstrapping C/C++ build system for portable source distributions.
+**Autark** is a self-bootstrapping build system for portable source distributions.
 It builds itself with `C99` compiler then builds your code.
 The goal of Autark is to provide the community with a portable, cross-platform build environment
 that has **no external dependencies** and can be distributed **directly with the project’s source code**.
@@ -113,7 +113,10 @@ Below is a demonstration of an Autark script from the demo project:
 https://github.com/Softmotions/autark-sample-project
 Take a look and try building it!
 
-Also see [Softmotions/iwnet](https://github.com/Softmotions/iwnet) or [Softmotions/protobuf-c](https://github.com/Softmotions/protobuf-c) for good real-word examples.
+Also see good real-word examples:
+* https://github.com/Softmotions/iwnet
+* https://github.com/Softmotions/ejdb
+* https://github.com/Softmotions/protobuf-c
 
 ```sh
 git clone https://github.com/Softmotions/autark-sample-project
@@ -144,7 +147,7 @@ meta {
 option { ENABLE_DEBINFO           Generate debuginfo even in release mode }
 option { HELLO_MSG                Hello message provided by libhello }
 
-# The `check` rule takes a list of script files that should be located in the `.autark/` directory relative to
+# The `check` rule takes a list of script files located in the `.autark/` directory relative to
 # the current Autark script file. A check script is a dash shell (`sh`) script that runs during the early stage
 # of the build process (`init` phase). It verifies system requirements, locates required software or libraries,
 # and sets variables that will be available in the Autark script. Check scripts typically use `autark set` to
@@ -465,6 +468,57 @@ For example, `config.h.in` may contain:
 ```
 
 The generated `config.h` will then contain the Git revision that was current when the configuration step was executed.
+
+
+## How to get version info from project's Changelog file
+
+```cfg
+check {
+  changelog_md.sh { S{ <project_markdown_style_changelog_file> } }
+
+  # Or
+  changelog_gnu.sh { S{ <project_gnu_style_changelog_file> } }
+
+  # Or you may write own changelog parser script
+}
+```
+
+Given the following `CHANGELOG.md`:
+
+```md
+ [v0.9.13-dev]
+- Added autark script `prepare` keyword as alias of `check`.
+- Fixed incorrect behaviour of `path_relativize_cwd()` for some edge cases.
+...
+```
+
+```cfg
+check {
+  changelog_md.sh { S{CHANGELOG.md} }
+}
+```
+
+The following variables are now available in the Autark script context:
+
+```
+CHANGELOG_VERSION=0.9.13-dev
+CHANGELOG_VERSION_MAJOR=0
+CHANGELOG_VERSION_MINOR=9
+CHANGELOG_VERSION_PATCH=13
+CHANGELOG_VERSION_FLAVOR=dev
+CHANGELOG=- Added autark script `prepare` keyword as alias of `check`.\n- Fixed incorrect behaviour of `path_relativize_cwd()` for some edge cases.
+```
+
+Autark tracks all version-related dependencies associated with the changelog and automatically rebuilds all dependent
+parts of the project whenever the version or description changes.
+
+A good practice to use `${CHANGELOG_...}` variables in [meta](#meta-) section. Like:
+
+```cfg
+  meta {
+    version { ${CHANGELOG_VERSION} }
+  }
+```
 
 ## How to get JSON compilation database (compile_commands.json) for my project?
 
