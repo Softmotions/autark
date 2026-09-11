@@ -1531,7 +1531,7 @@ If the argument index `N` is omitted (`&{}`), the arguments are substituted in s
 A good real-world example of using macros can be found here:
 https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark
 
-# install {..}
+# install {...}
 
 If `build.sh` is run with the `-I` or `--install` option (to install all built artifacts),
 or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
