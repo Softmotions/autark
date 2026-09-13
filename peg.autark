@@ -7,7 +7,7 @@ if { !defined {PEG_URL}
 }
 
 check {
-  fetch_resource.sh { ${PEG_URL} C{extern_peg} PEG_SRC_DIR 2 }
+  fetch_resource.sh { ${PEG_URL} C{extern_peg} PEG_SRC_DIR }
 }
 
 set {
