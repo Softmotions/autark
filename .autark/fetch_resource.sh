@@ -1,0 +1,1 @@
+../check_scripts/fetch_resource.sh

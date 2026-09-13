@@ -24,6 +24,8 @@ set {
   @{ git rev-parse --short HEAD }
 }
 
+include { peg.autark }
+
 set {
   CC
   ${CC cc}
@@ -132,7 +134,7 @@ run {
 }
 
 run {
-  exec { ${LEG} -o scriptx.h S{scriptx.leg} }
+  exec { ${LEG_EXEC} -o scriptx.h S{scriptx.leg} }
   consumes {
     scriptx.leg
   }
