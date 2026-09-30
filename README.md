@@ -44,7 +44,7 @@ wget -O ./build.sh \
   https://raw.githubusercontent.com/Softmotions/autark/refs/heads/master/dist/build.sh
 chmod u+x ./build.sh
 
-# Write an Autark script then
+... Write your Autark build script
 
 ./build.sh
 ```
