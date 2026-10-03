@@ -75,6 +75,10 @@ struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_ta
   return 0;
 }
 
+struct unit_env_item* unit_env_get_item(struct unit *u, const char *key) {
+  return map_get(u->env, key);
+}
+
 const char* unit_env_get_raw(struct unit *u, const char *key) {
   struct unit_env_item *item = map_get(u->env, key);
   if (item) {

@@ -1,5 +1,6 @@
 # [v0.9.14-dev]
--  Ian Piumarta's PEG parser v0.1.19 is now included in project source tree
+- Fixed `-D` build options being shadowed by root-level `set { X ${X default} }` declarations, so command-line values now take precedence over inline defaults.
+- Ian Piumarta's PEG parser v0.1.19 is now included in project source tree
 
 # [v0.9.13]
 - Added autark script `prepare` keyword as alias of `check`.

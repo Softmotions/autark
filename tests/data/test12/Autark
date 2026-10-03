@@ -1,0 +1,9 @@
+set {
+  BUILD_TYPE
+  ${BUILD_TYPE Release}
+}
+
+set {
+  RESULT
+  ${BUILD_TYPE}
+}

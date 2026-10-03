@@ -90,6 +90,7 @@ struct node {
   // Recursive set
   struct {
     struct node *n;
+    const char *val; /// Prior raw value (e.g. from -D) preserved for self-referencing defaults
     bool active;
   } recur_next;
 

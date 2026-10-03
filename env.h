@@ -135,6 +135,8 @@ void unit_env_set_val(struct unit*, const char *key, const char *val);
 
 void unit_env_set_node(struct unit*, const char *key, struct node *n, unsigned tag);
 
+struct unit_env_item* unit_env_get_item(struct unit *u, const char *key);
+
 struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_tag);
 
 const char* unit_env_get(struct node *n, const char *key);

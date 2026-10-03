@@ -13,6 +13,10 @@ static void _set_dispose(struct node *n) {
     free(n->impl);
   }
   n->impl = 0;
+  if (n->recur_next.val) {
+    free((void*) n->recur_next.val);
+    n->recur_next.val = 0;
+  }
 }
 
 static bool _set_is_let(struct node *n) {
@@ -41,10 +45,16 @@ static void _set_init_impl(struct node *n) {
     node_warn(n, "No name specified for 'set' directive");
     return;
   }
-  unsigned tag = 0;
-  struct node *nn = unit_env_get_node(unit, key, &tag);
-  if (nn && nn != n) {
-    n->recur_next.n = nn;
+  struct unit_env_item *item = unit_env_get_item(unit, key);
+  if (item) {
+    if (item->n && item->n != n) {
+      n->recur_next.n = item->n;
+    } else if (item->val && !n->recur_next.val) {
+      // Preserve a pre-existing raw value (e.g. from -D) so that a
+      // self-referencing default like `set { X ${X def} }` resolves to
+      // the caller-provided value instead of silently falling back to def.
+      n->recur_next.val = xstrdup(item->val);
+    }
   }
   unit_env_set_node(unit, key, n, 0);
 }
@@ -79,8 +89,13 @@ static void _set_build(struct node *n) {
 }
 
 static const char* _set_value_get(struct node *n) {
-  if (n->recur_next.active && n->recur_next.n) {
-    return _set_value_get(n->recur_next.n);
+  if (n->recur_next.active) {
+    if (n->recur_next.n) {
+      return _set_value_get(n->recur_next.n);
+    }
+    if (n->recur_next.val) {
+      return n->recur_next.val;
+    }
   }
   n->recur_next.active = true;
 
