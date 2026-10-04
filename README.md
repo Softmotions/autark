@@ -620,7 +620,7 @@ These variables can be defined either as environment variables:
 BUILD_TYPE=Release BUILD_SHARED_LIBS=1 ./build.sh
 ```
 
-or as command-line arguments:
+Alternatively `-D` command-line arguments are used as options, but doesn't set system environment variable:
 
 ```sh
 ./build.sh -DBUILD_TYPE=Release -DBUILD_SHARED_LIBS=1
@@ -630,6 +630,16 @@ If you don't use the variable values in shell scripts during the build,
 the second method is preferred - it avoids polluting the environment
 and prevents these variables from leaking into subprocesses where they might be unnecessary
 or accidentally override something.
+
+If you want to propagate options to external subprojects then use environment variables.
+Below `ENABLE_ASAN=1` propagates option to all child subprojects:
+```sh
+ENABLE_ASAN=1 ./build.sh
+```
+Here `ENABLE_ASAN` available only in the current build process.
+```sh
+./build.sh -DENABLE_ASAN=1
+```
 
 To list all documented build options, use:
 ```sh
