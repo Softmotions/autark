@@ -1,4 +1,4 @@
-# [v0.9.14-dev]
+# [v0.9.14]
 - Fixed `-D` build options being shadowed by root-level `set { X ${X default} }` declarations, so command-line values now take precedence over inline defaults.
 - Ian Piumarta's PEG parser v0.1.19 is now included in project source tree
 
