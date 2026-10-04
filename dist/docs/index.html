@@ -2313,32 +2313,6 @@ href="https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark">htt
 install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
-<h3 id="available-variables-useful-when-installing-artifacts">Available
-variables useful when installing artifacts</h3>
-<ul>
-<li><code>INSTALL_PREFIX</code> – Absolute path to the installation
-prefix. <strong>Default:</strong> <code>$HOME/.local</code></li>
-<li><code>INSTALL_BIN_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for installing executables.
-<strong>Default:</strong> <code>bin</code></li>
-<li><code>INSTALL_LIB_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for installing libraries.
-<strong>Default:</strong> platform-dependent (e.g., <code>lib</code> or
-<code>lib64</code>)</li>
-<li><code>INSTALL_DATA_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for shared data. <strong>Default:</strong>
-<code>share</code></li>
-<li><code>INSTALL_INCLUDE_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for headers. <strong>Default:</strong>
-<code>include</code></li>
-<li><code>INSTALL_PKGCONFIG_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for <code>.pc</code> files.
-<strong>Default:</strong> platform-dependent (e.g.,
-<code>lib/pkgconfig</code>)</li>
-<li><code>INSTALL_MAN_DIR</code> – Path relative to
-<code>INSTALL_PREFIX</code> for man pages. <strong>Default:</strong>
-<code>share/man</code></li>
-</ul>
 <div class="sourceCode" id="cb83"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
@@ -2389,6 +2363,82 @@ href="https://github.com/Softmotions/iwnet">Softmotions/iwnet</a></p>
 <p><strong>NOTE:</strong> autonomous source distribution mode requires
 at least one <code>install-sources</code> directive in your build
 config.</p>
+<h1 id="autark-built-in-script-variables">Autark built-in script
+variables</h1>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AUTARK_ROOT_DIR</code></td>
+<td>Absolute path to the project root directory containing the root
+<code>Autark</code> script.</td>
+</tr>
+<tr>
+<td><code>AUTARK_CACHE_DIR</code></td>
+<td>Absolute path to the project-wide Autark cache directory. By
+default, this is <code>autark-cache</code> under the project root.</td>
+</tr>
+<tr>
+<td><code>UNIT_DIR</code></td>
+<td>Absolute path to the directory of the currently processed Autark
+build unit (script). For the root unit, this is the same as
+<code>AUTARK_ROOT_DIR</code>.</td>
+</tr>
+<tr>
+<td><code>UNIT_CACHE_DIR</code></td>
+<td>Absolute path to the cache directory associated with the currently
+processed build unit (script). For the root unit, this is the same as
+<code>AUTARK_CACHE_DIR</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_ENABLED</code></td>
+<td>Set to <code>1</code> when installation has been requested/enabled.
+Otherwise the variable is not set.</td>
+</tr>
+<tr>
+<td><code>INSTALL_PREFIX</code></td>
+<td>Absolute installation prefix. Default:
+<code>$HOME/.local</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_BIN_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for executable
+files. Default: <code>bin</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_LIB_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for libraries.
+Default is platform-dependent, typically <code>lib</code> or
+<code>lib64</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_DATA_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for shared/project
+data. Default: <code>share</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_INCLUDE_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for header files.
+Default: <code>include</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_PKGCONFIG_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for pkg-config
+<code>.pc</code> files. Default is platform-dependent, typically
+<code>lib/pkgconfig</code>.</td>
+</tr>
+<tr>
+<td><code>INSTALL_MAN_DIR</code></td>
+<td>Directory relative to <code>INSTALL_PREFIX</code> for manual pages.
+Default: <code>share/man</code>.</td>
+</tr>
+</tbody>
+</table>
 <h1 id="contributing">Contributing</h1>
 <ul>
 <li><p>The best way to contribute to this project is to submit a pull
@@ -2416,8 +2466,7 @@ cannot meaningfully discuss the submitted changes yourself, please do
 not attempt to contribute them to this project.</p></li>
 </ul>
 <h1 id="license">License</h1>
-<pre><code>
-MIT License
+<pre><code>MIT License
 
 Copyright (c) 2012-2026 Softmotions Ltd &lt;info@softmotions.com&gt;
 
@@ -2437,7 +2486,6 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-</code></pre>
+SOFTWARE.</code></pre>
 </body>
 </html>

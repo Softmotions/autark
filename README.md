@@ -1547,23 +1547,6 @@ If `build.sh` is run with the `-I` or `--install` option (to install all built a
 or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
 then all `install` rules will be executed after the `build` phase completes.
 
-### Available variables useful when installing artifacts
-
-- `INSTALL_PREFIX` – Absolute path to the installation prefix.
-  **Default:** `$HOME/.local`
-- `INSTALL_BIN_DIR` – Path relative to `INSTALL_PREFIX` for installing executables.
-  **Default:** `bin`
-- `INSTALL_LIB_DIR` – Path relative to `INSTALL_PREFIX` for installing libraries.
-  **Default:** platform-dependent (e.g., `lib` or `lib64`)
-- `INSTALL_DATA_DIR` – Path relative to `INSTALL_PREFIX` for shared data.
-  **Default:** `share`
-- `INSTALL_INCLUDE_DIR` – Path relative to `INSTALL_PREFIX` for headers.
-  **Default:** `include`
-- `INSTALL_PKGCONFIG_DIR` – Path relative to `INSTALL_PREFIX` for `.pc` files.
-  **Default:** platform-dependent (e.g., `lib/pkgconfig`)
-- `INSTALL_MAN_DIR` – Path relative to `INSTALL_PREFIX` for man pages.
-  **Default:** `share/man`
-
 ```cfg
 install { INSTAL_TARGET_DIR FILES... }
 ```
@@ -1623,6 +1606,24 @@ in [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
 **NOTE:** autonomous source distribution mode requires at least one `install-sources` directive in your build config.
 
+# Autark built-in script variables
+
+| Variable | Description |
+|---|---|
+| `AUTARK_ROOT_DIR` | Absolute path to the project root directory containing the root `Autark` script. |
+| `AUTARK_CACHE_DIR` | Absolute path to the project-wide Autark cache directory. By default, this is `autark-cache` under the project root. |
+| `UNIT_DIR` | Absolute path to the directory of the currently processed Autark build unit (script). For the root unit, this is the same as `AUTARK_ROOT_DIR`. |
+| `UNIT_CACHE_DIR` | Absolute path to the cache directory associated with the currently processed build unit (script). For the root unit, this is the same as `AUTARK_CACHE_DIR`. |
+| `INSTALL_ENABLED` | Set to `1` when installation has been requested/enabled. Otherwise the variable is not set. |
+| `INSTALL_PREFIX` | Absolute installation prefix. Default: `$HOME/.local`. |
+| `INSTALL_BIN_DIR` | Directory relative to `INSTALL_PREFIX` for executable files. Default: `bin`. |
+| `INSTALL_LIB_DIR` | Directory relative to `INSTALL_PREFIX` for libraries. Default is platform-dependent, typically `lib` or `lib64`. |
+| `INSTALL_DATA_DIR` | Directory relative to `INSTALL_PREFIX` for shared/project data. Default: `share`. |
+| `INSTALL_INCLUDE_DIR` | Directory relative to `INSTALL_PREFIX` for header files. Default: `include`. |
+| `INSTALL_PKGCONFIG_DIR` | Directory relative to `INSTALL_PREFIX` for pkg-config `.pc` files. Default is platform-dependent, typically `lib/pkgconfig`. |
+| `INSTALL_MAN_DIR` | Directory relative to `INSTALL_PREFIX` for manual pages. Default: `share/man`. |
+
+
 # Contributing
 
 - The best way to contribute to this project is to submit a pull request that fixes a bug or implements functionality
@@ -1647,7 +1648,6 @@ attempt to contribute them to this project.
 # License
 
 ```
-
 MIT License
 
 Copyright (c) 2012-2026 Softmotions Ltd <info@softmotions.com>
@@ -1669,5 +1669,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 ```
