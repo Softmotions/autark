@@ -294,6 +294,9 @@ int path_rm_cache(const char *path) {
     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
       continue;
     }
+    if (strcmp(name, "compile_commands.json") == 0) { // Keep compile commands.
+      continue;
+    }
     snprintf(child, sizeof(child), "%s/%s", path, name);
     if (!_is_autark_dist_root(child)) {
       _rm_dir_recursive(child);
