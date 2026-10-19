@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define META_VERSION "0.9.15"
-#define META_REVISION "5dcb81a"
+#define META_REVISION "4451db2"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
