@@ -1610,6 +1610,7 @@ in [Softmotions/iwnet](https://github.com/Softmotions/iwnet)
 
 | Variable | Description |
 |---|---|
+  `AUTARK_INTERACTIVE` | Environment variable is available and set to `1` if Autark is launched in interactive terminal mode. |
 | `AUTARK_ROOT_DIR` | Absolute path to the project root directory containing the root `Autark` script. |
 | `AUTARK_CACHE_DIR` | Absolute path to the project-wide Autark cache directory. By default, this is `autark-cache` under the project root. |
 | `UNIT_DIR` | Absolute path to the directory of the currently processed Autark build unit (script). For the root unit, this is the same as `AUTARK_ROOT_DIR`. |

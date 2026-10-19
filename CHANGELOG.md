@@ -1,3 +1,6 @@
+# [v0.9.15]
+- `AUTARK_INTERACTIVE` env var is set to `1` if Autark is launched in interactive terminal.
+
 # [v0.9.14]
 - `autark_cache/compile_commands.json` is retained on clean rebuild (`-c,--clean`)
 - Fixed `-D` build options being shadowed by root-level `set { X ${X default} }` declarations, so command-line values now take precedence over inline defaults.

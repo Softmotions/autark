@@ -1,8 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define META_VERSION "0.9.14"
-#define META_REVISION "90c5b30"
+#define META_VERSION "0.9.15"
+#define META_REVISION "5dcb81a"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -787,6 +787,7 @@ const char* path_join_path_pool(struct pool *pool, const char *dir, const char *
 #define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
+#define AUTARK_INTERACTIVE_ENV       "AUTARK_INTERACTIVE"      // Autark is launched in interactive terminal
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 
@@ -8225,6 +8226,10 @@ void autark_build_prepare(const char *script_path) {
 
   setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
+
+  if (isatty(STDIN_FILENO)) {
+    setenv(AUTARK_INTERACTIVE_ENV, "1", 1);
+  }
 
   if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_INSTALL_SRC_DEPS_ENV)) {
     g_env.install.enabled = true;

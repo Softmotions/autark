@@ -405,6 +405,10 @@ void autark_build_prepare(const char *script_path) {
   setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
 
+  if (isatty(STDIN_FILENO)) {
+    setenv(AUTARK_INTERACTIVE_ENV, "1", 1);
+  }
+
   if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_INSTALL_SRC_DEPS_ENV)) {
     g_env.install.enabled = true;
     g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
