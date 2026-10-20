@@ -1,4 +1,4 @@
-# [v0.9.16-dev]
+# [v0.9.16]
 - Better C compiler selection in build.sh
 
 # [v0.9.15]
