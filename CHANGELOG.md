@@ -1,3 +1,6 @@
+# [v0.9.16-dev]
+- Better C compiler selection in build.sh
+
 # [v0.9.15]
 - `AUTARK_INTERACTIVE` env var is set to `1` if Autark is launched in interactive terminal.
 

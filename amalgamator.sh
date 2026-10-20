@@ -170,6 +170,8 @@ elif command -v clang >/dev/null 2>&1; then
   COMPILER=clang
 elif command -v gcc >/dev/null 2>&1; then
   COMPILER=gcc
+elif command -v cc >/dev/null 2>&1; then
+  COMPILER=cc
 else
   echo "No suitable C compiler found" >&2
   exit 1
