@@ -1,3 +1,6 @@
+# [v0.9.17]
+- test_pthread.sh now detects spinlock availability
+
 # [v0.9.16]
 - Better C compiler selection in build.sh
 
