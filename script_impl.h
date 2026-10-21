@@ -9,6 +9,7 @@
 #include "nodes.h"
 #include "autark.h"
 #include "paths.h"
+#include "toolchain.h"
 
 #include <unistd.h>
 #include <stdarg.h>

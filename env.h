@@ -32,7 +32,9 @@
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 
 
-#define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
+#define AUTARK_VERBOSE_ENV    "AUTARK_VERBOSE"                // Autark verbose env key
+#define AUTARK_TARGET_ENV     "AUTARK_TARGET"                 // Target toolchain id of cross build
+#define AUTARK_TOOLCHAIN_ENV  "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
@@ -68,6 +70,8 @@ struct unit_ctx {
   unsigned     flags;
 };
 
+struct toolchain;
+
 /// Global env
 struct env {
   const char  *cwd;
@@ -82,6 +86,8 @@ struct env {
     bool compile_commands;          // Generate compile_commands.json database.
     bool compile_commands_own;      // We own compile commands file.
     bool prepared;                  // Autark build prepared
+    const char *toolchain_path;     // Path to target toolchain descriptor. Can be zero.
+    struct toolchain *toolchain;    // Resolved target toolchain. Can be zero.
     struct xstr *options;           // Ask option values
   } project;
   struct {

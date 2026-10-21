@@ -1,0 +1,26 @@
+# Nested project built by the parent build (tests target context propagation)
+check { system.sh }
+
+echo {
+  init {
+    ^{DEP_CROSS= ${SYSTEM_CROSS}}
+    ^{DEP_NAME= ${SYSTEM_NAME}}
+    ^{DEP_ARCH= ${SYSTEM_ARCH}}
+    ^{DEP_TARGET= ${SYSTEM_TARGET}}
+    ^{DEP_CC= ${CC}}
+  }
+}
+
+set { CFLAGS -std=c99 ..${CFLAGS} ..${CFLAGS_TARGET} }
+
+cc {
+  dep.c
+  ${CFLAGS}
+  ${CC}
+}
+
+run {
+  exec { ${AR} rcs libdep.a ${CC_OBJS} }
+  consumes { ${CC_OBJS} }
+  produces { libdep.a }
+}

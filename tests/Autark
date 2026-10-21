@@ -42,4 +42,20 @@ if { ${RUN_TESTS}
       consumes { %{${OBJ}} }
     }
   }
+  # End-to-end cross compilation tests
+  run {
+    always
+    shell {
+      sh
+      S{tests/cross/run-tests.sh}
+      C{autark}
+      S{tests/data/cross}
+      S{check_scripts/system.sh}
+      CC{cross-tests}
+    }
+    consumes {
+      C{autark}
+      S{tests/cross/run-tests.sh}
+    }
+  }
 }

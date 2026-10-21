@@ -1,0 +1,131 @@
+# Mini project used by tests/cross/run-tests.sh
+#
+# It builds a target executable, a host build tool (which generates a source
+# file) and links a nested Autark subproject in order to cover the cross
+# compilation feature end to end.
+check { system.sh }
+
+option { BAD_LINK       Link a host build tool object into a target artifact (must fail) }
+option { BUILD_CXX_TOOL  Build a C++ host tool (requires a host C++ compiler) }
+option { BAD_HOST_LINK  Link a target object into a host build tool (must fail) }
+
+echo {
+  init {
+    ^{CROSS= ${SYSTEM_CROSS}}
+    ^{NAME= ${SYSTEM_NAME}}
+    ^{ARCH= ${SYSTEM_ARCH}}
+    ^{ARCH_ALT= ${SYSTEM_ARCH_ALT}}
+    ^{BITS= ${SYSTEM_BITNESS}}
+    ^{BITS64= ${SYSTEM_BITNESS_64}}
+    ^{ENDIAN= ${SYSTEM_ENDIAN}}
+    ^{LE= ${SYSTEM_LITTLE_ENDIAN}}
+    ^{BE= ${SYSTEM_BIGENDIAN}}
+    ^{TARGET= ${SYSTEM_TARGET}}
+    ^{SYSROOT= ${TOOLCHAIN_SYSROOT}}
+    ^{CFLAGS_TARGET= ${CFLAGS_TARGET}}
+    ^{HOST_CC= ${HOST_CC}}
+    ^{CC= ${CC}}
+  }
+}
+
+set { CFLAGS -std=c99 ..${CFLAGS} ..${CFLAGS_TARGET} }
+set { LDFLAGS ..${LDFLAGS} ..${LDFLAGS_TARGET} }
+
+# Host build toolchain: the toolchain descriptor provides HOST_* values for a
+# cross build, native builds use the detected compiler.
+set { HOST_CC ${HOST_CC ${CC}} }
+set { HOST_CXX ${HOST_CXX c++} }
+set { HOST_AR ${HOST_AR ${AR}} }
+set {
+  SOURCES
+  main.c
+  C{generated.c}
+}
+
+# ---------------------------------------------------------------------------
+# Build tool: compiled by the host compiler into the host object namespace
+# ---------------------------------------------------------------------------
+host-cc {
+  gen.c
+  objects { HOST_GEN_OBJS }
+}
+
+run {
+  host
+  exec { ${HOST_CC} -o gen ${HOST_GEN_OBJS} }
+  consumes { ${HOST_GEN_OBJS} }
+  produces { gen }
+}
+
+run {
+  shell { ./gen > generated.c }
+  consumes { gen }
+  produces { generated.c }
+}
+
+# C++ host build tool, see the BUILD_CXX_TOOL option
+if { ${BUILD_CXX_TOOL}
+  host-cxx {
+    genxx.cxx
+    objects { HOST_GENXX_OBJS }
+  }
+  run {
+    host
+    exec { ${HOST_CXX} -o genxx ${HOST_GENXX_OBJS} }
+    consumes { ${HOST_GENXX_OBJS} }
+    produces { genxx }
+  }
+  run {
+    shell { ./genxx > cxx-tool-info.txt }
+    consumes { genxx }
+    produces { cxx-tool-info.txt }
+  }
+}
+
+# Dumps the environment of a host tool build (checked by the test suite)
+run {
+  host
+  shell { env > host-env.txt }
+  produces { host-env.txt }
+}
+
+# ---------------------------------------------------------------------------
+# Target artifacts
+# ---------------------------------------------------------------------------
+cc {
+  ${SOURCES}
+  ${CFLAGS}
+  ${CC}
+  objects { MAIN_OBJS }
+  consumes { generated.c }
+}
+
+run {
+  shell { autark -H C{nested} S{dep} }
+  consumes { S{dep/Autark} }
+  produces { C{nested/libdep.a} }
+}
+
+run {
+  exec { ${CC} -o app ${MAIN_OBJS} C{nested/libdep.a} ${LDFLAGS} }
+  consumes { ${MAIN_OBJS} C{nested/libdep.a} }
+  produces { app }
+}
+
+# Deliberately broken rules used to verify host/target object separation
+if { ${BAD_LINK}
+  run {
+    exec { ${CC} -o bad-app ${MAIN_OBJS} ${HOST_GEN_OBJS} }
+    consumes { ${MAIN_OBJS} ${HOST_GEN_OBJS} }
+    produces { bad-app }
+  }
+}
+
+if { ${BAD_HOST_LINK}
+  run {
+    host
+    exec { ${HOST_CC} -o bad-host-app ${MAIN_OBJS} ${HOST_GEN_OBJS} }
+    consumes { ${MAIN_OBJS} ${HOST_GEN_OBJS} }
+    produces { bad-host-app }
+  }
+}

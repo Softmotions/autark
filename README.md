@@ -70,6 +70,8 @@ autark [options] [sources_dir] | [command [options]]
     -R, --prefix=<>             Install prefix. Default: $HOME/.local
     -S, --install-source-deps   Build autonomous source distribution package dir with all external
                                 project dependencies packed.
+        --toolchain=<>          Cross compilation toolchain descriptor file.
+                                Can also be provided by the AUTARK_TOOLCHAIN env variable.
    ...
 ```
 
@@ -327,10 +329,145 @@ and the rule has been previously executed.
 This phase is executed after the `build` phase has completed successfully.
 It is primarily used for rules that install the built project artifacts.
 
+## Cross compilation
+
+Autark can build for a target that differs from the build host. All target facts are declared by a
+*toolchain descriptor* - a small Autark DSL fragment - instead of being probed on the build machine:
+
+```sh
+./build.sh --toolchain=toolchains/android-arm64-v8a
+# or, for nested builds and CI wrappers:
+AUTARK_TOOLCHAIN=toolchains/android-arm64-v8a ./build.sh
+```
+
+The cache directory is not shared between targets: use a separate `-H`/`--cache` dir per target.
+
+### Toolchain descriptor
+
+```cfg
+# toolchains/android-arm64-v8a
+toolchain {
+  id       { android-arm64-v8a }  # SYSTEM_TARGET, defaults to the descriptor file basename
+  system   { android }            # target OS: SYSTEM_NAME, SYSTEM_ANDROID
+  arch     { aarch64 }            # SYSTEM_ARCH
+  arch-alt { arm64 }              # SYSTEM_ARCH_ALT, defaults to `arch`
+  bits     { 64 }                 # SYSTEM_BITNESS_64
+  endian   { little }             # SYSTEM_LITTLE_ENDIAN
+  cc       { ^{${ANDROID_NDK_HOME} /toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang} }
+  ar       { ^{${ANDROID_NDK_HOME} /toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar} }
+  cflags   { -DPTHREAD_SPIN_LOCK_SHIM }  # CFLAGS_TARGET
+  ldflags  { -llog }                     # LDFLAGS_TARGET
+  host-cc  { cc }                        # compiler of build tools: HOST_CC
+  host-cflags   { -O2 }                  # HOST_CFLAGS
+  host-cxxflags { -O2 }                  # HOST_CXXFLAGS
+  sysroot  { ^{${ANDROID_NDK_HOME} /toolchains/llvm/prebuilt/linux-x86_64/sysroot} }
+  runner   { qemu-aarch64 -L ... }       # optional: command prefix used to run target binaries
+}
+```
+
+Descriptor values are ordinary Autark expressions: `SS{}` refers to the directory of the
+descriptor file, `^{}` joins strings, `${}` expands variables, and `set`/`if` rules work as usual.
+
+Descriptor keys are not limited to a fixed set: every declared key is published as the
+`TOOLCHAIN_<KEY>` variable (and as an environment variable of the same name), so a descriptor
+can pass arbitrary project specific facts to build scripts and check scripts.
+
+Well known keys define the same variables that the `system.sh` check produces for a native
+build: `SYSTEM_NAME`, `SYSTEM_<OS>`, `SYSTEM_ARCH`, `SYSTEM_ARCH_ALT`, `SYSTEM_BITNESS_<bits>`,
+`SYSTEM_LITTLE_ENDIAN`/`SYSTEM_BIGENDIAN`, `CC`, `AR`, `PKGCONF`. In addition Autark publishes
+`SYSTEM_CROSS=1`, `SYSTEM_TARGET`, `SYSTEM_TOOLCHAIN`, `SYSTEM_BITNESS`, `SYSTEM_ENDIAN`,
+`CFLAGS_TARGET`, `LDFLAGS_TARGET`, `HOST_CC`, `HOST_CXX`, `HOST_AR`, `HOST_CFLAGS`,
+`HOST_CXXFLAGS`, `HOST_LDFLAGS`, `RUNNER` and `SYSTEM_RUNNER`.
+
+See `tests/data/toolchain/basic.cfg` and `tests/data/cross/hello/toolchain/` for complete examples.
+
+### Cross build of the project
+
+In a cross build `system.sh` skips the *runnable* system probe: all `SYSTEM_*` facts come from the
+descriptor, while the remaining checks (`test_header.sh`, `test_pthread.sh`, `test_qsort_r.sh`, ...)
+are still compiled by the target compiler and therefore report target capabilities.
+
+```cfg
+check { system.sh }
+
+set { CFLAGS -std=c99 ..${CFLAGS} ..${CFLAGS_TARGET} }
+set { LDFLAGS ..${LDFLAGS} ..${LDFLAGS_TARGET} }
+
+cc { ${SOURCES} ${CFLAGS} ${CC} }
+run {
+  exec { ${CC} -o app ${CC_OBJS} ${LDFLAGS} }
+  consumes { ${CC_OBJS} }
+  produces { app }
+}
+```
+
+If the descriptor declares a `runner`, `system.sh` compiles the probe and runs it through that
+runner (`qemu-*`, `adb shell`, ...), so bitness and endianness are measured rather than declared.
+
+### Build tools: `host-cc`, `host-cxx` and `run { host ... }`
+
+Build tools must run on the build machine, so they are compiled by `host-cc`/`host-cxx` (using
+`HOST_CC`/`HOST_CXX` and `HOST_CFLAGS`/`HOST_CXXFLAGS`) into the separate `host-tools/` object
+namespace of the unit cache:
+
+```cfg
+host-cc { peg.c tree.c leg.c } # -> ${HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...
+
+run {
+  host
+  exec { ${HOST_CC} -o leg ${HOST_CC_OBJS} }
+  consumes { ${HOST_CC_OBJS} }
+  produces { leg }
+}
+```
+
+`run { host ... }` also exports `CC`, `CXX`, `AR`, `CFLAGS`, `CXXFLAGS` and `LDFLAGS` pointing to the
+host toolchain and drops `AUTARK_TOOLCHAIN`/`AUTARK_TARGET`, so `make`/`cmake` driven generators and
+nested Autark invocations of build tool projects are built natively.
+
+Objects compiled by a cross build are tagged with their toolchain (`.autark-tag` sidecar files),
+and Autark refuses to link a build tool from target objects or to link a host object into a target
+artifact.
+
+### Target context propagation
+
+The resolved target context is exported to every spawned process:
+
+```sh
+AUTARK_TARGET=android-arm64-v8a
+AUTARK_TOOLCHAIN=/abs/path/toolchains/android-arm64-v8a
+```
+
+A nested `autark` invocation loads the same descriptor automatically, so dependencies are cross
+built without touching their recipes:
+
+```cfg
+run {
+  shell { autark --prefix C{} ${DEP_SRC_DIR} }
+  consumes { ${DEP_SRC_DIR} }
+  produces { C{include/dep/dep.h} }
+}
+```
+
+Build options (`-D`) are not propagated implicitly: pass them explicitly to nested builds, for
+example `^{BUILD_TYPE= ${BUILD_TYPE}} autark ...`, or through environment variables.
+
+### Building several targets
+
+Run the build once per target with its own cache dir:
+
+```sh
+for abi in arm64-v8a armeabi-v7a x86_64 x86; do
+  ./build.sh --toolchain=toolchains/android-$abi -H autark-cache/$abi
+done
+```
+
+Sharing one cache dir between two targets is not supported: Autark detects the target change and
+rebuilds the affected artifacts, but it does not keep both build trees side by side.
+
 ## Known Limitations
 
-* If the syntax of an Autark script is invalid, the resulting error message
-  may be vague or imprecise. This is due to the use of the `leg` PEG parser generator,
+* If the syntax of an Autark script is invalid, the resulting error message  may be vague or imprecise. This is due to the use of the `leg` PEG parser generator,
   which can produce generic error messages for malformed input.
 * Autark is primarily developed and tested on Linux, FreeBSD, and macOS.
   It should also work on other Unix-like systems. Windows Subsystem for Linux (WSL)

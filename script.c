@@ -86,7 +86,8 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_RUN;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
-  } else if (strcmp(key, "cc") == 0 || strcmp(key, "cxx") == 0) {
+  } else if (  strcmp(key, "cc") == 0 || strcmp(key, "cxx") == 0
+            || strcmp(key, "host-cc") == 0 || strcmp(key, "host-cxx") == 0) {
     return NODE_TYPE_CC;
   } else if (strcmp(key, "configure") == 0) {
     return NODE_TYPE_CONFIGURE;
@@ -813,6 +814,102 @@ int script_include(struct node *parent, const char *file, struct node **out) {
   return _script_open(parent, file, out);
 }
 
+static int _script_parse_impl(struct xnode *x, struct value *val) {
+  int rc = 0;
+  x->xp = xmalloc(sizeof(*x->xp));
+  *x->xp = (struct xparse) {
+    .stack = { .usize = sizeof(struct xnode*) },
+    .xerr = xstr_create_empty(),
+    .val = *val,
+  };
+
+  yycontext *yy = x->xp->yy = xmalloc(sizeof(yycontext));
+  *yy = (yycontext) {
+    .x = x
+  };
+
+  if (!yyparse(yy)) {
+    rc = AK_ERROR_SCRIPT_SYNTAX;
+    _yyerror(yy);
+    if (x->xp->xerr->size) {
+      akerror(rc, "%s\n", x->xp->xerr->ptr);
+    } else {
+      akerror(rc, 0, 0);
+    }
+  }
+
+  _xparse_destroy(x->xp);
+  x->xp = 0;
+  return rc;
+}
+
+int script_open_fragment(
+  const char *file,
+  const char *unit_path,
+  struct pool *unit_pool,
+  struct unit **out_unit,
+  struct sctx **out) {
+  int rc = 0;
+  struct pool *pool = g_env.pool;
+
+  if (out_unit) {
+    *out_unit = 0;
+  }
+  if (out) {
+    *out = 0;
+  }
+
+  struct value buf = utils_file_as_buf(file, (1024 * 1024));
+  if (buf.error) {
+    return value_destroy(&buf);
+  }
+
+  _preprocess_script(&buf);
+
+  struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
+  ulist_init(&ctx->nodes, 64, sizeof(struct node*));
+  ctx->products = map_create_str(map_k_free);
+
+  struct xnode *x = pool_calloc(pool, sizeof(*x));
+  x->base.ctx = ctx;
+  ctx->root = (struct node*) x;
+  x->base.value = pool_strdup(pool, file);
+  x->base.type = NODE_TYPE_SCRIPT;
+
+  struct unit *unit = unit_create(unit_path, UNIT_FLG_NO_CWD, unit_pool ? unit_pool : pool);
+  char dirbuf[PATH_MAX];
+  utils_strncpy(dirbuf, file, sizeof(dirbuf));
+  char *dir = path_dirname(dirbuf);
+  unit->dir = pool_strdup(pool, dir ? dir : ".");
+  unit->n = &x->base;
+  x->base.unit = unit;
+
+  _node_register(ctx, x);
+  rc = _node_bind(&x->base);
+  if (rc) {
+    _xnode_destroy(x);
+    value_destroy(&buf);
+    return rc;
+  }
+
+  rc = _script_parse_impl(x, &buf);
+  if (!rc) {
+    rc = _script_bind(ctx);
+  }
+  if (rc) {
+    _xnode_destroy(x);
+  } else {
+    if (out_unit) {
+      *out_unit = unit;
+    }
+    if (out) {
+      *out = ctx;
+    }
+  }
+  value_destroy(&buf);
+  return rc;
+}
+
 void script_build(struct sctx *s) {
   akassert(s->root);
   node_init(s->root);
@@ -1129,6 +1226,27 @@ void node_add_unit_deps(struct node *n, struct deps *deps) {
   }
 }
 
+/// Registers the active target toolchain as a dependency of a resolved node.
+///
+/// This makes switching the target (or switching between native and cross builds)
+/// invalidate all artifacts produced by the node.
+static void node_resolve_toolchain_deps(struct node_resolve *r) {
+  const char *target = toolchain_id();
+  if (!target) {
+    return;
+  }
+  struct deps deps;
+  if (deps_open(r->deps_path_tmp, 0, &deps)) {
+    return;
+  }
+  deps_add_sys_env(&deps, 0, AUTARK_TARGET_ENV, target);
+  if (g_env.project.toolchain && g_env.project.toolchain->path) {
+    deps_add_sys_env(&deps, 0, AUTARK_TOOLCHAIN_ENV, g_env.project.toolchain->path);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, g_env.project.toolchain->path, 0);
+  }
+  deps_close(&deps);
+}
+
 void node_resolve(struct node_resolve *r) {
   akassert(r && r->path && r->n);
 
@@ -1136,7 +1254,6 @@ void node_resolve(struct node_resolve *r) {
   struct deps deps = { 0 };
   struct pool *pool = pool_create_empty();
   struct unit *unit = unit_peek();
-
   const char *deps_path = pool_printf(pool, "%s/%s.deps", unit->cache_dir, r->path);
   const char *env_path = pool_printf(pool, "%s/%s.env", unit->cache_dir, r->path);
   const char *deps_path_tmp = pool_printf(pool, "%s/%s.deps.tmp", unit->cache_dir, r->path);
@@ -1156,10 +1273,15 @@ void node_resolve(struct node_resolve *r) {
     r->on_init(r);
   }
 
+  bool target_dep_seen = false;
   if (!r->force_outdated && !deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     char *prev_outdated = 0;
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
+
+      if (deps.type == DEPS_TYPE_SYS_ENV && !target_dep_seen && deps.alias && strcmp(deps.alias, AUTARK_TARGET_ENV) == 0) {
+        target_dep_seen = true;
+      }
 
       bool outdated = false;
       if (prev_outdated && strcmp(prev_outdated, deps.resource) == 0) {
@@ -1198,11 +1320,24 @@ void node_resolve(struct node_resolve *r) {
   }
 
   bool env_created = false;
-  if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num)) {
+  bool target_changed = false;
+  if (toolchain_id() && !target_dep_seen) {
+    // A cross build cache must not be reused by an older (or native) build
+    if (g_env.verbose) {
+      node_info(r->n, "Target toolchain changed: %s", toolchain_id());
+    }
+    target_changed = true;
+  }
+
+  if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num || target_changed)) {
     if (g_env.check.log && r->n) {
       xstr_printf(g_env.check.log, "%s: resolved outdated outdated=%u\n", r->n->name, r->resolve_outdated.num);
     }
+
     r->on_resolve(r);
+
+    node_resolve_toolchain_deps(r);
+
     if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
       if (rc) {

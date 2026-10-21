@@ -18,6 +18,7 @@
 #include "alloc.h"
 #include "deps.h"
 #include "fetchreg.h"
+#include "toolchain.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -309,6 +310,9 @@ static int _usage_va(
   fprintf(stderr,
           "    -S, --install-source-deps   Builds autonomous source distribution package dir with all external project dependencies packed.\n"
           "                                Sets -c option implicitly.\n");
+  fprintf(stderr,
+          "        --toolchain=<>          Cross compilation toolchain descriptor file.\n"
+          "                                Can also be provided by the " AUTARK_TOOLCHAIN_ENV " env variable.\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
@@ -784,6 +788,7 @@ void autark_run(int argc, const char **argv) {
     { "install", 0, 0, 'I' },
     { "install-source-deps", 0, 0, 'S' },
     { "prefix", 1, 0, 'R' },
+    { "toolchain", 1, 0, -7 },
     { "dir", 1, 0, 'C' },
     { "jobs", 1, 0, 'J' },
     { "bindir", 1, 0, -1 },
@@ -858,6 +863,9 @@ void autark_run(int argc, const char **argv) {
         break;
       case -6:
         g_env.install.data_dir = pool_strdup(g_env.pool, optarg);
+        break;
+      case -7:
+        g_env.project.toolchain_path = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
         break;
       case 'J': {
         int rc = 0;
@@ -966,6 +974,14 @@ void autark_run(int argc, const char **argv) {
   }
 
   autark_build_prepare(AUTARK_SCRIPT);
+
+  if (!g_env.project.toolchain_path) {
+    const char *toolchain = getenv(AUTARK_TOOLCHAIN_ENV);
+    if (toolchain && *toolchain != '\0') {
+      g_env.project.toolchain_path = path_normalize_cwd_pool(toolchain, g_env.cwd, g_env.pool);
+    }
+  }
+  toolchain_activate();
 
   if (g_env.project.options) {
     _options();

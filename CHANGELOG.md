@@ -1,4 +1,10 @@
-# [v0.9.17]
+# [v0.9.17-dev]
+- Cross compilation support (`--toolchain=<file>`, `AUTARK_TOOLCHAIN`): a toolchain descriptor declares the target
+  (`SYSTEM_*`, `CC`, `AR`, target flags and arbitrary `TOOLCHAIN_<KEY>` facts) instead of probing the build host;
+  `system.sh` skips the runnable probe, and an optional `runner { }` executes target probes through an emulator.
+- `host-cc`/`host-cxx` rules and `run { host ... }` build host tools with the `HOST_*` toolchain in a separate
+  `host-tools/` object namespace; host and target objects are tagged and cannot be mixed.
+- Target context (`AUTARK_TARGET`, `AUTARK_TOOLCHAIN`) is propagated to nested builds.
 - test_pthread.sh now detects spinlock availability
 
 # [v0.9.16]

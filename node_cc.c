@@ -10,6 +10,7 @@
 #include "spawn.h"
 #include "alloc.h"
 #include "map.h"
+#include "toolchain.h"
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -35,11 +36,50 @@ struct _cc_ctx {
   struct node *n_objects;
   const char  *cc;
   const char  *objskey;
-  struct ulist consumes;    // sizeof(char*)
+  const char  *cflags_default; // Used when no explicit flags expression is given (host-cc/host-cxx)
+  const char  *tag;            // Toolchain object tag. Zero if objects are not tagged.
+  bool is_host;                // Compiles build tools running on the build host
+  struct ulist consumes;       // sizeof(char*)
   int num_failed;
 };
 
 static void _cc_cdb_entry_add(struct node *n, struct spawn *s, const char *src, const char *tgt);
+
+/// Directory (relative to the unit cache dir) holding objects of build tools.
+#define CC_HOST_OBJS_DIR "host-tools"
+
+/// Computes the object file path (relative to the unit cache dir) for a given source.
+/// The result is allocated and should be freed by the caller.
+static char* _cc_obj_path(struct _cc_ctx *ctx, const char *src, struct unit *unit) {
+  char buf[PATH_MAX];
+  const char *nsrc = path_normalize_cwd(src, unit->cache_dir, buf);
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, nsrc, unit->cache_dir);
+  char *obj = incache ? path_relativize_cwd(unit->cache_dir, nsrc, unit->cache_dir)
+              : path_relativize_cwd(unit->dir, nsrc, unit->dir);
+
+  char *p = strrchr(obj, '.');
+  akassert(p && p[1] != '\0');
+  p[1] = 'o';
+  p[2] = '\0';
+
+  if (ctx->is_host) {
+    size_t len = strlen(obj) + sizeof(CC_HOST_OBJS_DIR) + 2;
+    char *prefixed = xmalloc(len);
+    snprintf(prefixed, len, "%s/%s", CC_HOST_OBJS_DIR, obj);
+    free(obj);
+    obj = prefixed;
+  }
+  return obj;
+}
+
+/// Writes the toolchain tag sidecar of a compiled object file.
+static void _cc_obj_tag_write(struct _cc_ctx *ctx, const char *obj) {
+  // A zero tag removes a stale tag of a previously built (cross) target
+  int rc = toolchain_object_tag_write(obj, ctx->tag);
+  if (rc) {
+    node_fatal(rc, ctx->n, "Failed to write toolchain tag of object file: %s", obj);
+  }
+}
 
 static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   deps_add_alias(deps, 's', src, item);
@@ -129,9 +169,9 @@ static void _cc_on_build_source(
 
   spawn_set_nowait(s, true);
 
-  if (ctx->n_cflags) {
+  const char *cflags = ctx->n_cflags ? node_value(ctx->n_cflags) : ctx->cflags_default;
+  if (cflags && *cflags != '\0') {
     struct xstr *xstr = 0;
-    const char *cflags = node_value(ctx->n_cflags);
     if (!is_vlist(cflags)) {
       xstr = xstr_create_empty();
       utils_split_values_add(cflags, xstr);
@@ -216,21 +256,9 @@ static void _cc_on_resolve(struct node_resolve *r) {
     while (tasks.num < max_jobs && i < slist->num) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(slist, i);
+      obj = _cc_obj_path(ctx, src, unit);
       src = path_normalize_cwd(src, unit->cache_dir, buf);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
-      if (!incache) {
-        obj = path_relativize_cwd(unit->dir, src, unit->dir);
-        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      } else {
-        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-        src = xstrdup(obj);
-      }
-
-      char *p = strrchr(obj, '.');
-      akassert(p && p[1] != '\0');
-      p[1] = 'o';
-      p[2] = '\0';
-
+      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
       struct _cc_task task = { .src = src, .obj = obj, .pid = -1 };
       _cc_on_build_source(ctx->n, &deps, src, obj, &task);
 
@@ -265,6 +293,8 @@ static void _cc_on_resolve(struct node_resolve *r) {
         if (code != 0) {
           ++ctx->num_failed;
           map_put_str(fmap, t->src, (void*) (intptr_t) 1);
+        } else {
+          _cc_obj_tag_write(ctx, t->obj);
         }
         if (slist == &ctx->sources) {
           deps_add(&deps, code != 0 ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', t->src, 0);
@@ -283,20 +313,9 @@ static void _cc_on_resolve(struct node_resolve *r) {
     for (int i = 0; i < ctx->sources.num; ++i) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
+      obj = _cc_obj_path(ctx, src, unit);
       src = path_normalize_cwd(src, unit->cache_dir, buf);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
-      if (!incache) {
-        obj = path_relativize_cwd(unit->dir, src, unit->dir);
-        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      } else {
-        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-        src = xstrdup(obj);
-      }
-      char *p = strrchr(obj, '.');
-      akassert(p && p[1] != '\0');
-      p[1] = 'o';
-      p[2] = '\0';
-
+      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
       bool failed = map_get(fmap, src) != 0;
       deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
       if (!failed) {
@@ -500,14 +519,7 @@ static void _cc_source_add(struct node *n, const char *src) {
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
 
-  bool incache = path_is_prefix_for(g_env.project.cache_dir, p, unit->dir);
-  const char *dir = incache ? unit->cache_dir : unit->dir;
-  char *obj = path_relativize_cwd(dir, p, dir);
-
-  p = strrchr(obj, '.');
-  akassert(p && p[1] != '\0');
-  p[1] = 'o';
-  p[2] = '\0';
+  char *obj = _cc_obj_path(ctx, npath, unit);
   ulist_push(&ctx->objects, &obj);
   node_product_add(n, obj, 0);
 }
@@ -516,6 +528,10 @@ static void _cc_setup(struct node *n) {
   _cc_cdb_init(n);
 
   struct _cc_ctx *ctx = n->impl;
+  bool is_cxx = strcmp(n->value, "cxx") == 0 || strcmp(n->value, "host-cxx") == 0;
+  ctx->is_host = utils_startswith(n->value, "host-");
+  ctx->tag = toolchain_object_tag(ctx->is_host);
+
   const char *val = node_value(ctx->n_sources);
   if (is_vlist(val)) {
     struct vlist_iter iter;
@@ -535,23 +551,41 @@ static void _cc_setup(struct node *n) {
     }
   }
   if (!ctx->cc) {
-    const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";
-    if (key) {
-      ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
-      if (g_env.verbose && ctx->cc) {
-        node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
-      }
+    const char *key = ctx->is_host
+                      ? (is_cxx ? "HOST_CXX" : "HOST_CC")
+                      : (is_cxx ? "CXX" : "CC");
+    ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
+    if ((!ctx->cc || *ctx->cc == '\0') && ctx->is_host && !toolchain_id()) {
+      // Native builds compile build tools with the native compiler
+      ctx->cc = pool_strdup(ctx->pool, node_env_get(n, is_cxx ? "CXX" : "CC"));
+    }
+    if (g_env.verbose && ctx->cc) {
+      node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
     }
   }
   if (!ctx->cc) {
-    if (strcmp(n->value, "cc") == 0) {
-      ctx->cc = "cc";
-    } else {
-      ctx->cc = "c++";
-    }
+    ctx->cc = is_cxx ? "c++" : "cc";
     node_warn(n, "Fallback compiler: %s", ctx->cc);
   } else if (g_env.verbose) {
     node_info(n, "Compiler: %s", ctx->cc);
+  }
+
+  if (ctx->is_host && !ctx->n_cflags) {
+    // Build tools are compiled with host compiler flags unless the rule
+    // provides its own flags expression. Native builds fall back to the
+    // detected compiler flags of the corresponding language.
+    if (is_cxx) {
+      ctx->cflags_default = node_env_get(n, "HOST_CXXFLAGS");
+      if ((!ctx->cflags_default || *ctx->cflags_default == '\0')) {
+        ctx->cflags_default = toolchain_id() ? node_env_get(n, "HOST_CFLAGS")
+                                            : node_env_get(n, "CXXFLAGS");
+      }
+    } else {
+      ctx->cflags_default = node_env_get(n, "HOST_CFLAGS");
+      if ((!ctx->cflags_default || *ctx->cflags_default == '\0') && !toolchain_id()) {
+        ctx->cflags_default = node_env_get(n, "CFLAGS");
+      }
+    }
   }
 
   const char *objskey = 0;
@@ -559,10 +593,10 @@ static void _cc_setup(struct node *n) {
     objskey = node_value(ctx->n_objects->child);
   }
   if (!objskey) {
-    if (strcmp(n->value, "cc") == 0) {
-      objskey = "CC_OBJS";
+    if (ctx->is_host) {
+      objskey = is_cxx ? "HOST_CXX_OBJS" : "HOST_CC_OBJS";
     } else {
-      objskey = "CXX_OBJS";
+      objskey = is_cxx ? "CXX_OBJS" : "CC_OBJS";
     }
   }
   if (g_env.verbose) {

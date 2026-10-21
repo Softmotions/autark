@@ -39,6 +39,8 @@
 #define NODE_TYPE_CALL            0x1000000U
 #define NODE_TYPE_INSTALL_SOURCES 0x2000000U
 
+struct unit;
+
 #define NODE_FLG_BOUND 0x01U
 #define NODE_FLG_INIT  0x02U
 #define NODE_FLG_SETUP 0x04U
@@ -116,6 +118,20 @@ struct sctx {
 int script_open(const char *file, struct sctx **out);
 
 int script_include(struct node *parent, const char *file, struct node **out);
+
+/// Parses an arbitrary Autark DSL fragment (e.g. a toolchain descriptor) into a
+/// standalone script tree.
+///
+/// The tree gets its own unit created under `unit_path` in the project cache,
+/// whose source directory (`SS{}`) is the directory of the fragment file.
+/// The unit is owned by `unit_pool` (g_env.pool is used when it is zero), so
+/// destroying that pool unregisters the unit.
+int script_open_fragment(
+  const char *file,
+  const char *unit_path,
+  struct pool *unit_pool,
+  struct unit **out_unit,
+  struct sctx **out);
 
 void script_build(struct sctx*);
 

@@ -89,6 +89,7 @@ set {
   pool.c
   script.c
   spawn.c
+  toolchain.c
   ulist.c
   utils.c
   xstr.c

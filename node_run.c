@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "log.h"
 #include "paths.h"
+#include "toolchain.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -31,7 +32,96 @@ struct _run_on_resolve_ctx {
   struct ulist consumes;         // sizeof(char*)
   struct ulist consumes_foreach; // sizeof(char*)
   bool fe_consumed;              // Foreach variable is consumed
+  bool is_host;                  // Rule builds a build tool running on the build host
 };
+
+static bool _run_is_host(struct node *n) {
+  return node_find_direct_child(n, NODE_TYPE_VALUE, "host") != 0;
+}
+
+/// Resolves a host build tool variable.
+///
+/// Host tools fall back to the native toolchain variables unless a target
+/// toolchain is active: in that case the target compiler must never be used to
+/// build host tools.
+static const char* _run_host_var(struct node *n, const char *key, const char *native_key, const char *fallback) {
+  const char *v = node_env_get(n, key);
+  if (v && *v != '\0') {
+    return v;
+  }
+  if (!toolchain_id()) {
+    v = node_env_get(n, native_key);
+    if (v && *v != '\0') {
+      return v;
+    }
+  }
+  return fallback;
+}
+
+/// Exposes the host toolchain to a spawned build tool and detaches it from the
+/// target build context, so nested Autark invocations are built natively.
+static void _run_host_env(struct node *n, struct spawn *s) {
+  spawn_env_set(s, "CC", _run_host_var(n, "HOST_CC", "CC", "cc"));
+  spawn_env_set(s, "CXX", _run_host_var(n, "HOST_CXX", "CXX", "c++"));
+  spawn_env_set(s, "AR", _run_host_var(n, "HOST_AR", "AR", "ar"));
+  const char *cflags = _run_host_var(n, "HOST_CFLAGS", "CFLAGS", 0);
+  if (cflags) {
+    spawn_env_set(s, "CFLAGS", cflags);
+  }
+  const char *cxxflags = _run_host_var(n, "HOST_CXXFLAGS", "CXXFLAGS", 0);
+  if (!cxxflags && toolchain_id()) {
+    // In a cross build HOST_CFLAGS are host flags declared for build tools,
+    // so they apply to C++ sources as well.
+    cxxflags = cflags;
+  }
+  if (cxxflags) {
+    spawn_env_set(s, "CXXFLAGS", cxxflags);
+  }
+  const char *ldflags = _run_host_var(n, "HOST_LDFLAGS", "LDFLAGS", 0);
+  if (ldflags) {
+    spawn_env_set(s, "LDFLAGS", ldflags);
+  }
+  spawn_env_set(s, AUTARK_TOOLCHAIN_ENV, "");
+  spawn_env_set(s, AUTARK_TARGET_ENV, "");
+}
+
+static void _run_check_obj_tag_one(struct node *n, bool host, const char *obj) {
+  if (!obj || *obj == '\0' || !utils_endswith(obj, ".o") || !path_is_file(obj)) {
+    return;
+  }
+  char tag[128];
+  const char *actual = toolchain_object_check(obj, host, tag, sizeof(tag));
+  if (!actual) {
+    return;
+  }
+  if (host) {
+    node_fatal(AK_ERROR_FAIL, n,
+               "Refusing to link object '%s' of toolchain '%s' into a host build tool", obj, actual);
+  } else {
+    node_fatal(AK_ERROR_FAIL, n,
+               "Refusing to link object '%s' compiled for toolchain '%s' into a target artifact. "
+               "Build tools must be compiled by host-cc/host-cxx and linked by a `run { host ... }` rule",
+               obj, actual);
+  }
+}
+
+/// Verifies that objects linked by a rule belong to its compilation scope.
+static void _run_check_obj_tags(struct node *n, bool host, const char *val) {
+  char buf[PATH_MAX];
+  if (!val) {
+    return;
+  }
+  if (is_vlist(val)) {
+    struct vlist_iter iter;
+    vlist_iter_init(val, &iter);
+    while (vlist_iter_next(&iter)) {
+      utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
+      _run_check_obj_tag_one(n, host, buf);
+    }
+  } else {
+    _run_check_obj_tag_one(n, host, val);
+  }
+}
 
 static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
   struct node *n = r->n;
@@ -67,6 +157,10 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
   spawn_env_path_prepend(s, unit->cache_dir);
   spawn_set_stdout_handler(s, _run_stdout_handler);
   spawn_set_stderr_handler(s, _run_stderr_handler);
+
+  if (r->user_data && ((struct _run_on_resolve_ctx*) r->user_data)->is_host) {
+    _run_host_env(n, s);
+  }
 
   spawn_arg_add(s, "-c");
   spawn_arg_add(s, xstr_ptr(xstr));
@@ -105,15 +199,24 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
   spawn_set_stdout_handler(s, _run_stdout_handler);
   spawn_set_stderr_handler(s, _run_stderr_handler);
 
+  struct _run_on_resolve_ctx *ctx = r->user_data;
+  bool host = ctx && ctx->is_host;
+
+  if (host) {
+    _run_host_env(n, s);
+  }
+
   for (struct node *nn = ncmd->next; nn; nn = nn->next) {
     if (node_is_can_be_value(nn)) {
+      const char *val = node_value(nn);
+      _run_check_obj_tags(n, host, val);
       if (node_is_spread(nn)) {
         struct xstr *xstr = xstr_create_empty();
-        utils_split_values_add(node_value(nn), xstr);
+        utils_split_values_add(val, xstr);
         spawn_arg_add(s, xstr_ptr(xstr));
         xstr_destroy(xstr);
       } else {
-        spawn_arg_add(s, node_value(nn));
+        spawn_arg_add(s, val);
       }
     }
   }
@@ -326,6 +429,7 @@ static void _run_build(struct node *n) {
     .consumes = { .usize = sizeof(char*) },
     .consumes_foreach = { .usize = sizeof(char*) },
     .fe = node_find_parent_foreach(n),
+    .is_host = _run_is_host(n),
   };
 
   struct node_resolve r = {

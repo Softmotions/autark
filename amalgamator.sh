@@ -30,6 +30,7 @@ cat <<'EOF' >> ${F}
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -66,6 +67,7 @@ cat ./paths.h >> ${F}
 cat ./env.h >> ${F}
 cat ./deps.h >> ${F}
 cat ./fetchreg.h >> ${F}
+cat ./toolchain.h >> ${F}
 cat ./nodes.h >> ${F}
 cat ./autark.h >> ${F}
 cat ./script.h >> ${F}
@@ -80,6 +82,7 @@ cat ./paths.c >> ${F}
 cat ./spawn.c >> ${F}
 cat ./deps.c >> ${F}
 cat ./fetchreg.c >> ${F}
+cat ./toolchain.c >> ${F}
 cat ./node_script.c >> ${F}
 cat ./node_check.c >> ${F}
 cat ./node_set.c >> ${F}
