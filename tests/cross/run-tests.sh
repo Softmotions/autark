@@ -61,6 +61,10 @@ tag_of() {
 mkdir -p "$WORK/home"
 rm -rf "$WORK"/*.log
 
+# The native build reports the host system name as reported by `uname -s`
+# (Linux, macOS, FreeBSD, OpenBSD, ...), lower cased by `check_scripts/system.sh`.
+HOST_SYSTEM=$(uname -s | tr '[:upper:]' '[:lower:]')
+
 # A C++ host tool build is tested only when a host C++ compiler is available
 CXX_ARGS=
 if printf 'int main() { return 0; }\n' > "$WORK/cxx-probe.cxx" \
@@ -73,7 +77,7 @@ fi
 # ---------------------------------------------------------------------------
 prepare_project "$WORK/native"
 build "$WORK/native.log" || fail "native build failed: see $WORK/native.log"
-expect 'CROSS= NAME=linux' "$WORK/native.log" "native build reports no target toolchain"
+expect "CROSS= NAME=$HOST_SYSTEM" "$WORK/native.log" "native build reports no target toolchain"
 expect 'TARGET= SYSROOT=' "$WORK/native.log" "native build declares no target facts"
 if [ -f "$PROJ/autark-cache/main.o.autark-tag" ]; then
   fail "native target object is tagged with a toolchain"
