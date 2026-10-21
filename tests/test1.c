@@ -1,26 +1,24 @@
 #include "test_utils.h"
-#include "log.h"
 #include "xstr.h"
-#include <unistd.h>
 
-int main(void) {
-  int rc = 0;
-  struct sctx *p;
+static void test_parse_and_dump(void) {
+  struct sctx *p = 0;
   struct xstr *xstr = xstr_create_empty();
 
-  rc = test_script_parse("../../tests/data/test1/Autark", &p);
-  ASSERT(assert, rc == 0);
+  int rc = test_script_parse("../../tests/data/test1/Autark", &p);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   script_dump(p, xstr);
-  ASSERT(assert, cmp_file_with_xstr("../../tests/data/test1/Autark.dump", xstr) == 0);
+  IW_TEST_ASSERT_EQUAL(cmp_file_with_xstr("../../tests/data/test1/Autark.dump", xstr), 0);
 
   script_close(&p);
   xstr_destroy(xstr);
+}
 
-  if (rc) {
-    akerror(rc, "Error ", 0);
-  }
-  return rc ? rc : 0;
-assert:
-  return 1;
+static const struct iw_test_case cases[] = {
+  IW_TEST_CASE(test_parse_and_dump),
+};
+
+int main(int argc, char *argv[]) {
+  return iw_test_run(argc, argv, IW_TEST_SUITE("test1", cases, 0, 0));
 }

@@ -1,4 +1,5 @@
 # [v0.9.17-dev]
+- Migrated to iwtests.h framework
 - Cross compilation support (`--toolchain=<file>`, `AUTARK_TOOLCHAIN`): a toolchain descriptor declares the target
   (`SYSTEM_*`, `CC`, `AR`, target flags and arbitrary `TOOLCHAIN_<KEY>` facts) instead of probing the build host;
   `system.sh` skips the runnable probe, and an optional `runner { }` executes target probes through an emulator.

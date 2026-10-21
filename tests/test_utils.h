@@ -1,5 +1,18 @@
 #pragma once
 
+#ifndef IW_TEST_HARNESS
+#define IW_TEST_HARNESS "autark"
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#include "iwtests.h"
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #include "basedefs.h"
 #include "utils.h"
 #include "xstr.h"
@@ -14,12 +27,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-#define ASSERT(label__, expr__)                                       \
-        if (!(expr__)) {                                              \
-          fputs(__FILE__ ":" Q(__LINE__) " " Q(expr__) "\n", stderr); \
-          goto label__;                                               \
-        }
 
 int test_script_parse(const char *script_path, struct sctx **out);
 
