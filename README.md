@@ -367,6 +367,7 @@ toolchain {
 
 Descriptor values are ordinary Autark expressions: `SS{}` refers to the directory of the
 descriptor file, `^{}` joins strings, `${}` expands variables, and `set`/`if` rules work as usual.
+The descriptor file name is not significant, the convention is to use the `.autark` extension.
 
 Descriptor keys are not limited to a fixed set: every declared key is published as the
 `TOOLCHAIN_<KEY>` variable (and as an environment variable of the same name), so a descriptor
@@ -379,7 +380,7 @@ build: `SYSTEM_NAME`, `SYSTEM_<OS>`, `SYSTEM_ARCH`, `SYSTEM_ARCH_ALT`, `SYSTEM_B
 `CFLAGS_TARGET`, `LDFLAGS_TARGET`, `HOST_CC`, `HOST_CXX`, `HOST_AR`, `HOST_CFLAGS`,
 `HOST_CXXFLAGS`, `HOST_LDFLAGS`, `RUNNER` and `SYSTEM_RUNNER`.
 
-See `tests/data/toolchain/basic.cfg` and `tests/data/cross/hello/toolchain/` for complete examples.
+See `tests/data/toolchain/basic.autark` and `tests/data/cross/hello/toolchain/` for complete examples.
 
 ### Cross build of the project
 

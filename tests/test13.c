@@ -24,7 +24,7 @@ static struct toolchain* load_basic(void) {
   test_reinit(true);
   autark_build_prepare("../../tests/data/toolchain/Autark");
   unsetenv("TEST_TOOLCHAIN_EXTRA");
-  struct toolchain *tc = toolchain_load(g_env.pool, "basic.cfg");
+  struct toolchain *tc = toolchain_load(g_env.pool, "basic.autark");
   IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(tc);
   return tc;
 }
@@ -63,7 +63,7 @@ static void test_conditional_keys(void) {
 
   // Conditional descriptor keys
   setenv("TEST_TOOLCHAIN_EXTRA", "1", 1);
-  struct toolchain *tc2 = toolchain_load(g_env.pool, "basic.cfg");
+  struct toolchain *tc2 = toolchain_load(g_env.pool, "basic.autark");
   IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(tc2);
   IW_TEST_ASSERT_STR_EQUAL(toolchain_var_get(tc2, "extra"), "extra-value");
   unsetenv("TEST_TOOLCHAIN_EXTRA");

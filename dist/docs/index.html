@@ -1298,7 +1298,9 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb7-1"><a hr
 <p>Descriptor values are ordinary Autark expressions: <code>SS{}</code>
 refers to the directory of the descriptor file, <code>^{}</code> joins
 strings, <code>${}</code> expands variables, and
-<code>set</code>/<code>if</code> rules work as usual.</p>
+<code>set</code>/<code>if</code> rules work as usual. The descriptor
+file name is not significant, the convention is to use the
+<code>.autark</code> extension.</p>
 <p>Descriptor keys are not limited to a fixed set: every declared key is
 published as the <code>TOOLCHAIN_&lt;KEY&gt;</code> variable (and as an
 environment variable of the same name), so a descriptor can pass
@@ -1318,7 +1320,7 @@ Autark publishes <code>SYSTEM_CROSS=1</code>,
 <code>HOST_CFLAGS</code>, <code>HOST_CXXFLAGS</code>,
 <code>HOST_LDFLAGS</code>, <code>RUNNER</code> and
 <code>SYSTEM_RUNNER</code>.</p>
-<p>See <code>tests/data/toolchain/basic.cfg</code> and
+<p>See <code>tests/data/toolchain/basic.autark</code> and
 <code>tests/data/cross/hello/toolchain/</code> for complete
 examples.</p>
 <h3 id="cross-build-of-the-project">Cross build of the project</h3>
