@@ -49,10 +49,6 @@ static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
       struct xstr *xstr = xstr_create_empty();
       xstr_printf(xstr, "#define %s %s", key, np);
       return xstr_destroy_keep_ptr(xstr);
-    } else {
-      struct xstr *xstr = xstr_create_empty();
-      xstr_printf(xstr, "#define %s 0\n", key);
-      return xstr_destroy_keep_ptr(xstr);
     }
   } else {
     utils_strnncpy(key, sp, ep - sp, sizeof(key));

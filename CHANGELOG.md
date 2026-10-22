@@ -1,3 +1,6 @@
+# [v0.9.18]
+- Fixed `//autarkdef VAR <NUM>` Now if VAR is not set `#define` at all
+
 # [v0.9.17]
 - Migrated to iwtests.h framework
 - Cross compilation support (`--toolchain=<file>`, `AUTARK_TOOLCHAIN`): a toolchain descriptor declares the target
