@@ -1289,7 +1289,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb7-1"><a hr
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  ar       { <span class="bu">^</span>{<span class="bu">$</span>{ANDROID_NDK_HOME} /toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar} }</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  cflags   { -DPTHREAD_SPIN_LOCK_SHIM }  # CFLAGS_TARGET</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  ldflags  { -llog }                     # LDFLAGS_TARGET</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  host-cc  { <span class="kw">cc</span> }                        # compiler of <span class="kw">build</span> tools: HOST_CC</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host-cc</span>  { <span class="kw">cc</span> }                        # compiler of <span class="kw">build</span> tools: HOST_CC</span>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  host-cflags   { -O2 }                  # HOST_CFLAGS</span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  host-cxxflags { -O2 }                  # HOST_CXXFLAGS</span>
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  sysroot  { <span class="bu">^</span>{<span class="bu">$</span>{ANDROID_NDK_HOME} /toolchains/llvm/prebuilt/linux-x86_64/sysroot} }</span>
@@ -1355,10 +1355,10 @@ and endianness are measured rather than declared.</p>
 <code>HOST_CFLAGS</code>/<code>HOST_CXXFLAGS</code>) into the separate
 <code>host-tools/</code> object namespace of the unit cache:</p>
 <div class="sourceCode" id="cb9"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>host-cc { peg.c tree.c leg.c } # -&gt; <span class="bu">$</span>{HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...</span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">host-cc</span> { peg.c tree.c leg.c } # -&gt; <span class="bu">$</span>{HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  host</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host</span></span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{HOST_CC} -o leg <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> { <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> { leg }</span>
@@ -2122,7 +2122,7 @@ support virtually any custom pipeline.</p>
 <div class="sourceCode" id="cb74"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
 <span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">always</span>]</span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  [host]</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">host</span>]</span>
 <span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">exec</span>  { CMD [CMD_ARGS...] }] ...</span>
 <span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">shell</span> { CMD [CMD_ARGS...] }] ...</span>
 <span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>  [<span class="kw">consumes</span>{ CONSUMED_FILES... }]</span>
@@ -2175,7 +2175,7 @@ the <code>host</code> keyword and links objects compiled by the
 </ul>
 <div class="sourceCode" id="cb76"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  host</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host</span></span>
 <span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{HOST_CC} -o gen <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> { <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> { gen }</span>
@@ -2353,7 +2353,7 @@ hardcoding individual test names.</p>
 automatically tracking all required dependencies including header files.
 Compilation is parallelized to speed up the build process.</p>
 <div class="sourceCode" id="cb86"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span>|<span class="kw">cxx</span>|host-cc|host-cxx {</span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cc</span>|<span class="kw">cxx</span>|<span class="kw">host-cc</span>|<span class="kw">host-cxx</span> {</span>
 <span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>   SOURCES</span>
 <span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>   [COMPILER_FLAGS]</span>
 <span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>   [COMPILER_CMD]</span>
@@ -2431,7 +2431,7 @@ generators, ...) must be compiled for the <strong>build host</strong>,
 not for the target. For this purpose <code>host-cc</code> and
 <code>host-cxx</code> rules are provided:</p>
 <div class="sourceCode" id="cb88"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>host-cc {</span>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="kw">host-cc</span> {</span>
 <span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  peg.c tree.c leg.c       # -&gt; <span class="bu">$</span>{HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...</span>
 <span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The <code>host-*</code> rules differ from
@@ -2453,7 +2453,7 @@ by a <code>run { host ... }</code> rule (see the <a href="#run-">run</a>
 rule reference):</p>
 <div class="sourceCode" id="cb89"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  host</span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host</span></span>
 <span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{HOST_CC} -o leg <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> { <span class="bu">$</span>{HOST_CC_OBJS} }</span>
 <span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> { leg }</span>

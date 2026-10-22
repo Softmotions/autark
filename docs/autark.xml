@@ -11,6 +11,8 @@
       <item>meta</item>
       <item>cc</item>
       <item>cxx</item>
+      <item>host-cc</item>
+      <item>host-cxx</item>
       <item>run</item>
       <item>run-on-install</item>
       <item>echo</item>
@@ -50,6 +52,7 @@
       <item>exec</item>
       <item>shell</item>
       <item>always</item>
+      <item>host</item>
       <item>build</item>
       <item>setup</item>
       <item>init</item>
