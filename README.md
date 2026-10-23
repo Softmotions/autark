@@ -24,6 +24,7 @@ flexibility needed for non-trivial build workflows.
 - Support for extending the build process with custom rules.
 - Parallel compilation of C/C++ source files.
 - Basic support of C++20 modules.
+- Cross compilation toolchains support.
 - Support of an external project dependencies.
 - Automatic generation of `compile_commands.json` compilation database.
 - Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
