@@ -56,10 +56,13 @@ static void test_descriptor(void) {
   IW_TEST_ASSERT_STR_EQUAL(_var_name(tc, "sysroot"), "TOOLCHAIN_SYSROOT");
   IW_TEST_ASSERT_PTR_NULL(toolchain_var_get(tc, "extra"));
   IW_TEST_ASSERT_PTR_NULL(toolchain_var_get(tc, "unknown-key"));
+
+  toolchain_destroy(tc);
 }
 
 static void test_conditional_keys(void) {
-  load_basic();
+  struct toolchain *tc = load_basic();
+  toolchain_destroy(tc);
 
   // Conditional descriptor keys
   setenv("TEST_TOOLCHAIN_EXTRA", "1", 1);
@@ -67,6 +70,8 @@ static void test_conditional_keys(void) {
   IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(tc2);
   IW_TEST_ASSERT_STR_EQUAL(toolchain_var_get(tc2, "extra"), "extra-value");
   unsetenv("TEST_TOOLCHAIN_EXTRA");
+
+  toolchain_destroy(tc2);
 }
 
 static void test_apply(void) {
@@ -92,6 +97,9 @@ static void test_apply(void) {
   IW_TEST_ASSERT_STR_EQUAL(getenv(AUTARK_TARGET_ENV), "test-arm64");
   IW_TEST_ASSERT_STR_EQUAL(getenv("SYSTEM_CROSS"), "1");
   IW_TEST_ASSERT_STR_EQUAL(getenv("TOOLCHAIN_SYSROOT"), "/nonexistent/ndk/sysroot");
+
+  // The applied toolchain is owned by the environment
+  autark_dispose();
 }
 
 static void test_object_tags(void) {
@@ -111,6 +119,9 @@ static void test_object_tags(void) {
 
   IW_TEST_ASSERT_EQUAL_FATAL(toolchain_object_tag_write("cross-test.o", 0), 0);
   IW_TEST_ASSERT_PTR_NULL(toolchain_object_check("cross-test.o", true, tag, sizeof(tag)));
+
+  // The applied toolchain is owned by the environment
+  autark_dispose();
 }
 
 static const struct iw_test_case cases[] = {

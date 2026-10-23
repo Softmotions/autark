@@ -1,4 +1,6 @@
 # [v0.9.19-dev]
+- Added ENABLE_ASAN / ENABLE_UBSAN build options.
+- Rework of map.c cleanup and perf improvements.
 - Basic c++20 modules support
 
 # [v0.9.18]

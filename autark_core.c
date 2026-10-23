@@ -19,6 +19,7 @@
 #include "deps.h"
 #include "fetchreg.h"
 #include "toolchain.h"
+#include "cxx_modules.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -735,6 +736,8 @@ AK_DESTRUCTOR void autark_dispose(void) {
     ulist_destroy_keep(&g_env.units);
     ulist_destroy_keep(&g_env.stack_units);
     map_destroy(g_env.map_path_to_unit);
+    toolchain_destroy(g_env.project.toolchain);
+    cxx_modules_dispose();
     pool_destroy(pool);
     memset(&g_env, 0, sizeof(g_env));
   }

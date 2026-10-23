@@ -20,7 +20,7 @@ foreach {
   OBJ
   ${CC_OBJS}
   run {
-    exec { ${CC} ${OBJ} ${LIBAUTARK} -o %{${OBJ}} }
+    exec { ${CC} ${OBJ} ${LIBAUTARK} ${LDFLAGS} -o %{${OBJ}} }
     produces {
       %{${OBJ}}
     }

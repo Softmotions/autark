@@ -306,6 +306,12 @@ struct toolchain* toolchain_load(struct pool *pool, const char *path) {
   return tc;
 }
 
+void toolchain_destroy(struct toolchain *tc) {
+  if (tc) {
+    ulist_destroy_keep(&tc->vars);
+  }
+}
+
 /// Publishes a value as a build script variable and as a process environment variable.
 static void _publish(struct unit *root, const char *key, const char *val) {
   if (!val || *val == '\0') {

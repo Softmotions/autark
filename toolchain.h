@@ -53,11 +53,19 @@ struct toolchain {
 
 /// Loads and resolves the given toolchain descriptor.
 ///
+/// The toolchain struct and its values are allocated in the given pool.
+/// A toolchain which is not passed to `toolchain_apply()` should be released with
+/// `toolchain_destroy()` before the pool is destroyed.
+///
 /// @param pool Pool used to allocate the toolchain and its values
 /// @param path Path to the descriptor file
 ///
 /// @return Resolved toolchain
 struct toolchain* toolchain_load(struct pool *pool, const char *path);
+
+/// Releases heap resources of the toolchain which are not owned by its pool.
+/// The toolchain struct itself is released together with the pool given to `toolchain_load()`.
+void toolchain_destroy(struct toolchain *tc);
 
 /// Loads the toolchain descriptor selected by `--toolchain`/`AUTARK_TOOLCHAIN` (if any)
 /// and publishes its facts into the root build unit.

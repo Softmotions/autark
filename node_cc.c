@@ -298,7 +298,7 @@ static void _cc_sources_split(
   }
 
   if (!all) {
-    outdated = map_create_str(0);
+    outdated = map_create_str(map_k_free);
     for (int i = 0; i < r->resolve_outdated.num; ++i) {
       struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
       map_put_str(outdated, u->path, (void*) (intptr_t) 1);

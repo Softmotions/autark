@@ -110,6 +110,10 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
   struct stat st;
   struct node *n = ctx->n;
 
+  if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
+    node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
+  }
+
   if (ctx->install_overlays) {
     if (utils_endswith(src, "/" AUTARK_FETCH_DEP)) {
       // autark-cache/.overlay/myproj/.autark-fetch-dep = autark-cache/.overlay/myproj
@@ -130,10 +134,6 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       _install_file(n, src, dst_buf, &st);
       return;
     }
-  }
-
-  if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
-    node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
   }
 
   utils_strncpy(src_buf, src, sizeof(src_buf));

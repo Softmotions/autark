@@ -16,50 +16,42 @@ struct map_iter {
   int32_t     entry;
 };
 
+/// Key/Value free callback which uses standard `free()` deallocation.
+/// @param key Pointer to key or zero.
+/// @param val Pointer to value or zero.
 void map_kv_free(void *key, void *val);
+
+/// Key free callback which uses standard `free()` deallocation.
+/// @param key Pointer to key or zero.
+/// @param val Value, ignored.
 void map_k_free(void *key, void *val);
 
-struct map* map_create(
-  int (*cmp_fn)(const void*, const void*),
-  uint32_t (*hash_fn)(const void*),
-  void (*kv_free_fn)(void*, void*));
+/// Creates a map with `strcmp()` keys.
+/// @param kv_free_fn Callback used to release keys and values on removal,
+///        zero means that the map does not own stored keys and values.
+struct map* map_create_str(void (*kv_free_fn)(void*, void*));
 
 void map_destroy(struct map*);
 
-struct map* map_create_u64(void (*kv_free_fn)(void*, void*));
-
-struct map* map_create_u32(void (*kv_free_fn)(void*, void*));
-
-struct map* map_create_str(void (*kv_free_fn)(void*, void*));
-
-void map_put(struct map*, void *key, void *val);
-
-void map_put_u32(struct map*, uint32_t key, void *val);
-
-void map_put_u64(struct map*, uint64_t key, void *val);
-
+/// Makes a copy of key (`strdup()`) then puts key/value pair into the map.
+/// @note Key memory is expected to be released by `kv_free_fn` given to `map_create_str()`.
 void map_put_str(struct map*, const char *key, void *val);
 
+/// Puts key/value pair into the map without copying the key.
+/// @note Key memory is expected to be released by `kv_free_fn` given to `map_create_str()`.
 void map_put_str_no_copy(struct map*, const char *key, void *val);
 
-int map_remove(struct map*, const void *key);
+/// Removes the given key from the map.
+/// @return `1` if the key has been found and removed, `0` otherwise.
+int map_remove(struct map*, const char *key);
 
-int map_remove_u64(struct map*, uint64_t key);
-
-int map_remove_u32(struct map*, uint32_t key);
-
-void* map_get(struct map*, const void *key);
-
-void* map_get_u64(struct map*, uint64_t key);
-
-void* map_get_u32(struct map*, uint32_t key);
-
-uint32_t map_count(const struct map*);
-
-void map_clear(struct map*);
+/// @return Value associated with the given key or zero.
+void* map_get(struct map*, const char *key);
 
 void map_iter_init(struct map*, struct map_iter*);
 
+/// Advances the iterator to the next entry.
+/// @return `1` if the iterator points to an entry, `0` at the end of the map.
 int map_iter_next(struct map_iter*);
 
 #endif

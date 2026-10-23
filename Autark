@@ -26,6 +26,9 @@ set {
 
 include { peg.autark }
 
+option { ENABLE_ASAN                  Build with AddressSanitizer }
+option { ENABLE_UBSAN                 Build with UndefinedBehaviorSanitizer }
+
 set {
   CC
   ${CC cc}
@@ -52,7 +55,23 @@ set {
   -Wno-sign-compare
   -Wno-unused-parameter
   -Wno-format-truncation
+  if { ${ENABLE_ASAN}
+    -fsanitize=address
+    -fno-omit-frame-pointer
+  }
+  if { ${ENABLE_UBSAN}
+    -fsanitize=undefined
+    -fno-omit-frame-pointer
+  }
   ..${CFLAGS}
+}
+
+# Sanitizers require their runtime libraries on the link stage as well
+set {
+  LDFLAGS
+  if { ${ENABLE_ASAN} -fsanitize=address }
+  if { ${ENABLE_UBSAN} -fsanitize=undefined }
+  ..${LDFLAGS}
 }
 
 set {
@@ -125,7 +144,7 @@ run {
 }
 
 run {
-  exec { ${CC} -o autark ${CC_OBJS_LIB} ${CC_OBJS} }
+  exec { ${CC} -o autark ${CC_OBJS_LIB} ${CC_OBJS} ${LDFLAGS} }
   consumes {
     ${CC_OBJS_LIB}
     ${CC_OBJS}

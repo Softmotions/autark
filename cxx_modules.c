@@ -51,7 +51,9 @@ struct cxx_module {
 ///
 /// It is populated while scripts are set up (all setups finish before any build
 /// starts), so the module map of a build unit lists interfaces of all units.
-/// The registry is owned by the build process and is not released explicitly.
+/// Registry entries refer to rule nodes of the current build environment,
+/// so the registry is released by `cxx_modules_dispose()` together with that
+/// environment and is recreated on demand.
 static struct {
   struct pool *pool;
   struct ulist list; // struct cxx_module*
@@ -115,6 +117,14 @@ static void _reg_add(struct node *n, const char *tag, const char *name, const ch
     .owner = n,
   };
   ulist_push(&_reg.list, &m);
+}
+
+void cxx_modules_dispose(void) {
+  if (_reg.pool) {
+    ulist_destroy_keep(&_reg.list);
+    pool_destroy(_reg.pool);
+    memset(&_reg, 0, sizeof(_reg));
+  }
 }
 
 static bool _is_module_ext(const char *path) {

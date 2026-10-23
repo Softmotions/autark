@@ -34,8 +34,15 @@ bool cxx_modules_is_module_path(const char *path);
 struct cxx_modules* cxx_modules_create(struct node *n, const char *compiler, const char *tag);
 
 /// Destroys module compilation state. Registered modules remain in the project
-/// wide module registry, which is owned by the build process.
+/// wide module registry, which is released by `cxx_modules_dispose()`.
 void cxx_modules_destroy(struct cxx_modules*);
+
+/// Releases the project wide module registry.
+///
+/// The registry refers to rule nodes of the current build environment, so it is
+/// released together with that environment (`autark_dispose()`) and is recreated
+/// on demand. Safe to call multiple times.
+void cxx_modules_dispose(void);
 
 /// Scans the source and registers it as a module unit if it declares a module.
 ///
