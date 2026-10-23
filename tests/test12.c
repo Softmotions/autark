@@ -5,6 +5,10 @@
 static char cwd_start[PATH_MAX];
 
 static int suite_init(void) {
+  // `${BUILD_TYPE Release}` falls back to the process environment, while this suite
+  // checks option resolution itself. Ambient build options of the outer build
+  // (`BUILD_TYPE=Debug ./build.sh`) must not leak into the cases.
+  unsetenv("BUILD_TYPE");
   return getcwd(cwd_start, sizeof(cwd_start)) ? 0 : 1;
 }
 
