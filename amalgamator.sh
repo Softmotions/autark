@@ -68,6 +68,7 @@ cat ./env.h >> ${F}
 cat ./deps.h >> ${F}
 cat ./fetchreg.h >> ${F}
 cat ./toolchain.h >> ${F}
+cat ./cxx_modules.h >> ${F}
 cat ./nodes.h >> ${F}
 cat ./autark.h >> ${F}
 cat ./script.h >> ${F}
@@ -83,6 +84,7 @@ cat ./spawn.c >> ${F}
 cat ./deps.c >> ${F}
 cat ./fetchreg.c >> ${F}
 cat ./toolchain.c >> ${F}
+cat ./cxx_modules.c >> ${F}
 cat ./node_script.c >> ${F}
 cat ./node_check.c >> ${F}
 cat ./node_set.c >> ${F}

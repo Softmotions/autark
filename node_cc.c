@@ -11,6 +11,7 @@
 #include "alloc.h"
 #include "map.h"
 #include "toolchain.h"
+#include "cxx_modules.h"
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -34,6 +35,8 @@ struct _cc_ctx {
   struct node *n_cc;
   struct node *n_consumes;
   struct node *n_objects;
+  struct node *n_modules;
+  struct cxx_modules *modules;  // C++20 modules compilation state (cxx rules only)
   const char  *cc;
   const char  *objskey;
   const char  *cflags_default; // Used when no explicit flags expression is given (host-cc/host-cxx)
@@ -81,11 +84,7 @@ static void _cc_obj_tag_write(struct _cc_ctx *ctx, const char *obj) {
   }
 }
 
-static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
-  deps_add_alias(deps, 's', src, item);
-}
-
-static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj, char flags) {
   char buf[MAX(2 * PATH_MAX, 8192)];
   size_t len = strlen(obj);
   utils_strncpy(buf, obj, sizeof(buf));
@@ -97,7 +96,9 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
 
   FILE *f = fopen(buf, "r");
   if (!f) {
-    node_warn(n, "Failed to open compiler generated (-MMD) dependency file: %s", buf);
+    if (g_env.verbose) {
+      node_info(n, "No compiler generated (-MMD) dependency file: %s", buf);
+    }
     return;
   }
 
@@ -109,9 +110,12 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
         continue;
       }
       p += len;
-      if (*p++ != ':') {
+      // The first target may be followed by module specific targets (gcc)
+      char *colon = strchr(p, ':');
+      if (colon == 0) {
         continue;
       }
+      p = colon + 1;
     } else {
       nl = false;
     }
@@ -133,7 +137,11 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
           *p = '\0';
           ++p;
         }
-        _cc_deps_MMD_item_add(sp, n, deps, src);
+        // Skip logical module references emitted by gcc (`.c++m`)
+        if (utils_endswith(sp, ".c++m")) {
+          continue;
+        }
+        deps_add_alias(deps, flags, src, sp);
       }
     }
   }
@@ -155,7 +163,6 @@ static void _cc_task_destroy(struct _cc_task *t) {
 
 static void _cc_on_build_source(
   struct node     *n,
-  struct deps     *deps,
   const char      *src,
   const char      *obj,
   struct _cc_task *task) {
@@ -164,6 +171,7 @@ static void _cc_on_build_source(
   }
 
   struct _cc_ctx *ctx = n->impl;
+  struct unit *unit = unit_peek();
   struct spawn *s = spawn_create(ctx->cc, ctx);
   task->s = s;
 
@@ -179,6 +187,11 @@ static void _cc_on_build_source(
     }
     spawn_arg_add(s, cflags);
     xstr_destroy(xstr);
+  }
+
+  if (ctx->modules) {
+    char buf[PATH_MAX];
+    cxx_modules_args_add(ctx->modules, s, path_normalize_cwd(src, unit->cache_dir, buf));
   }
 
   if (!spawn_arg_starts_with(s, "-M")) {
@@ -205,52 +218,17 @@ static void _cc_on_build_source(
   task->pid = spawn_pid(s);
 }
 
-static void _cc_on_resolve(struct node_resolve *r) {
-  struct deps deps;
-  struct _cc_ctx *ctx = r->user_data;
+/// Compiles the given sources (up to `max_jobs` in parallel).
+///
+/// Failed sources are registered in `fmap` (cache relative source path -> failure).
+/// Dependencies of compiled sources are recorded by the caller.
+static void _cc_compile_sources(
+  struct _cc_ctx *ctx,
+  struct ulist   *slist,
+  int             max_jobs,
+  struct map     *fmap) {
   struct unit *unit = unit_peek();
-  struct ulist *slist = &ctx->sources;
-  struct ulist rlist = { .usize = sizeof(char*) };
   struct ulist tasks = { .usize = sizeof(struct _cc_task) };
-  struct map *fmap = map_create_str(map_k_free);
-
-  int max_jobs = g_env.max_parallel_jobs;
-  if (max_jobs <= 0) {
-    max_jobs = 1;
-  }
-
-  if (r->resolve_outdated.num) {
-    for (int i = 0; i < r->resolve_outdated.num; ++i) {
-      struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
-      if (u->flags != 's') { // Rebuild all on any outdated non source dependency
-        slist = &ctx->sources;
-        break;
-      } else {
-        char *path = pool_strdup(r->pool, u->path);
-        ulist_push(&rlist, &path);
-        slist = &rlist;
-      }
-    }
-  }
-
-  int rc = deps_open(r->deps_path_tmp, 0, &deps);
-  if (rc) {
-    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
-  }
-  node_add_unit_deps(ctx->n, &deps);
-
-  for (int i = 0; i < r->node_val_deps.num; ++i) {
-    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
-    const char *val = node_value(nv);
-    if (val) {
-      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
-    }
-  }
-
-  for (int i = 0; i < ctx->consumes.num; ++i) {
-    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
-  }
 
   for (int i = 0; i < slist->num || tasks.num > 0; ) {
     while (tasks.num < max_jobs && i < slist->num) {
@@ -259,15 +237,13 @@ static void _cc_on_resolve(struct node_resolve *r) {
       obj = _cc_obj_path(ctx, src, unit);
       src = path_normalize_cwd(src, unit->cache_dir, buf);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+
       struct _cc_task task = { .src = src, .obj = obj, .pid = -1 };
-      _cc_on_build_source(ctx->n, &deps, src, obj, &task);
+      _cc_on_build_source(ctx->n, src, obj, &task);
 
       if (task.pid == -1) {
         ++ctx->num_failed;
         map_put_str(fmap, src, (void*) (intptr_t) 1);
-        if (slist == &ctx->sources) {
-          deps_add(&deps, DEPS_TYPE_FILE_OUTDATED, 's', src, 0);
-        }
         _cc_task_destroy(&task);
       } else {
         ulist_push(&tasks, &task);
@@ -296,39 +272,123 @@ static void _cc_on_resolve(struct node_resolve *r) {
         } else {
           _cc_obj_tag_write(ctx, t->obj);
         }
-        if (slist == &ctx->sources) {
-          deps_add(&deps, code != 0 ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', t->src, 0);
-          if (code == 0) {
-            _cc_deps_MMD_add(ctx->n, &deps, t->src, t->obj);
-          }
-        }
         _cc_task_destroy(t);
         ulist_remove(&tasks, j);
         break;
       }
     }
   }
+  ulist_destroy_keep(&tasks);
+}
 
-  if (slist != &ctx->sources) {
-    for (int i = 0; i < ctx->sources.num; ++i) {
-      char buf[PATH_MAX];
-      char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
-      obj = _cc_obj_path(ctx, src, unit);
-      src = path_normalize_cwd(src, unit->cache_dir, buf);
-      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      bool failed = map_get(fmap, src) != 0;
-      deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
-      if (!failed) {
-        _cc_deps_MMD_add(ctx->n, &deps, src, obj);
-      }
-      free(obj);
-      free(src);
+/// Splits outdated sources into module interface units and regular sources.
+static void _cc_sources_split(
+  struct _cc_ctx *ctx,
+  struct node_resolve *r,
+  struct ulist *ifaces,
+  struct ulist *sources) {
+  struct map *outdated = 0;
+  bool all = r->resolve_outdated.num == 0;
+
+  for (int i = 0; !all && i < r->resolve_outdated.num; ++i) {
+    struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+    if (u->flags != 's') { // Rebuild all on any outdated non source dependency
+      all = true;
     }
   }
 
+  if (!all) {
+    outdated = map_create_str(0);
+    for (int i = 0; i < r->resolve_outdated.num; ++i) {
+      struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+      map_put_str(outdated, u->path, (void*) (intptr_t) 1);
+    }
+  }
+
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    const char *src = *(char**) ulist_get(&ctx->sources, i);
+    if (!all && !map_get(outdated, src)) {
+      continue;
+    }
+    if (ctx->modules && cxx_modules_is_interface(ctx->modules, src)) {
+      ulist_push(ifaces, &src);
+    } else {
+      ulist_push(sources, &src);
+    }
+  }
+  map_destroy(outdated);
+}
+
+static void _cc_on_resolve(struct node_resolve *r) {
+  struct deps deps;
+  struct _cc_ctx *ctx = r->user_data;
+  struct unit *unit = unit_peek();
+  struct ulist ifaces = { .usize = sizeof(char*) };
+  struct ulist slist = { .usize = sizeof(char*) };
+  struct map *fmap = map_create_str(map_k_free);
+
+  int max_jobs = g_env.max_parallel_jobs;
+  if (max_jobs <= 0) {
+    max_jobs = 1;
+  }
+
+  _cc_sources_split(ctx, r, &ifaces, &slist);
+
+  int rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
+  }
+  node_add_unit_deps(ctx->n, &deps);
+
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+
+  for (int i = 0; i < ctx->consumes.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
+  }
+
+  // Module interface units must be compiled before all importers.
+  // They are compiled in their declaration order.
+  _cc_compile_sources(ctx, &ifaces, 1, fmap);
+
+  if (ctx->num_failed) {
+    if (g_env.verbose && slist.num) {
+      node_info(ctx->n, "Skipping %u source(s) due to C++ module compilation errors", slist.num);
+    }
+  } else {
+    _cc_compile_sources(ctx, &slist, max_jobs, fmap);
+  }
+
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    char buf[PATH_MAX];
+    char *obj, *abs = *(char**) ulist_get(&ctx->sources, i);
+    bool iface = ctx->modules && cxx_modules_is_interface(ctx->modules, abs);
+    char flags = iface ? 0 : 's'; // Interface units rebuild the whole group
+    obj = _cc_obj_path(ctx, abs, unit);
+    char *src = path_normalize_cwd(abs, unit->cache_dir, buf);
+    src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+
+    bool failed = map_get(fmap, src) != 0;
+    deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, flags, src, 0);
+
+    if (!failed) {
+      _cc_deps_MMD_add(ctx->n, &deps, src, obj, flags);
+    }
+    free(obj);
+    free(src);
+  }
+
+  cxx_modules_deps_add(ctx->modules, &deps);
+
   deps_close(&deps);
-  ulist_destroy_keep(&rlist);
-  ulist_destroy_keep(&tasks);
+  ulist_destroy_keep(&ifaces);
+  ulist_destroy_keep(&slist);
   map_destroy(fmap);
 }
 
@@ -470,6 +530,8 @@ static void _cc_build(struct node *n) {
     }
   }
 
+  cxx_modules_prepare(ctx->modules);
+
   struct node_resolve r = {
     .n = n,
     .path = n->vfile,
@@ -522,6 +584,69 @@ static void _cc_source_add(struct node *n, const char *src) {
   char *obj = _cc_obj_path(ctx, npath, unit);
   ulist_push(&ctx->objects, &obj);
   node_product_add(n, obj, 0);
+}
+
+/// Initializes C++20 modules compilation of the rule.
+///
+/// Sources listed in the optional `modules { }` bag are treated as module units
+/// unconditionally, other sources are detected by their file extension.
+static void _cc_modules_setup(struct _cc_ctx *ctx, bool is_cxx) {
+  struct node *n = ctx->n;
+  struct unit *unit = unit_peek();
+
+  if (ctx->n_modules && !is_cxx) {
+    node_fatal(AK_ERROR_SCRIPT, n, "`modules { }` is supported only by cxx rules");
+  }
+  if (!is_cxx) {
+    for (int i = 0; i < ctx->sources.num; ++i) {
+      const char *src = *(char**) ulist_get(&ctx->sources, i);
+      if (cxx_modules_is_module_path(src)) {
+        node_fatal(AK_ERROR_SCRIPT, n, "C++ module units require a cxx rule: %s", src);
+      }
+    }
+    return;
+  }
+
+  ctx->modules = cxx_modules_create(n, ctx->cc, ctx->tag);
+  struct map *explicit = ctx->n_modules ? map_create_str(map_k_free) : 0;
+
+  if (explicit) {
+    for (struct node *nn = ctx->n_modules->child; nn; nn = nn->next) {
+      const char *val = node_value(nn);
+      if (!val || *val == '\0') {
+        continue;
+      }
+      struct vlist_iter iter;
+      vlist_iter_init(val, &iter);
+      while (vlist_iter_next(&iter)) {
+        char buf[PATH_MAX], path[PATH_MAX];
+        utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
+        const char *abs = path_is_absolute(buf)
+                          ? utils_strncpy(path, buf, sizeof(path))
+                          : path_normalize_cwd(buf, unit->dir, path);
+        map_put_str(explicit, abs, (void*) (intptr_t) 1);
+      }
+    }
+  }
+
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    const char *src = *(char**) ulist_get(&ctx->sources, i);
+    bool required = explicit && map_get(explicit, src) != 0;
+    cxx_modules_add_source(ctx->modules, src, required);
+    if (required) {
+      map_remove(explicit, src);
+    }
+  }
+
+  if (explicit) {
+    struct map_iter it;
+    map_iter_init(explicit, &it);
+    if (map_iter_next(&it)) {
+      node_fatal(AK_ERROR_SCRIPT, n,
+                 "Source listed in `modules { }` is not a part of the cxx sources: %s", (const char*) it.key);
+    }
+    map_destroy(explicit);
+  }
 }
 
 static void _cc_setup(struct node *n) {
@@ -607,6 +732,8 @@ static void _cc_setup(struct node *n) {
   char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, ctx->objskey, objs);
   free(objs);
+
+  _cc_modules_setup(ctx, is_cxx);
 }
 
 static void _cc_init(struct node *n) {
@@ -617,6 +744,9 @@ static void _cc_init(struct node *n) {
       continue;
     } else if (strcmp(nn->value, "objects") == 0) {
       ctx->n_objects = nn;
+      continue;
+    } else if (strcmp(nn->value, "modules") == 0) {
+      ctx->n_modules = nn;
       continue;
     }
     if (!ctx->n_sources) {
@@ -643,6 +773,7 @@ static void _cc_dispose(struct node *n) {
       char *p = *(char**) ulist_get(&ctx->objects, i);
       free(p);
     }
+    cxx_modules_destroy(ctx->modules);
     ulist_destroy_keep(&ctx->sources);
     ulist_destroy_keep(&ctx->objects);
     ulist_destroy_keep(&ctx->consumes);

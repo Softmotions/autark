@@ -58,4 +58,18 @@ if { ${RUN_TESTS}
       S{tests/cross/run-tests.sh}
     }
   }
+  # End-to-end C++20 modules tests (supported compilers are detected)
+  run {
+    always
+    shell {
+      sh
+      S{tests/cxx-modules/run-tests.sh}
+      C{autark}
+      CC{cxx-modules-tests}
+    }
+    consumes {
+      C{autark}
+      S{tests/cxx-modules/run-tests.sh}
+    }
+  }
 }

@@ -58,6 +58,7 @@ set {
 set {
   SOURCES_LIB
   autark_core.c
+  cxx_modules.c
   deps.c
   fetchreg.c
   log.c

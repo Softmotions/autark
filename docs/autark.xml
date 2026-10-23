@@ -49,6 +49,7 @@
       <item>consumes</item>
       <item>produces</item>
       <item>objects</item>
+      <item>modules</item>
       <item>exec</item>
       <item>shell</item>
       <item>always</item>

@@ -1410,10 +1410,10 @@ messages for malformed input.</li>
 <li>Autark is primarily developed and tested on Linux, FreeBSD, and
 macOS. It should also work on other Unix-like systems. Windows Subsystem
 for Linux (WSL) is currently untested.</li>
-<li>Autark does not yet support C++20 modules. Support is a work in
-progress and is tracked in <a
-href="https://github.com/Softmotions/autark/issues/1">this
-issue</a>.</li>
+<li>Autark supports C++20 named modules in
+<code>cxx</code>/<code>host-cxx</code> rules (see <a
+href="#c20-modules">C++20 modules</a>). Module partitions, header units
+and <code>import std;</code> are not supported yet.</li>
 </ul>
 <h1 id="cookbook">Cookbook</h1>
 <h2
@@ -2359,7 +2359,8 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb86-1"><a h
 <span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>   [COMPILER_CMD]</span>
 <span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">objects</span> { NAME }]</span>
 <span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">consumes</span> { ... }]</span>
-<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>   [modules { ... }]</span>
+<span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h3 id="sources">SOURCES</h3>
 <p>The first argument must be an expression that returns a list of
 source files. It can be a single string (for one file) or a list defined
@@ -2410,6 +2411,73 @@ the <code>cc</code> compilation rule.</p>
 <code>configure</code> rule (such as a generated header file), you must
 list it here. This ensures that the <code>configure</code> step is
 executed <strong>before</strong> compilation starts.</p>
+<h3 id="c20-modules">C++20 modules</h3>
+<p><code>cxx</code> and <code>host-cxx</code> rules support C++20 named
+modules. Sources with a module interface unit extension
+(<code>.cppm</code>, <code>.ixx</code>, <code>.mpp</code>,
+<code>.ccm</code>, <code>.cxxm</code>) are detected automatically. A
+<code>modules { ... }</code> section can be used to mark sources with
+other extensions (e.g. <code>.cpp</code>) as module units:</p>
+<div class="sourceCode" id="cb87"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> { SOURCES base.cppm derived.cppm main.cpp }</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cxx</span> {</span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{SOURCES}</span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  -std=c++20</span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CXX}</span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Module interface units are compiled <strong>first and
+sequentially</strong> in their declaration order, so they must be listed
+in the order of their inter-module dependencies (a module may import
+only modules declared before it). All other sources are compiled in
+parallel after the interfaces, so any source may import any module of
+the rule as well as modules of other rules/units of the project.</p>
+<div class="sourceCode" id="cb88"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> { MOD_SOURCES impl.cpp main.cpp }</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cxx</span> {</span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{MOD_SOURCES}</span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  -std=c++20</span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CXX}</span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>  modules { impl.cpp }   # impl.cpp is a module unit even being a `.cpp` file</span>
+<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Compiled module interfaces (BMIs) are stored in the
+<code>.cxx-modules</code> directory of the project cache, in a
+subdirectory named after the toolchain id for cross builds (and
+<code>host</code> for build tools). They are registered as products of
+the rule, so other rules can depend on them via
+<code>consumes { ... }</code>.</p>
+<p>All <code>cxx</code> rules of the same target depend on the project
+BMIs, so a change of a module interface recompiles every
+<code>cxx</code> rule of that target. If a source imports a module
+provided by another rule (or unit), make sure that the provider is built
+first, e.g. by including its script before the importing rule.</p>
+<p>Supported compilers:</p>
+<ul>
+<li>clang (tested with clang 19) via
+<code>-fprebuilt-module-path</code></li>
+<li>gcc (tested with gcc 14) via a generated
+<code>-fmodule-mapper</code> file</li>
+</ul>
+<p>The compiler style is detected from the compiler name. If a cross
+compiler is a wrapper script (so its name does not contain
+<code>clang</code>), set <code>CXX_MODULE_STYLE</code> explicitly:</p>
+<div class="sourceCode" id="cb89"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> { CXX_MODULE_STYLE <span class="bu">$</span>{CXX_MODULE_STYLE clang} }  # <span class="cf">or</span> `gcc`</span></code></pre></div>
+<p>Notes and current limitations:</p>
+<ul>
+<li><code>CXXFLAGS</code> must select the language mode explicitly, e.g.
+<code>-std=c++20</code>.</li>
+<li>Module partitions (<code>export module foo:part;</code>), header
+units (<code>import &lt;header&gt;;</code>) and <code>import std;</code>
+are not supported. Such units are reported with a build error.</li>
+<li>All sources of a rule must be compiled with the same compiler flags
+(and the same toolchain) to share their BMIs.</li>
+<li>Module interface sources must exist during the script setup phase,
+so generated module units are not supported yet.</li>
+<li>BMIs of other projects (fetched dependencies) are not tracked
+automatically.</li>
+<li>Editing an interface unit (or a header it includes) recompiles the
+whole module group in a single build.</li>
+</ul>
 <h3 id="cross-builds-host-cc-and-host-cxx">Cross builds:
 <code>host-cc</code> and <code>host-cxx</code></h3>
 <p><code>cc</code>/<code>cxx</code> always compile for the
@@ -2418,8 +2486,8 @@ executed <strong>before</strong> compilation starts.</p>
 a plain <code>cc { ${SOURCES} ${CFLAGS} ${CC} }</code> rule is already
 target-correct. Target specific flags are <em>not</em> applied
 implicitly, so add them explicitly:</p>
-<div class="sourceCode" id="cb87"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> { CFLAGS -std=c99 <span class="bu">..$</span>{CFLAGS} <span class="bu">..$</span>{CFLAGS_TARGET} }</span></code></pre></div>
+<div class="sourceCode" id="cb90"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> { CFLAGS -std=c99 <span class="bu">..$</span>{CFLAGS} <span class="bu">..$</span>{CFLAGS_TARGET} }</span></code></pre></div>
 <p>Every object file produced by a cross build is tagged with the id of
 the toolchain that compiled it (a
 <code>&lt;object&gt;.o.autark-tag</code> sidecar file next to the
@@ -2430,10 +2498,10 @@ object can never end up in a build tool and vice versa.</p>
 generators, ...) must be compiled for the <strong>build host</strong>,
 not for the target. For this purpose <code>host-cc</code> and
 <code>host-cxx</code> rules are provided:</p>
-<div class="sourceCode" id="cb88"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="kw">host-cc</span> {</span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  peg.c tree.c leg.c       # -&gt; <span class="bu">$</span>{HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...</span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb91"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="kw">host-cc</span> {</span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  peg.c tree.c leg.c       # -&gt; <span class="bu">$</span>{HOST_CC_OBJS} = host-tools/peg.o host-tools/tree.o ...</span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The <code>host-*</code> rules differ from
 <code>cc</code>/<code>cxx</code> in the following way:</p>
 <ul>
@@ -2451,13 +2519,13 @@ same source file do not collide.</li>
 <p>Similarly to the target artifacts, build tool objects must be linked
 by a <code>run { host ... }</code> rule (see the <a href="#run-">run</a>
 rule reference):</p>
-<div class="sourceCode" id="cb89"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host</span></span>
-<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{HOST_CC} -o leg <span class="bu">$</span>{HOST_CC_OBJS} }</span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> { <span class="bu">$</span>{HOST_CC_OBJS} }</span>
-<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> { leg }</span>
-<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb92"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="kw">run</span> {</span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">host</span></span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">exec</span> { <span class="bu">$</span>{HOST_CC} -o leg <span class="bu">$</span>{HOST_CC_OBJS} }</span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">consumes</span> { <span class="bu">$</span>{HOST_CC_OBJS} }</span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">produces</span> { leg }</span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Use a separate cache directory (<code>-H</code> /
 <code>--cache</code>) for every target, since the cache is not kept per
 target. See the <a href="#cross-compilation">Cross compilation</a>
@@ -2468,8 +2536,8 @@ variables.</p>
 <p>Source files compilation can be performed in parallel. By default,
 the parallelism level is set to <code>4</code>. You can change this
 using the <code>-J</code> option on the command line. For example:</p>
-<div class="sourceCode" id="cb90"><pre
-class="sourceCode sh"><code class="sourceCode bash"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
+<div class="sourceCode" id="cb93"><pre
+class="sourceCode sh"><code class="sourceCode bash"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./build.sh</span> <span class="at">-J8</span></span></code></pre></div>
 <p>This will run up to 8 compilation jobs in parallel.</p>
 <h1 id="library-">library {...}</h1>
 <p>Search for a library file by name.</p>
@@ -2486,13 +2554,13 @@ locations commonly used across Unix-like systems:</p>
 subdirectories where shared or static libraries may be located (such as
 <code>lib</code>, <code>lib64</code>, etc., depending on the
 system).</p>
-<div class="sourceCode" id="cb91"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="kw">library</span> {</span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  | VAR_NAME</span>
-<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">parent</span> { VAR_NAME }</span>
-<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">root</span> { VAR_NAME }</span>
-<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a>  LIB_FILES...</span>
-<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb94"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="kw">library</span> {</span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>  | VAR_NAME</span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">parent</span> { VAR_NAME }</span>
+<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>  | <span class="kw">root</span> { VAR_NAME }</span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>  LIB_FILES...</span>
+<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <ul>
 <li>The resulting absolute path to the first matched file will be stored
 in the specified variable.</li>
@@ -2501,12 +2569,12 @@ parent script (<code>parent { VAR_NAME }</code>), or root script
 (<code>root { VAR_NAME }</code>).</li>
 </ul>
 <p>Example:</p>
-<div class="sourceCode" id="cb92"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="kw">library</span> { LIB_M libm.a }</span>
-<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { <span class="bu">$</span>{LIB_M} }</span>
-<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">error</span> { Library libm not found }</span>
-<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb95"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> { <span class="kw">library</span> { LIB_M libm.a }</span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { <span class="bu">$</span>{LIB_M} }</span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">error</span> { Library libm not found }</span>
+<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>This will search for <code>libm.a</code>, and if found, store its
 absolute path in <code>LIB_M</code> and print it. If the library is not
 found, the script will terminate with an error.</p>
@@ -2518,43 +2586,43 @@ few parameter values.</p>
 <p>A macro call is similar to a function call, but instead of executing
 code directly, it rewrites and rebuilds the script’s AST (Abstract
 Syntax Tree) before the build script starts.</p>
-<div class="sourceCode" id="cb93"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
-<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
-<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a>  ...</span>
-<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb96"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>The body of a macro directive can contain any valid Autark script
 elements and may include argument placeholders for macro calls. These
 placeholders have the following format: <code>&amp;{N}</code>, where
 <code>N</code> is the argument number starting from one. A macro is
 invoked using the <code>call</code> directive:</p>
-<div class="sourceCode" id="cb94"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
-<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
-<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>  ARGS...</span>
-<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb97"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>  MACRO_NAME</span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a>  ARGS...</span>
+<span id="cb97-4"><a href="#cb97-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Example:</p>
-<div class="sourceCode" id="cb95"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
-<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
-<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> {</span>
-<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>    JOIN</span>
-<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">^</span>{<span class="bu">&amp;</span>{1} <span class="st">&#39; &#39;</span> <span class="bu">&amp;</span>{2}}</span>
-<span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb95-7"><a href="#cb95-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { JOIN <span class="bu">$</span>{JOIN} }</span>
-<span id="cb95-8"><a href="#cb95-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb95-9"><a href="#cb95-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb95-10"><a href="#cb95-10" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
-<span id="cb95-11"><a href="#cb95-11" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
-<span id="cb95-12"><a href="#cb95-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;foo bar&#39;</span></span>
-<span id="cb95-13"><a href="#cb95-13" aria-hidden="true" tabindex="-1"></a>  baz</span>
-<span id="cb95-14"><a href="#cb95-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb95-15"><a href="#cb95-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb95-16"><a href="#cb95-16" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
-<span id="cb95-17"><a href="#cb95-17" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
-<span id="cb95-18"><a href="#cb95-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;baz gaz&#39;</span></span>
-<span id="cb95-19"><a href="#cb95-19" aria-hidden="true" tabindex="-1"></a>  last</span>
-<span id="cb95-20"><a href="#cb95-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb98"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> {</span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> {</span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>    JOIN</span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">^</span>{<span class="bu">&amp;</span>{1} <span class="st">&#39; &#39;</span> <span class="bu">&amp;</span>{2}}</span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb98-7"><a href="#cb98-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">echo</span> { JOIN <span class="bu">$</span>{JOIN} }</span>
+<span id="cb98-8"><a href="#cb98-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb98-9"><a href="#cb98-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-10"><a href="#cb98-10" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb98-11"><a href="#cb98-11" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb98-12"><a href="#cb98-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;foo bar&#39;</span></span>
+<span id="cb98-13"><a href="#cb98-13" aria-hidden="true" tabindex="-1"></a>  baz</span>
+<span id="cb98-14"><a href="#cb98-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb98-15"><a href="#cb98-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-16"><a href="#cb98-16" aria-hidden="true" tabindex="-1"></a><span class="kw">call</span> {</span>
+<span id="cb98-17"><a href="#cb98-17" aria-hidden="true" tabindex="-1"></a>  M_ECHO</span>
+<span id="cb98-18"><a href="#cb98-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;baz gaz&#39;</span></span>
+<span id="cb98-19"><a href="#cb98-19" aria-hidden="true" tabindex="-1"></a>  last</span>
+<span id="cb98-20"><a href="#cb98-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Console output:</p>
 <pre><code>foo bar baz
 baz gaz last</code></pre>
@@ -2570,16 +2638,16 @@ href="https://github.com/Softmotions/protobuf-c/blob/master/t/Issues.autark">htt
 install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
-<div class="sourceCode" id="cb97"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
+<div class="sourceCode" id="cb100"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
 <code>${INSTALL_PREFIX}/${INSTALL_DATA_DIR}</code> (creating it if
 necessary). File permissions from the original files are preserved
 during the copy.</p>
 <p>Example:</p>
-<div class="sourceCode" id="cb98"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span>
-<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_INCLUDE_DIR} <span class="bu">$</span>{PUB_HDRS} }</span></code></pre></div>
+<div class="sourceCode" id="cb101"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_INCLUDE_DIR} <span class="bu">$</span>{PUB_HDRS} }</span></code></pre></div>
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
 the chosen prefix.</p>
@@ -2589,23 +2657,23 @@ the chosen prefix.</p>
 dir.</p>
 <p>Good practice is to place source code files into
 <code>&lt;install_prefix&gt;/share/&lt;project_name&gt;/&lt;project_name&gt;-sources-&lt;version&gt;</code></p>
-<div class="sourceCode" id="cb99"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>Example of <code>install-sources</code> configuration for iwnet
 project:</p>
-<div class="sourceCode" id="cb100"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> {</span>
-<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>   <span class="bu">^</span>{<span class="bu">$</span>{INSTALL_DATA_DIR} / <span class="bu">$</span>{META_NAME} / <span class="bu">$</span>{META_NAME} -sources- <span class="bu">$</span>{META_VERSION}}</span>
-<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>  .autark/</span>
-<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a> .ignore</span>
-<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a> Autark</span>
-<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a> Changelog</span>
-<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a> LICENSE</span>
-<span id="cb100-8"><a href="#cb100-8" aria-hidden="true" tabindex="-1"></a> README.md</span>
-<span id="cb100-9"><a href="#cb100-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">build</span>.sh</span>
-<span id="cb100-10"><a href="#cb100-10" aria-hidden="true" tabindex="-1"></a> src/</span>
-<span id="cb100-11"><a href="#cb100-11" aria-hidden="true" tabindex="-1"></a> tools/</span>
-<span id="cb100-12"><a href="#cb100-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb103"><pre
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> {</span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>   <span class="bu">^</span>{<span class="bu">$</span>{INSTALL_DATA_DIR} / <span class="bu">$</span>{META_NAME} / <span class="bu">$</span>{META_NAME} -sources- <span class="bu">$</span>{META_VERSION}}</span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>  .autark/</span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a> .ignore</span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a> Autark</span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a> Changelog</span>
+<span id="cb103-7"><a href="#cb103-7" aria-hidden="true" tabindex="-1"></a> LICENSE</span>
+<span id="cb103-8"><a href="#cb103-8" aria-hidden="true" tabindex="-1"></a> README.md</span>
+<span id="cb103-9"><a href="#cb103-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">build</span>.sh</span>
+<span id="cb103-10"><a href="#cb103-10" aria-hidden="true" tabindex="-1"></a> src/</span>
+<span id="cb103-11"><a href="#cb103-11" aria-hidden="true" tabindex="-1"></a> tools/</span>
+<span id="cb103-12"><a href="#cb103-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="autonomous-source-distributions">Autonomous source
 distributions</h2>
 <p>If your project depends on other projects downloaded by network you
