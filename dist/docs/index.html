@@ -964,6 +964,7 @@ nothing more than a C99-compliant compiler.</li>
 which is not a programming language.</li>
 <li>Support for extending the build process with custom rules.</li>
 <li>Parallel compilation of C/C++ source files.</li>
+<li>Basic support of C++20 modules.</li>
 <li>Support of an external project dependencies.</li>
 <li>Automatic generation of <code>compile_commands.json</code>
 compilation database.</li>
@@ -2359,7 +2360,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb86-1"><a h
 <span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>   [COMPILER_CMD]</span>
 <span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">objects</span> { NAME }]</span>
 <span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">consumes</span> { ... }]</span>
-<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>   [modules { ... }]</span>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>   [<span class="kw">modules</span> { ... }]</span>
 <span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h3 id="sources">SOURCES</h3>
 <p>The first argument must be an expression that returns a list of
@@ -2437,7 +2438,7 @@ class="sourceCode autark"><code class="sourceCode autark"><span id="cb88-1"><a h
 <span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{MOD_SOURCES}</span>
 <span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  -std=c++20</span>
 <span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">$</span>{CXX}</span>
-<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>  modules { impl.cpp }   # impl.cpp is a module unit even being a `.cpp` file</span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">modules</span> { impl.cpp }   # impl.cpp is a module unit even being a `.cpp` file</span>
 <span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Compiled module interfaces (BMIs) are stored in the
 <code>.cxx-modules</code> directory of the project cache, in a
