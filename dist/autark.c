@@ -1,8 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define META_VERSION "0.9.19"
-#define META_REVISION "5ccd6ac"
+#define META_VERSION "0.9.20"
+#define META_REVISION "e5a0893"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -560,7 +560,14 @@ int utils_copy_file(const char *src, const char *dst);
 
 int utils_copy_dir(const char *src, const char *dst);
 
+/// Copies directory `src` into `dst` transforming permissions of created
+/// files and directories with `mode_fn`. If `mode_fn` is 0, source permissions
+/// are preserved as is.
+int utils_copy_dir_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t));
+
 int utils_copy_dir_to_parent(const char *src, const char *dst);
+
+int utils_copy_dir_to_parent_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t));
 
 int utils_rename_file(const char *src, const char *dst);
 
@@ -2816,7 +2823,8 @@ static int _utils_copy_symlink(const char *src, const char *dst, const struct st
 static int _utils_copy_regular(
   const char        *src,
   const char        *dst,
-  const struct stat *src_st) {
+  const struct stat *src_st,
+  mode_t           (*mode_fn)(mode_t)) {
   struct stat dst_st;
 
   if (lstat(dst, &dst_st) == 0) {
@@ -2836,14 +2844,19 @@ static int _utils_copy_regular(
     return errno;
   }
   int rc = utils_copy_file(src, dst);
-  if (  !rc
-     && chmod(dst, src_st->st_mode & 07777) != 0) {
-    rc = errno;
+  if (!rc) {
+    mode_t mode = src_st->st_mode & 07777;
+    if (mode_fn) {
+      mode = mode_fn(mode);
+    }
+    if (chmod(dst, mode) != 0) {
+      rc = errno;
+    }
   }
   return rc;
 }
 
-static int _utils_copy_dir_recursive(const char *src, const char *dst) {
+static int _utils_copy_dir_recursive(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   struct stat src_st;
   struct stat dst_st;
   if (lstat(src, &src_st) != 0) {
@@ -2901,9 +2914,9 @@ static int _utils_copy_dir_recursive(const char *src, const char *dst) {
     if (lstat(src_path, &entry_st) != 0) {
       rc = errno;
     } else if (S_ISDIR(entry_st.st_mode)) {
-      rc = _utils_copy_dir_recursive(src_path, dst_path);
+      rc = _utils_copy_dir_recursive(src_path, dst_path, mode_fn);
     } else if (S_ISREG(entry_st.st_mode)) {
-      rc = _utils_copy_regular(src_path, dst_path, &entry_st);
+      rc = _utils_copy_regular(src_path, dst_path, &entry_st, mode_fn);
     } else if (S_ISLNK(entry_st.st_mode)) {
       rc = _utils_copy_symlink(src_path, dst_path, &entry_st);
     } else {
@@ -2920,32 +2933,44 @@ static int _utils_copy_dir_recursive(const char *src, const char *dst) {
   if (closedir(dir) != 0 && !rc) {
     rc = errno;
   }
-  if (  created
-     && chmod(dst, src_st.st_mode & 07777) != 0
-     && !rc) {
-    rc = errno;
+  if (!rc && (mode_fn || created)) {
+    mode_t mode = src_st.st_mode & 07777;
+    if (mode_fn) {
+      mode = mode_fn(mode);
+    }
+    if (chmod(dst, mode) != 0) {
+      rc = errno;
+    }
   }
   return rc;
 }
 
-int utils_copy_dir(const char *src, const char *dst) {
+int utils_copy_dir_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   if (!src || !*src || !dst || !*dst) {
     return AK_ERROR_INVALID_ARGS;
   }
   int rc = _utils_check_overlap(src, dst);
-  return rc ? rc : _utils_copy_dir_recursive(src, dst);
+  return rc ? rc : _utils_copy_dir_recursive(src, dst, mode_fn);
 }
 
-int utils_copy_dir_to_parent(const char *src, const char *dst) {
+int utils_copy_dir(const char *src, const char *dst) {
+  return utils_copy_dir_mode(src, dst, 0);
+}
+
+int utils_copy_dir_to_parent_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   if (!src || !*src || !dst || !*dst) {
     return AK_ERROR_INVALID_ARGS;
   }
   struct pool *pool = pool_create_empty();
   char *bname = path_basename(pool_strdup(pool, src));
   dst = path_join_path_pool(pool, dst, bname, 0);
-  int rv = utils_copy_dir(src, dst);
+  int rv = utils_copy_dir_mode(src, dst, mode_fn);
   pool_destroy(pool);
   return rv;
+}
+
+int utils_copy_dir_to_parent(const char *src, const char *dst) {
+  return utils_copy_dir_to_parent_mode(src, dst, 0);
 }
 
 long int utils_strtol(const char *v, int base, int *rcp) {
@@ -8381,7 +8406,25 @@ struct _install_on_resolve_ctx {
   struct node *n_target;
   struct ulist consumes;  // sizeof(char*)
   bool install_overlays;
+  bool exact;  // Preserve source permissions as is
 };
+
+/// Normalizes permissions of an installed file.
+///
+/// By default installed files must be readable by everyone and executables
+/// must be executable by everyone. Write and special bits are preserved.
+static mode_t _install_mode_default(mode_t mode) {
+  mode &= 07777;
+  mode |= S_IRUSR | S_IRGRP | S_IROTH;
+  if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
+    mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+  }
+  return mode;
+}
+
+static mode_t _install_mode_exact(mode_t mode) {
+  return mode & 07777;
+}
 
 static void _install_symlink(struct node *n, const char *src, const char *dst, struct stat *st) {
   char buf[PATH_MAX];
@@ -8413,14 +8456,14 @@ static void _install_symlink(struct node *n, const char *src, const char *dst, s
   utimensat(AT_FDCWD, dst, times, AT_SYMLINK_NOFOLLOW);
 }
 
-static void _install_file(struct node *n, const char *src, const char *dst, struct stat *st) {
+static void _install_file(struct node *n, const char *src, const char *dst, struct stat *st, mode_t mode) {
   node_info(n, "File %s => %s", src, dst);
 
   int in_fd = open(src, O_RDONLY);
   if (in_fd == -1) {
     node_fatal(errno, n, "Error opening file: %s", src);
   }
-  int out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, st->st_mode);
+  int out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (out_fd == -1) {
     node_fatal(errno, n, "Error opening file: %s", dst);
   }
@@ -8450,7 +8493,7 @@ static void _install_file(struct node *n, const char *src, const char *dst, stru
     }
   }
 
-  fchmod(out_fd, st->st_mode);
+  fchmod(out_fd, mode);
 #ifdef __APPLE__
   struct timespec times[2] = { st->st_atime, st->st_mtime };
 #else
@@ -8468,6 +8511,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
 
   struct stat st;
   struct node *n = ctx->n;
+  mode_t (*mode_fn)(mode_t) = ctx->exact ? _install_mode_exact : _install_mode_default;
 
   if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
     node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
@@ -8479,7 +8523,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       src = path_dirname(src);
       snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR, target);
       path_mkdirs(dst_buf);
-      int rci = utils_copy_dir_to_parent(src, dst_buf);
+      int rci = utils_copy_dir_to_parent_mode(src, dst_buf, mode_fn);
       if (rci) {
         node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
       }
@@ -8490,7 +8534,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
                "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST,
                target);
       path_mkdirs_for(dst_buf);
-      _install_file(n, src, dst_buf, &st);
+      _install_file(n, src, dst_buf, &st, mode_fn(st.st_mode));
       return;
     }
   }
@@ -8500,11 +8544,11 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
 
   if (S_ISREG(st.st_mode)) {
     path_mkdirs_for(dst_buf);
-    _install_file(n, src, dst_buf, &st);
+    _install_file(n, src, dst_buf, &st, mode_fn(st.st_mode));
   } else if (S_ISLNK(st.st_mode)) {
     _install_symlink(n, src, dst_buf, &st);
   } else if (S_ISDIR(st.st_mode)) {
-    int rci = utils_copy_dir_to_parent(src, target);
+    int rci = utils_copy_dir_to_parent_mode(src, target, mode_fn);
     if (rci) {
       node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
     }
@@ -8624,12 +8668,19 @@ static void _install_on_resolve_init(struct node_resolve *r) {
 }
 
 static void _install_post_build(struct node *n) {
+  struct node *n_target = n->child;
+  bool exact = n_target && node_is_value(n_target) && n_target->value
+               && strcmp(n_target->value, "exact") == 0;
+  if (exact) {
+    n_target = n_target->next;
+  }
   struct _install_on_resolve_ctx ctx = {
     .n = n,
-    .n_target = n->child,
+    .n_target = n_target,
     .consumes = { .usize = sizeof(char*) },
     .install_overlays = (  n->type == NODE_TYPE_INSTALL_SOURCES && g_env.project.cache_overlay_dir != 0
-                        && !(g_env.install.flags & INSTALL_FLG_SRC_OVERLAYS_APPLIED))
+                        && !(g_env.install.flags & INSTALL_FLG_SRC_OVERLAYS_APPLIED)),
+    .exact = exact
   };
   if (!ctx.n_target || !node_is_can_be_value(ctx.n_target)) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No target dir specified");

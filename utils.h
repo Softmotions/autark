@@ -117,7 +117,14 @@ int utils_copy_file(const char *src, const char *dst);
 
 int utils_copy_dir(const char *src, const char *dst);
 
+/// Copies directory `src` into `dst` transforming permissions of created
+/// files and directories with `mode_fn`. If `mode_fn` is 0, source permissions
+/// are preserved as is.
+int utils_copy_dir_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t));
+
 int utils_copy_dir_to_parent(const char *src, const char *dst);
+
+int utils_copy_dir_to_parent_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t));
 
 int utils_rename_file(const char *src, const char *dst);
 

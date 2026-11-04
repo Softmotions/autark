@@ -1,3 +1,8 @@
+# [v0.9.20]
+- `install` rule now makes installed files readable by everyone and executable by everyone
+  when the source is executable, independently of the user's `umask`.
+- Added `exact` modifier for `install` and `install-sources` rules preserving source permissions as is.
+
 # [v0.9.19]
 - Added ENABLE_ASAN / ENABLE_UBSAN build options.
 - Rework of map.c cleanup and perf improvements.

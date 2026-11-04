@@ -318,7 +318,8 @@ static int _utils_copy_symlink(const char *src, const char *dst, const struct st
 static int _utils_copy_regular(
   const char        *src,
   const char        *dst,
-  const struct stat *src_st) {
+  const struct stat *src_st,
+  mode_t           (*mode_fn)(mode_t)) {
   struct stat dst_st;
 
   if (lstat(dst, &dst_st) == 0) {
@@ -338,14 +339,19 @@ static int _utils_copy_regular(
     return errno;
   }
   int rc = utils_copy_file(src, dst);
-  if (  !rc
-     && chmod(dst, src_st->st_mode & 07777) != 0) {
-    rc = errno;
+  if (!rc) {
+    mode_t mode = src_st->st_mode & 07777;
+    if (mode_fn) {
+      mode = mode_fn(mode);
+    }
+    if (chmod(dst, mode) != 0) {
+      rc = errno;
+    }
   }
   return rc;
 }
 
-static int _utils_copy_dir_recursive(const char *src, const char *dst) {
+static int _utils_copy_dir_recursive(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   struct stat src_st;
   struct stat dst_st;
   if (lstat(src, &src_st) != 0) {
@@ -403,9 +409,9 @@ static int _utils_copy_dir_recursive(const char *src, const char *dst) {
     if (lstat(src_path, &entry_st) != 0) {
       rc = errno;
     } else if (S_ISDIR(entry_st.st_mode)) {
-      rc = _utils_copy_dir_recursive(src_path, dst_path);
+      rc = _utils_copy_dir_recursive(src_path, dst_path, mode_fn);
     } else if (S_ISREG(entry_st.st_mode)) {
-      rc = _utils_copy_regular(src_path, dst_path, &entry_st);
+      rc = _utils_copy_regular(src_path, dst_path, &entry_st, mode_fn);
     } else if (S_ISLNK(entry_st.st_mode)) {
       rc = _utils_copy_symlink(src_path, dst_path, &entry_st);
     } else {
@@ -422,32 +428,44 @@ static int _utils_copy_dir_recursive(const char *src, const char *dst) {
   if (closedir(dir) != 0 && !rc) {
     rc = errno;
   }
-  if (  created
-     && chmod(dst, src_st.st_mode & 07777) != 0
-     && !rc) {
-    rc = errno;
+  if (!rc && (mode_fn || created)) {
+    mode_t mode = src_st.st_mode & 07777;
+    if (mode_fn) {
+      mode = mode_fn(mode);
+    }
+    if (chmod(dst, mode) != 0) {
+      rc = errno;
+    }
   }
   return rc;
 }
 
-int utils_copy_dir(const char *src, const char *dst) {
+int utils_copy_dir_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   if (!src || !*src || !dst || !*dst) {
     return AK_ERROR_INVALID_ARGS;
   }
   int rc = _utils_check_overlap(src, dst);
-  return rc ? rc : _utils_copy_dir_recursive(src, dst);
+  return rc ? rc : _utils_copy_dir_recursive(src, dst, mode_fn);
 }
 
-int utils_copy_dir_to_parent(const char *src, const char *dst) {
+int utils_copy_dir(const char *src, const char *dst) {
+  return utils_copy_dir_mode(src, dst, 0);
+}
+
+int utils_copy_dir_to_parent_mode(const char *src, const char *dst, mode_t (*mode_fn)(mode_t)) {
   if (!src || !*src || !dst || !*dst) {
     return AK_ERROR_INVALID_ARGS;
   }
   struct pool *pool = pool_create_empty();
   char *bname = path_basename(pool_strdup(pool, src));
   dst = path_join_path_pool(pool, dst, bname, 0);
-  int rv = utils_copy_dir(src, dst);
+  int rv = utils_copy_dir_mode(src, dst, mode_fn);
   pool_destroy(pool);
   return rv;
+}
+
+int utils_copy_dir_to_parent(const char *src, const char *dst) {
+  return utils_copy_dir_to_parent_mode(src, dst, 0);
 }
 
 long int utils_strtol(const char *v, int base, int *rcp) {

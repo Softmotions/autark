@@ -1871,22 +1871,31 @@ or if an install prefix is explicitly specified using `-R` or `--prefix=<dir>`,
 then all `install` rules will be executed after the `build` phase completes.
 
 ```cfg
-install { INSTAL_TARGET_DIR FILES... }
+install { [exact] INSTALL_TARGET_DIR FILES... }
 ```
 
 The install rule copies the specified files into the target directory
 `${INSTALL_PREFIX}/${INSTALL_DATA_DIR}` (creating it if necessary).
-File permissions from the original files are preserved during the copy.
+
+By default installed files are readable by everyone (`a+r`), and files that are
+executable (any execute bit is set) are executable by everyone (`a+x`). Other
+permission bits, including write and special bits, are preserved as is. This
+makes installed artifacts independent of the user's `umask`.
+
+If the optional `exact` keyword is specified as the first item, the source file
+mode is preserved exactly, including the effects of the user's `umask`.
 
 Example:
 
 ```cfg
 install { ${INSTALL_PKGCONFIG_DIR} libiwnet.pc }
 install { ${INSTALL_INCLUDE_DIR} ${PUB_HDRS} }
+install { exact ${INSTALL_BIN_DIR} private-tool }
 ```
 
 This will install `libiwnet.pc` into the appropriate pkgconfig directory,
 and public headers into the include directory under the chosen prefix.
+The `private-tool` executable is installed with its original permissions.
 
 # install-sources {...}
 
@@ -1897,8 +1906,10 @@ Good practice is to place source code files into
 `<install_prefix>/share/<project_name>/<project_name>-sources-<version>`
 
 ```cfg
-install-sources { INSTAL_TARGET_DIR FILES... }
+install-sources { [exact] INSTALL_TARGET_DIR FILES... }
 ```
+
+The optional `exact` keyword has the same meaning as in the `install` rule.
 
 Example of `install-sources` configuration for iwnet project:
 

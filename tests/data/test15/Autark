@@ -1,0 +1,47 @@
+meta {
+  name { test15 }
+  description { Install rule permissions test }
+  version { 1.0.0 }
+}
+
+# Creates fixtures with restrictive permissions (umask 077).
+run {
+  always
+  shell {
+    umask 077 ;
+    : > plain.txt ;
+    : > exec.bin ;
+    chmod 700 exec.bin ;
+    : > write.bin ;
+    chmod 660 write.bin ;
+    mkdir -p data/sub ;
+    : > data/sub/nested.txt ;
+    chmod 600 data/sub/nested.txt
+  }
+  produces {
+    plain.txt
+    exec.bin
+    write.bin
+    data/sub/nested.txt
+  }
+}
+
+install {
+  ${INSTALL_DATA_DIR}
+  plain.txt
+  exec.bin
+  write.bin
+}
+
+install {
+  ${INSTALL_DATA_DIR}
+  data
+}
+
+install {
+  exact
+  ^{${INSTALL_DATA_DIR} /exact}
+  plain.txt
+  exec.bin
+  write.bin
+}

@@ -22,7 +22,25 @@ struct _install_on_resolve_ctx {
   struct node *n_target;
   struct ulist consumes;  // sizeof(char*)
   bool install_overlays;
+  bool exact;  // Preserve source permissions as is
 };
+
+/// Normalizes permissions of an installed file.
+///
+/// By default installed files must be readable by everyone and executables
+/// must be executable by everyone. Write and special bits are preserved.
+static mode_t _install_mode_default(mode_t mode) {
+  mode &= 07777;
+  mode |= S_IRUSR | S_IRGRP | S_IROTH;
+  if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
+    mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+  }
+  return mode;
+}
+
+static mode_t _install_mode_exact(mode_t mode) {
+  return mode & 07777;
+}
 
 static void _install_symlink(struct node *n, const char *src, const char *dst, struct stat *st) {
   char buf[PATH_MAX];
@@ -54,14 +72,14 @@ static void _install_symlink(struct node *n, const char *src, const char *dst, s
   utimensat(AT_FDCWD, dst, times, AT_SYMLINK_NOFOLLOW);
 }
 
-static void _install_file(struct node *n, const char *src, const char *dst, struct stat *st) {
+static void _install_file(struct node *n, const char *src, const char *dst, struct stat *st, mode_t mode) {
   node_info(n, "File %s => %s", src, dst);
 
   int in_fd = open(src, O_RDONLY);
   if (in_fd == -1) {
     node_fatal(errno, n, "Error opening file: %s", src);
   }
-  int out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, st->st_mode);
+  int out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (out_fd == -1) {
     node_fatal(errno, n, "Error opening file: %s", dst);
   }
@@ -91,7 +109,7 @@ static void _install_file(struct node *n, const char *src, const char *dst, stru
     }
   }
 
-  fchmod(out_fd, st->st_mode);
+  fchmod(out_fd, mode);
 #ifdef __APPLE__
   struct timespec times[2] = { st->st_atime, st->st_mtime };
 #else
@@ -109,6 +127,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
 
   struct stat st;
   struct node *n = ctx->n;
+  mode_t (*mode_fn)(mode_t) = ctx->exact ? _install_mode_exact : _install_mode_default;
 
   if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
     node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
@@ -120,7 +139,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       src = path_dirname(src);
       snprintf(dst_buf, sizeof(dst_buf), "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR, target);
       path_mkdirs(dst_buf);
-      int rci = utils_copy_dir_to_parent(src, dst_buf);
+      int rci = utils_copy_dir_to_parent_mode(src, dst_buf, mode_fn);
       if (rci) {
         node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
       }
@@ -131,7 +150,7 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
                "%s/" AUTARK_CACHE "/" AUTARK_CACHE_OVERLAY_DIR "/" AUTARK_FETCHED_REG_DIST,
                target);
       path_mkdirs_for(dst_buf);
-      _install_file(n, src, dst_buf, &st);
+      _install_file(n, src, dst_buf, &st, mode_fn(st.st_mode));
       return;
     }
   }
@@ -141,11 +160,11 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
 
   if (S_ISREG(st.st_mode)) {
     path_mkdirs_for(dst_buf);
-    _install_file(n, src, dst_buf, &st);
+    _install_file(n, src, dst_buf, &st, mode_fn(st.st_mode));
   } else if (S_ISLNK(st.st_mode)) {
     _install_symlink(n, src, dst_buf, &st);
   } else if (S_ISDIR(st.st_mode)) {
-    int rci = utils_copy_dir_to_parent(src, target);
+    int rci = utils_copy_dir_to_parent_mode(src, target, mode_fn);
     if (rci) {
       node_fatal(rci, n, "Failed copy %s directory into %s", src, target);
     }
@@ -265,12 +284,19 @@ static void _install_on_resolve_init(struct node_resolve *r) {
 }
 
 static void _install_post_build(struct node *n) {
+  struct node *n_target = n->child;
+  bool exact = n_target && node_is_value(n_target) && n_target->value
+               && strcmp(n_target->value, "exact") == 0;
+  if (exact) {
+    n_target = n_target->next;
+  }
   struct _install_on_resolve_ctx ctx = {
     .n = n,
-    .n_target = n->child,
+    .n_target = n_target,
     .consumes = { .usize = sizeof(char*) },
     .install_overlays = (  n->type == NODE_TYPE_INSTALL_SOURCES && g_env.project.cache_overlay_dir != 0
-                        && !(g_env.install.flags & INSTALL_FLG_SRC_OVERLAYS_APPLIED))
+                        && !(g_env.install.flags & INSTALL_FLG_SRC_OVERLAYS_APPLIED)),
+    .exact = exact
   };
   if (!ctx.n_target || !node_is_can_be_value(ctx.n_target)) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No target dir specified");
