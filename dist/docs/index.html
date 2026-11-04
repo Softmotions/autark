@@ -2641,18 +2641,27 @@ install prefix is explicitly specified using <code>-R</code> or
 <code>--prefix=&lt;dir&gt;</code>, then all <code>install</code> rules
 will be executed after the <code>build</code> phase completes.</p>
 <div class="sourceCode" id="cb100"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { [exact] INSTALL_TARGET_DIR FILES... }</span></code></pre></div>
 <p>The install rule copies the specified files into the target directory
 <code>${INSTALL_PREFIX}/${INSTALL_DATA_DIR}</code> (creating it if
-necessary). File permissions from the original files are preserved
-during the copy.</p>
+necessary).</p>
+<p>By default installed files are readable by everyone
+(<code>a+r</code>), and files that are executable (any execute bit is
+set) are executable by everyone (<code>a+x</code>). Other permission
+bits, including write and special bits, are preserved as is. This makes
+installed artifacts independent of the user's <code>umask</code>.</p>
+<p>If the optional <code>exact</code> keyword is specified as the first
+item, the source file mode is preserved exactly, including the effects
+of the user's <code>umask</code>.</p>
 <p>Example:</p>
 <div class="sourceCode" id="cb101"><pre
 class="sourceCode autark"><code class="sourceCode autark"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_PKGCONFIG_DIR} libiwnet.pc }</span>
-<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_INCLUDE_DIR} <span class="bu">$</span>{PUB_HDRS} }</span></code></pre></div>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { <span class="bu">$</span>{INSTALL_INCLUDE_DIR} <span class="bu">$</span>{PUB_HDRS} }</span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a><span class="kw">install</span> { exact <span class="bu">$</span>{INSTALL_BIN_DIR} private-tool }</span></code></pre></div>
 <p>This will install <code>libiwnet.pc</code> into the appropriate
 pkgconfig directory, and public headers into the include directory under
-the chosen prefix.</p>
+the chosen prefix. The <code>private-tool</code> executable is installed
+with its original permissions.</p>
 <h1 id="install-sources-">install-sources {...}</h1>
 <p>Installs project source code into target dir specified by
 <code>--prefix</code>. This directive operates in project source code
@@ -2660,7 +2669,9 @@ dir.</p>
 <p>Good practice is to place source code files into
 <code>&lt;install_prefix&gt;/share/&lt;project_name&gt;/&lt;project_name&gt;-sources-&lt;version&gt;</code></p>
 <div class="sourceCode" id="cb102"><pre
-class="sourceCode autark"><code class="sourceCode autark"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> { INSTAL_TARGET_DIR FILES... }</span></code></pre></div>
+class="sourceCode autark"><code class="sourceCode autark"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="kw">install-sources</span> { [exact] INSTALL_TARGET_DIR FILES... }</span></code></pre></div>
+<p>The optional <code>exact</code> keyword has the same meaning as in
+the <code>install</code> rule.</p>
 <p>Example of <code>install-sources</code> configuration for iwnet
 project:</p>
 <div class="sourceCode" id="cb103"><pre
