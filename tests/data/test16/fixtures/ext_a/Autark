@@ -1,0 +1,5 @@
+# External project build script. It requires a shared dependency (libd)
+# which is also required by ext_b. LIBD_URL is provided by the environment.
+check {
+  fetch_resource.sh { ${LIBD_URL} C{libd} LIBD_SRC_DIR }
+}

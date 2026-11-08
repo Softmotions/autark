@@ -51,7 +51,16 @@ static inline int cmp_file_with_xstr(const char *path, struct xstr *xstr) {
   return cmp_file_with_buf(path, xstr_ptr(xstr), xstr_size(xstr));
 }
 
+/// Drops build environment leaked to this process by a previously built
+/// project, so the next one is built as a standalone project.
+static inline void test_env_reset(void) {
+  unsetenv(AUTARK_EXTERNS_DIR_ENV);
+  unsetenv(AUTARK_CACHE_OVERLAY_DIR_ENV);
+  unsetenv(AUTARK_BUILD_ID_ENV);
+}
+
 static inline void test_init(bool cleanup) {
+  test_env_reset();
   g_env.verbose = true;
   g_env.project.cleanup = cleanup;
   autark_init();

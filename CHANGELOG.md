@@ -1,3 +1,12 @@
+# [v0.10.0]
+- External project dependencies are now identified by their URL and resolved through a build wide store
+  (`AUTARK_EXTERNS_DIR`, `autark fetch-plan`): a resource requested by several parts of the build is fetched once, a
+  repeated fetch does not invalidate its consumers, and different versions requested into the same target dir are
+  reported as an error instead of silently overwriting each other. The store is shared with nested builds, so an
+  external dependency of an external project is fetched once per build tree.
+- `fetch_resource.sh` now reuses an already fetched resource and re-fetches only when its URL changes.
+- Added `fetchreg_foreach()` and an optional build id field to the fetch registry entries.
+
 # [v0.9.20]
 - `install` rule now makes installed files readable by everyone and executable by everyone
   when the source is executable, independently of the user's `umask`.

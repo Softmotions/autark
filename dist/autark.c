@@ -1,8 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define META_VERSION "0.9.20"
-#define META_REVISION "e5a0893"
+#define META_VERSION "0.10.0-dev"
+#define META_REVISION "090a412"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
@@ -780,21 +780,24 @@ const char* path_join_path_pool(struct pool *pool, const char *dir, const char *
 #define AUTARK_FETCHED_REG       ".autark-fetched"
 #define AUTARK_FETCHED_REG_DIST  ".autark-fetched-dist"
 #define AUTARK_FETCH_DEP         ".autark-fetch-dep"
+#define AUTARK_EXTERNS_REG       ".autark-externs"
 #define AUTARK_COMPILE_COMMANDS  ".compile_commands"
 
 #define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
 #define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
 #define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
+#define AUTARK_EXTERNS_DIR_ENV       "AUTARK_EXTERNS_DIR"       // Build wide store of fetched external projects
+#define AUTARK_BUILD_ID_ENV          "AUTARK_BUILD_ID"          // Id of the build shared by the whole build tree
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
-#define AUTARK_INTERACTIVE_ENV       "AUTARK_INTERACTIVE"      // Autark is launched in interactive terminal
+#define AUTARK_INTERACTIVE_ENV      "AUTARK_INTERACTIVE"        // Autark is launched in interactive terminal
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 
 
-#define AUTARK_VERBOSE_ENV    "AUTARK_VERBOSE"                // Autark verbose env key
-#define AUTARK_TARGET_ENV     "AUTARK_TARGET"                 // Target toolchain id of cross build
-#define AUTARK_TOOLCHAIN_ENV  "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
+#define AUTARK_VERBOSE_ENV   "AUTARK_VERBOSE"                // Autark verbose env key
+#define AUTARK_TARGET_ENV    "AUTARK_TARGET"                 // Target toolchain id of cross build
+#define AUTARK_TOOLCHAIN_ENV "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
@@ -839,16 +842,18 @@ struct env {
   int verbose;
   int max_parallel_jobs;            // Max number of allowed parallel jobs.
   struct {
-    const char *root_dir;           // Project root source dir. Not zero.
-    const char *cache_dir;          // Project artifacts cache dir. Not zero.
-    const char *cache_overlay_dir;  // Overlay data dir for autark cache. Can be zero.
-    bool cleanup;                   // Clean project cache before build
-    bool compile_commands;          // Generate compile_commands.json database.
-    bool compile_commands_own;      // We own compile commands file.
-    bool prepared;                  // Autark build prepared
-    const char *toolchain_path;     // Path to target toolchain descriptor. Can be zero.
-    struct toolchain *toolchain;    // Resolved target toolchain. Can be zero.
-    struct xstr *options;           // Ask option values
+    const char *root_dir;             // Project root source dir. Not zero.
+    const char *cache_dir;            // Project artifacts cache dir. Not zero.
+    const char *cache_overlay_dir;    // Overlay data dir for autark cache. Can be zero.
+    const char *externs_dir;          // Store dir shared by the whole build tree. Not zero.
+    const char *build_id;             // Id of the build shared by the whole build tree. Not zero.
+    bool cleanup;                     // Clean project cache before build
+    bool compile_commands;            // Generate compile_commands.json database.
+    bool compile_commands_own;        // We own compile commands file.
+    bool prepared;                    // Autark build prepared
+    const char       *toolchain_path; // Path to target toolchain descriptor. Can be zero.
+    struct toolchain *toolchain;      // Resolved target toolchain. Can be zero.
+    struct xstr      *options;        // Ask option values
   } project;
   struct {
     const char *prefix_dir;  // Absolute path to install prefix dir.
@@ -981,11 +986,14 @@ struct fetchreg;
 struct fetcherg_entry {
   const char *url;
   const char *target;
+  const char *build_id; /// Build that produced the entry. Can be zero.
 };
 
 int fetchreg_open(const char *path, struct fetchreg **out);
 
 bool fetchreg_find(struct fetchreg*, const char *url, void *user_data, void (*cb)(const struct fetcherg_entry*, void*));
+
+void fetchreg_foreach(struct fetchreg*, void *user_data, void (*cb)(const struct fetcherg_entry*, void*));
 
 int fetchreg_register(struct fetchreg*, const struct fetcherg_entry*);
 
@@ -1208,6 +1216,12 @@ void macro_unregister_call(struct node*);
 #ifndef _AMALGAMATE_
 #include <stdbool.h>
 #endif
+
+/// Exit code of `autark fetch-plan` telling that a resource fetch is required.
+#define AUTARK_FETCH_PENDING_RC 3
+
+/// Exit code of `autark fetch-plan` telling that the fetch dir is unusable.
+#define AUTARK_FETCH_REJECTED_RC 4
 
 void autark_init(void);
 
@@ -4422,6 +4436,40 @@ int fetchreg_open(const char *path, struct fetchreg **out) {
   return 0;
 }
 
+/// Splits a single registry line into url, target and build id parts.
+/// Modifies the given buffer. On invalid input `url` is zeroed.
+static void _fetchreg_parse_line(char *buf, struct fetcherg_entry *e) {
+  e->url = 0;
+  e->target = 0;
+  e->build_id = 0;
+  char *sep = strchr(buf, '\1');
+  if (!sep || sep == buf) {
+    return;
+  }
+  *sep = '\0';
+  char *target = sep + 1;
+  char *sep2 = strchr(target, '\1');
+  if (sep2) {
+    *sep2 = '\0';
+    char *build_id = sep2 + 1;
+    int rv = utils_endswith(build_id, "\n");
+    if (rv) {
+      build_id[rv - 1] = '\0';
+    }
+    if (*build_id) {
+      e->build_id = build_id;
+    }
+  }
+  int rv = utils_endswith(target, "\n");
+  if (rv) {
+    target[rv - 1] = '\0';
+  }
+  e->url = buf;
+  if (*target) {
+    e->target = target;
+  }
+}
+
 bool fetchreg_find(
   struct fetchreg *r,
   const char *url,
@@ -4431,56 +4479,64 @@ bool fetchreg_find(
 
   char buf[PATH_MAX * 3 + 2];
   char sbuf[sizeof(buf)];
-  struct fetcherg_entry se = { 0 };
+  size_t url_off = 0;
+  size_t target_off = 0;
+  size_t build_id_off = 0;
+  bool found = false;
+  struct fetcherg_entry e = { 0 };
 
   if (fseek(r->f, 0, SEEK_SET) == -1) {
-    akerror(errno, "fetchreg for %s", url);
+    akerror(errno, "Failed to seek fetch registry for: %s", url);
     return false;
   }
 
   // Find the last matched fetched entry
   while (fgets(buf, sizeof(buf), r->f)) {
-    struct fetcherg_entry e = { 0 };
-    int idxs[1] = { 0 };
-    char *rp = buf;
-
-    for ( ; *rp; ++rp) {
-      if (*rp == '\1') {
-        *rp = '\0';
-        if (strcmp(buf, url) != 0) {
-          break;
-        }
-        e.url = buf;
-        if (rp[1] != '\0' && rp[1] != '\n') {
-          e.target = rp + 1;
-          idxs[0] = e.target - buf;
-        }
-        break;
-      }
+    _fetchreg_parse_line(buf, &e);
+    if (!e.url || strcmp(e.url, url) != 0) {
+      continue;
     }
-
-    if (e.url) {
-      memset(&se, 0, sizeof(se));
-      memcpy(sbuf, buf, sizeof(buf));
-      se.url = sbuf;
-      if (idxs[0]) {
-        char *target = sbuf + idxs[0];
-        int rv = utils_endswith(target, "\n");
-        if (rv) {
-          target[rv - 1] = '\0';
-        }
-        se.target = target;
-      }
-    }
+    url_off = e.url - buf;
+    target_off = e.target ? (size_t) (e.target - buf) : 0;
+    build_id_off = e.build_id ? (size_t) (e.build_id - buf) : 0;
+    memcpy(sbuf, buf, sizeof(sbuf));
+    found = true;
   }
 
-  if (se.url) {
-    if (cb) {
-      cb(&se, user_data);
-    }
-    return true;
-  } else {
+  if (!found) {
     return false;
+  }
+
+  struct fetcherg_entry se = {
+    .url = sbuf + url_off,
+    .target = target_off ? sbuf + target_off : 0,
+    .build_id = build_id_off ? sbuf + build_id_off : 0,
+  };
+  if (cb) {
+    cb(&se, user_data);
+  }
+  return true;
+}
+
+void fetchreg_foreach(
+  struct fetchreg *r,
+  void *user_data,
+  void (*cb)(const struct fetcherg_entry*, void*)) {
+  akassert(r && cb);
+
+  char buf[PATH_MAX * 3 + 2];
+  struct fetcherg_entry e = { 0 };
+
+  if (fseek(r->f, 0, SEEK_SET) == -1) {
+    akerror(errno, "Failed to seek fetch registry", 0);
+    return;
+  }
+
+  while (fgets(buf, sizeof(buf), r->f)) {
+    _fetchreg_parse_line(buf, &e);
+    if (e.url) {
+      cb(&e, user_data);
+    }
   }
 }
 
@@ -4496,7 +4552,13 @@ int fetchreg_register(struct fetchreg *r, const struct fetcherg_entry *entry) {
     return errno;
   }
   if (entry->target) {
-    if (fprintf(r->f, "%s\1%s\n", entry->url, entry->target) < 0) {
+    int rc;
+    if (entry->build_id) {
+      rc = fprintf(r->f, "%s\1%s\1%s\n", entry->url, entry->target, entry->build_id);
+    } else {
+      rc = fprintf(r->f, "%s\1%s\n", entry->url, entry->target);
+    }
+    if (rc < 0) {
       return errno;
     }
   } else {
@@ -9512,6 +9574,12 @@ static int _usage_va(
           "\nautark fetched <url> <target_dir>\n"
           "  Registers external resource located at <url> is downloaded to <target_dir>.\n"
           "  See .autark/fetch_resource.sh script.\n");
+  fprintf(stderr,
+          "\nautark fetch-plan <url> <target_dir>\n"
+          "  Prints the directory an external resource should be fetched into.\n"
+          "  Exit codes: %d - already fetched, %d - fetch is required, %d - dir is rejected.\n"
+          "  See .autark/fetch_resource.sh script.\n",
+          AK_ERROR_OK, AUTARK_FETCH_PENDING_RC, AUTARK_FETCH_REJECTED_RC);
 
   fprintf(stderr, "\n");
   return AK_ERROR_INVALID_ARGS;
@@ -9600,6 +9668,22 @@ void autark_build_prepare(const char *script_path) {
     }
   }
 
+  // The externals store is inherited by nested builds, so all external projects
+  // fetched anywhere in the build tree are shared.
+  const char *externs_dir = getenv(AUTARK_EXTERNS_DIR_ENV);
+  if (!externs_dir || *externs_dir == '\0') {
+    externs_dir = g_env.project.cache_dir;
+  }
+  g_env.project.externs_dir = path_normalize_pool(pool_strdup(g_env.pool, externs_dir), g_env.pool);
+  setenv(AUTARK_EXTERNS_DIR_ENV, g_env.project.externs_dir, 1);
+
+  const char *build_id = getenv(AUTARK_BUILD_ID_ENV);
+  if (!build_id || *build_id == '\0') {
+    build_id = pool_printf(g_env.pool, "%lld-%d", (long long) utils_current_time_ms(), (int) getpid());
+  }
+  g_env.project.build_id = pool_strdup(g_env.pool, build_id);
+  setenv(AUTARK_BUILD_ID_ENV, g_env.project.build_id, 1);
+
   utils_strncpy(path_buf, script_path, sizeof(path_buf));
   const char *path = path_basename(path_buf);
 
@@ -9641,6 +9725,12 @@ static void _project_command_env_read(void) {
   if (val) {
     g_env.project.cache_overlay_dir = pool_strdup(g_env.pool, val);
   }
+
+  val = getenv(AUTARK_EXTERNS_DIR_ENV);
+  g_env.project.externs_dir = (val && *val) ? pool_strdup(g_env.pool, val) : g_env.project.cache_dir;
+
+  val = getenv(AUTARK_BUILD_ID_ENV);
+  g_env.project.build_id = pool_strdup(g_env.pool, val ? val : "");
 
   val = getenv(AUTARK_UNIT_ENV);
   if (!val) {
@@ -9709,6 +9799,222 @@ static void _on_command_dep(int argc, const char **argv) {
   _on_command_dep_impl(file);
 }
 
+// External resources store
+//
+// A fetched external project is identified by its URL. The build wide registry
+// `<externs_dir>/.autark-externs` maps an URL to the directory it was fetched
+// into, so the same resource is fetched (and later built) only once even if
+// several parts of the build request it. `<externs_dir>` is inherited by nested
+// builds (AUTARK_EXTERNS_DIR), so it is shared by the whole build tree.
+
+struct _fetch_reg_scan {
+  const char *url;      // URL to look up. Can be zero.
+  const char *dir;      // Directory to check ownership for. Can be zero.
+  const char *build_id; // Id of the current build. Can be zero.
+  char found_dir[PATH_MAX];
+  char owner_url[PATH_MAX];
+  char owner_build_id[64];
+  bool found;
+};
+
+static void _fetch_reg_scan_cb(const struct fetcherg_entry *e, void *d) {
+  struct _fetch_reg_scan *s = d;
+  if (!e->url) {
+    return;
+  }
+  if (s->url && strcmp(e->url, s->url) == 0) { // Last entry wins
+    if (e->target) {
+      utils_strncpy(s->found_dir, e->target, sizeof(s->found_dir));
+      s->found = true;
+    } else {
+      s->found_dir[0] = '\0';
+      s->found = false;
+    }
+    return;
+  }
+  if (  s->dir && e->target && strcmp(e->target, s->dir) == 0
+     && (!s->url || strcmp(e->url, s->url) != 0)) {
+    utils_strncpy(s->owner_url, e->url, sizeof(s->owner_url));
+    utils_strncpy(s->owner_build_id, e->build_id ? e->build_id : "", sizeof(s->owner_build_id));
+  }
+}
+
+static void _fetch_reg_scan(struct fetchreg *reg, struct _fetch_reg_scan *s) {
+  fetchreg_foreach(reg, s, _fetch_reg_scan_cb);
+}
+
+/// Checks that the dir is claimed by another resource requested by this build.
+/// Claims made by previous builds are stale and can be taken over.
+static bool _fetch_reg_is_live_claim(const struct _fetch_reg_scan *s) {
+  return s->owner_url[0] && s->build_id && *s->build_id
+         && strcmp(s->owner_build_id, s->build_id) == 0;
+}
+
+/// Resolves the dir an external resource belongs to.
+///
+/// The dir owned by a previous build of `url` is preferred. `owner` is filled
+/// with the claims made for the resolved dir by other resources.
+static const char* _fetch_reg_resolve(
+  struct pool            *pool,
+  struct fetchreg        *reg,
+  const char             *url,
+  const char             *store_dir,
+  struct _fetch_reg_scan *owner) {
+  struct _fetch_reg_scan scan = { .url = url, .build_id = g_env.project.build_id };
+  _fetch_reg_scan(reg, &scan);
+
+  // Keep a single owner of a resource even if its dir was removed
+  const char *dir = scan.found ? pool_strdup(pool, scan.found_dir) : store_dir;
+
+  memset(owner, 0, sizeof(*owner));
+  owner->url = url;
+  owner->dir = dir;
+  owner->build_id = g_env.project.build_id;
+  _fetch_reg_scan(reg, owner);
+  return dir;
+}
+
+static const char* _fetch_reg_path(struct pool *pool) {
+  return path_join_path_pool(pool, g_env.project.externs_dir, AUTARK_EXTERNS_REG, 0);
+}
+
+static struct fetchreg* _fetch_reg_open(struct pool *pool) {
+  const char *path = _fetch_reg_path(pool);
+  int rc = path_mkdirs_for(path);
+  if (rc) {
+    akfatal(rc, "Failed to create externals store dir for: %s", path);
+  }
+  struct fetchreg *reg = 0;
+  rc = fetchreg_open(path, &reg);
+  if (rc) {
+    akfatal(rc, "Failed to open externals registry: %s", path);
+  }
+  return reg;
+}
+
+/// Returns the URL stored in the fetch marker of a given dir. Allocated value.
+static char* _fetch_marker_url(const char *marker) {
+  struct value v = utils_file_as_buf(marker, PATH_MAX);
+  if (v.error || !v.buf) {
+    value_destroy(&v);
+    return 0;
+  }
+  char *ret = v.buf;
+  size_t len = strlen(ret);
+  while (len > 0 && (ret[len - 1] == '\n' || ret[len - 1] == '\r' || ret[len - 1] == ' ')) {
+    ret[--len] = '\0';
+  }
+  if (len == 0) {
+    free(ret);
+    return 0;
+  }
+  return ret;
+}
+
+/// Checks what `dir` contains the resource fetched from `url`.
+static bool _fetch_dir_valid(struct pool *pool, const char *dir, const char *url) {
+  if (!path_is_dir(dir)) {
+    return false;
+  }
+  const char *marker = path_join_path_pool(pool, dir, AUTARK_FETCH_DEP, 0);
+  if (!path_is_file(marker)) {
+    return false;
+  }
+  char *marker_url = _fetch_marker_url(marker);
+  bool ret = !marker_url || strcmp(marker_url, url) == 0;
+  free(marker_url);
+  return ret;
+}
+
+/// Maps a requested fetch dir into the build wide externals store.
+static const char* _fetch_store_dir(struct pool *pool, const char *requested) {
+  const char *root = g_env.project.externs_dir;
+  if (!root) {
+    return requested;
+  }
+  // A dir requested relative to the project cache keeps its place in the store,
+  // so the same request of a nested build lands in the same store dir.
+  const char *rel = path_is_prefix_for(g_env.project.cache_dir, requested, 0);
+  if (rel && *rel) {
+    return path_join_path_pool(pool, root, rel, 0);
+  }
+  return requested;
+}
+
+/// Computes the dir path relative to the project source distribution overlay.
+static const char* _fetch_overlay_rel(struct pool *pool, const char *dir) {
+  if (!g_env.project.externs_dir) {
+    return 0;
+  }
+  const char *rel = path_is_prefix_for(g_env.project.externs_dir, dir, 0);
+  if (!rel || *rel == '\0') {
+    rel = path_is_prefix_for(g_env.project.cache_dir, dir, 0);
+  }
+  return rel && *rel ? pool_strdup(pool, rel) : 0;
+}
+
+static void _fetch_overlay_register(struct pool *pool, const char *url, const char *rel) {
+  struct fetchreg *reg;
+  const char *path = path_join_path_pool(pool, g_env.project.cache_overlay_dir, AUTARK_FETCHED_REG, 0);
+  int rc = fetchreg_open(path, &reg);
+  if (rc) {
+    akfatal(rc, "autark fetched Failed to open fetch registry file: %s", path);
+  }
+  struct _fetch_reg_scan scan = { .url = url };
+  _fetch_reg_scan(reg, &scan);
+  if (!scan.found || strcmp(scan.found_dir, rel) != 0) {
+    akcheck(fetchreg_register(reg, &(struct fetcherg_entry) {
+      .url = url,
+      .target = rel,
+    }));
+  }
+  fetchreg_close(reg);
+}
+
+/// Resolves the directory an external resource should be fetched into.
+///
+/// Prints the directory to stdout and exits with:
+///   AK_ERROR_OK - resource is already fetched, nothing to do;
+///   AUTARK_FETCH_PENDING_RC - fetch into the printed directory is required;
+///   AUTARK_FETCH_REJECTED_RC - the directory cannot be used for this resource.
+static void _on_command_fetch_plan(int argc, const char **argv) {
+  _project_command_env_read();
+  if (optind + 1 >= argc) {
+    _usage("Missing required command arg: autark fetch-plan <project_url> <target_dir>");
+  }
+  const char *url = argv[optind++];
+  const char *target_dir = argv[optind++];
+  struct pool *pool = pool_create_empty();
+
+  target_dir = path_normalize_pool(target_dir, pool);
+  const char *store_dir = _fetch_store_dir(pool, target_dir);
+
+  struct fetchreg *reg = _fetch_reg_open(pool);
+  struct _fetch_reg_scan owner;
+  const char *dir = _fetch_reg_resolve(pool, reg, url, store_dir, &owner);
+  fetchreg_close(reg);
+
+  // The registry is the only authority of the dir ownership: the fetch marker
+  // may describe the origin of copied sources rather than this dir itself.
+  // A resource of a previous build is allowed to be replaced by another one.
+  if (_fetch_reg_is_live_claim(&owner)) {
+    akerror(AK_ERROR_FAIL,
+            "autark fetch-plan Dir: %s is already used by external resource: %s. "
+            "Use a distinct target dir for: %s", dir, owner.owner_url, url);
+    pool_destroy(pool);
+    _exit(AUTARK_FETCH_REJECTED_RC);
+  }
+
+  bool valid = _fetch_dir_valid(pool, dir, url);
+  if (g_env.verbose) {
+    akinfo("autark fetch-plan %s %s", url, dir);
+  }
+  printf("%s\n", dir);
+  fflush(stdout);
+  pool_destroy(pool);
+  _exit(valid ? AK_ERROR_OK : AUTARK_FETCH_PENDING_RC);
+}
+
 static void _on_command_fetched(int argc, const char **argv) {
   _project_command_env_read();
   if (optind + 1 >= argc) {
@@ -9719,45 +10025,76 @@ static void _on_command_fetched(int argc, const char **argv) {
   if (g_env.verbose) {
     akinfo("autark fetched %s %s", url, target_dir);
   }
+  int rc;
   struct pool *pool = pool_create_empty();
 
   target_dir = path_normalize_pool(target_dir, pool);
+  if (!path_is_dir(target_dir)) {
+    akfatal(AK_ERROR_FAIL, "autark fetched Target dir does not exist: %s", target_dir);
+  }
   const char *fetch_dep_file = path_join_path_pool(pool, target_dir, AUTARK_FETCH_DEP, 0);
-  int rc = utils_file_write_buf(fetch_dep_file, "", 0, false);
-  if (rc) {
-    akfatal(rc, "autark fetched Failed to create dependency file: %s", fetch_dep_file);
+
+  struct fetchreg *reg = _fetch_reg_open(pool);
+  struct _fetch_reg_scan scan = { .url = url, .dir = target_dir, .build_id = g_env.project.build_id };
+  _fetch_reg_scan(reg, &scan);
+
+  if (_fetch_reg_is_live_claim(&scan)) {
+    fetchreg_close(reg);
+    akfatal(AK_ERROR_FAIL,
+            "autark fetched Dir: %s is already used by another external resource: %s. "
+            "Use distinct target dirs for: %s", target_dir, scan.owner_url, url);
+  }
+
+  // Rewrite the marker only if it does not describe this dir: its mtime is a
+  // dependency of the consumers, so it must stay intact otherwise.
+  char *marker_url = path_is_file(fetch_dep_file) ? _fetch_marker_url(fetch_dep_file) : 0;
+  if (marker_url && strcmp(marker_url, url) != 0 && g_env.verbose) {
+    akinfo("autark fetched Take over dir: %s from: %s", target_dir, marker_url);
+  }
+  bool write_marker = !marker_url || strcmp(marker_url, url) != 0;
+  free(marker_url);
+
+  if (write_marker) {
+    rc = utils_file_write_buf(fetch_dep_file, url, strlen(url), false);
+    if (rc) {
+      akfatal(rc, "autark fetched Failed to create dependency file: %s", fetch_dep_file);
+    }
   }
 
   _on_command_dep_impl(fetch_dep_file);
 
-  if (  g_env.project.cache_overlay_dir
-     && path_is_prefix_for(g_env.project.cache_dir, target_dir, 0)) {
-    char *target_rel = path_relativize_cwd(g_env.project.cache_dir, target_dir, g_env.project.cache_dir);
-    const char *overlay_target = path_join_path_pool(pool, g_env.project.cache_overlay_dir, target_rel, 0);
-    rc = path_mkdirs_for(overlay_target);
-    if (rc) {
-      akfatal(rc, "autark fetched Failed to create parent dir for: %s", overlay_target);
-    }
-    if (g_env.verbose) {
-      akinfo("autark fetched Copy overlay dir: %s into %s", target_dir, overlay_target);
-    }
-    rc = utils_copy_dir(target_dir, overlay_target);
-    if (rc) {
-      akfatal(rc, "Error copying dir: %s into: %s", target_dir, overlay_target);
-    }
-
-    struct fetchreg *reg;
-    const char *path = path_join_path_pool(pool, g_env.project.cache_overlay_dir, AUTARK_FETCHED_REG, 0);
-    rc = fetchreg_open(path, &reg);
-    if (rc) {
-      akfatal(rc, "autark fetched Failed to open fetch registry file: %s", path);
-    }
+  if (scan.found && strcmp(scan.found_dir, target_dir) != 0) {
+    akwarn("External resource: %s is already fetched to: %s (requested: %s)",
+           url, scan.found_dir, target_dir);
+  }
+  if (!scan.found || strcmp(scan.found_dir, target_dir) != 0) {
     akcheck(fetchreg_register(reg, &(struct fetcherg_entry) {
       .url = url,
-      .target = target_rel,
+      .target = target_dir,
+      .build_id = g_env.project.build_id,
     }));
-    fetchreg_close(reg);
-    free(target_rel);
+  }
+  fetchreg_close(reg);
+
+  if (g_env.project.cache_overlay_dir) {
+    const char *rel = _fetch_overlay_rel(pool, target_dir);
+    if (rel) {
+      const char *overlay_target = path_join_path_pool(pool, g_env.project.cache_overlay_dir, rel, 0);
+      if (write_marker || !path_is_dir(overlay_target)) {
+        rc = path_mkdirs_for(overlay_target);
+        if (rc) {
+          akfatal(rc, "autark fetched Failed to create parent dir for: %s", overlay_target);
+        }
+        if (g_env.verbose) {
+          akinfo("autark fetched Copy overlay dir: %s into %s", target_dir, overlay_target);
+        }
+        rc = utils_copy_dir(target_dir, overlay_target);
+        if (rc) {
+          akfatal(rc, "Error copying dir: %s into: %s", target_dir, overlay_target);
+        }
+      }
+      _fetch_overlay_register(pool, url, rel);
+    }
   }
   pool_destroy(pool);
 }
@@ -10131,6 +10468,9 @@ void autark_run(int argc, const char **argv) {
       return;
     } else if (strcmp(arg, "fetched") == 0) {
       _on_command_fetched(argc, argv);
+      return;
+    } else if (strcmp(arg, "fetch-plan") == 0) {
+      _on_command_fetch_plan(argc, argv);
       return;
     } else { // Root dir expected
       g_env.project.root_dir = pool_strdup(g_env.pool, arg);

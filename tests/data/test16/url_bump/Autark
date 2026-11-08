@@ -1,0 +1,16 @@
+# The resource URL is provided by the environment (as a build option).
+# Changing it must replace the resource in the same target dir: a previous
+# build is not allowed to block an already fetched resource.
+
+option { LIB_URL  URL of the external resource }
+
+if { !defined { LIB_URL }
+  set {
+    LIB_URL
+    ^{dir:// S{../fixtures/libext_v1}}
+  }
+}
+
+check {
+  fetch_resource.sh { ${LIB_URL} C{extern_lib} LIB_SRC_DIR }
+}

@@ -1,0 +1,20 @@
+# Same resource URL is requested twice into different target dirs.
+# It must be fetched once: the second request is redirected to the dir
+# owned by the first one.
+
+set {
+  LIB_URL
+  ^{dir:// S{../fixtures/libext_v1}}
+}
+
+check {
+  fetch_resource.sh { ${LIB_URL} C{extern_lib_a} LIB_SRC_A }
+  fetch_resource.sh { ${LIB_URL} C{extern_lib_b} LIB_SRC_B }
+}
+
+run {
+  shell { echo ${LIB_SRC_A} ${LIB_SRC_B} > dirs.txt }
+  produces {
+    dirs.txt
+  }
+}

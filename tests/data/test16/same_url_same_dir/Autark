@@ -1,0 +1,21 @@
+# Same resource URL is requested twice into the same target dir.
+# It must be fetched exactly once and reused by the second request:
+#  - both requests must resolve to the same dir;
+#  - the second build must not refetch anything.
+
+set {
+  LIB_URL
+  ^{dir:// S{../fixtures/libext_v1}}
+}
+
+check {
+  fetch_resource.sh { ${LIB_URL} C{extern_lib} LIB_SRC_A }
+  fetch_resource.sh { ${LIB_URL} C{extern_lib} LIB_SRC_B }
+}
+
+run {
+  shell { echo ${LIB_SRC_A} ${LIB_SRC_B} > dirs.txt }
+  produces {
+    dirs.txt
+  }
+}

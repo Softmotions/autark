@@ -1,0 +1,32 @@
+# Two external projects (ext_a, ext_b) required by this project depend on the
+# same shared resource (libd). Both are built by nested autark invocations,
+# so the shared resource must be taken from the build wide externals store.
+
+set {
+  EXT_A_URL
+  ^{dir:// S{../fixtures/ext_a}}
+}
+
+set {
+  EXT_B_URL
+  ^{dir:// S{../fixtures/ext_b}}
+}
+
+check {
+  fetch_resource.sh { ${EXT_A_URL} C{extern_a} EXT_A_SRC_DIR }
+  fetch_resource.sh { ${EXT_B_URL} C{extern_b} EXT_B_SRC_DIR }
+}
+
+run {
+  shell { autark ${EXT_A_SRC_DIR} }
+  consumes {
+    ${EXT_A_SRC_DIR}
+  }
+}
+
+run {
+  shell { autark ${EXT_B_SRC_DIR} }
+  consumes {
+    ${EXT_B_SRC_DIR}
+  }
+}

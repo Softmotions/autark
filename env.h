@@ -20,21 +20,24 @@
 #define AUTARK_FETCHED_REG       ".autark-fetched"
 #define AUTARK_FETCHED_REG_DIST  ".autark-fetched-dist"
 #define AUTARK_FETCH_DEP         ".autark-fetch-dep"
+#define AUTARK_EXTERNS_REG       ".autark-externs"
 #define AUTARK_COMPILE_COMMANDS  ".compile_commands"
 
 #define AUTARK_ROOT_DIR_ENV          "AUTARK_ROOT_DIR"          // Project root directory
 #define AUTARK_CACHE_DIR_ENV         "AUTARK_CACHE_DIR"         // Project cache directory
 #define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
+#define AUTARK_EXTERNS_DIR_ENV       "AUTARK_EXTERNS_DIR"       // Build wide store of fetched external projects
+#define AUTARK_BUILD_ID_ENV          "AUTARK_BUILD_ID"          // Id of the build shared by the whole build tree
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
-#define AUTARK_INTERACTIVE_ENV       "AUTARK_INTERACTIVE"      // Autark is launched in interactive terminal
+#define AUTARK_INTERACTIVE_ENV      "AUTARK_INTERACTIVE"        // Autark is launched in interactive terminal
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 
 
-#define AUTARK_VERBOSE_ENV    "AUTARK_VERBOSE"                // Autark verbose env key
-#define AUTARK_TARGET_ENV     "AUTARK_TARGET"                 // Target toolchain id of cross build
-#define AUTARK_TOOLCHAIN_ENV  "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
+#define AUTARK_VERBOSE_ENV   "AUTARK_VERBOSE"                // Autark verbose env key
+#define AUTARK_TARGET_ENV    "AUTARK_TARGET"                 // Target toolchain id of cross build
+#define AUTARK_TOOLCHAIN_ENV "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
 
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
@@ -79,16 +82,18 @@ struct env {
   int verbose;
   int max_parallel_jobs;            // Max number of allowed parallel jobs.
   struct {
-    const char *root_dir;           // Project root source dir. Not zero.
-    const char *cache_dir;          // Project artifacts cache dir. Not zero.
-    const char *cache_overlay_dir;  // Overlay data dir for autark cache. Can be zero.
-    bool cleanup;                   // Clean project cache before build
-    bool compile_commands;          // Generate compile_commands.json database.
-    bool compile_commands_own;      // We own compile commands file.
-    bool prepared;                  // Autark build prepared
-    const char *toolchain_path;     // Path to target toolchain descriptor. Can be zero.
-    struct toolchain *toolchain;    // Resolved target toolchain. Can be zero.
-    struct xstr *options;           // Ask option values
+    const char *root_dir;             // Project root source dir. Not zero.
+    const char *cache_dir;            // Project artifacts cache dir. Not zero.
+    const char *cache_overlay_dir;    // Overlay data dir for autark cache. Can be zero.
+    const char *externs_dir;          // Store dir shared by the whole build tree. Not zero.
+    const char *build_id;             // Id of the build shared by the whole build tree. Not zero.
+    bool cleanup;                     // Clean project cache before build
+    bool compile_commands;            // Generate compile_commands.json database.
+    bool compile_commands_own;        // We own compile commands file.
+    bool prepared;                    // Autark build prepared
+    const char       *toolchain_path; // Path to target toolchain descriptor. Can be zero.
+    struct toolchain *toolchain;      // Resolved target toolchain. Can be zero.
+    struct xstr      *options;        // Ask option values
   } project;
   struct {
     const char *prefix_dir;  // Absolute path to install prefix dir.
