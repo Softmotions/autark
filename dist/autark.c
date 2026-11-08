@@ -1,8 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define META_VERSION "0.10.0-dev"
-#define META_REVISION "090a412"
+#define META_VERSION "0.10.0"
+#define META_REVISION "8210a9d"
 
 #define MACRO_MAX_RECURSIVE_CALLS 128
 
