@@ -29,10 +29,35 @@ flexibility needed for non-trivial build workflows.
 - Automatic generation of `compile_commands.json` compilation database.
 - Generation of project source distributions with all required source dependencies included, allowing builds in isolated environments.
 - Script syntax highlighting support for Vim8+, Neovim, VSCode, TextMate with [Softmotions/tree-sitter-autark](https://github.com/Softmotions/tree-sitter-autark)
+- Context-aware Autark DSL completion in Vim/Neovim with [coc-autark](https://www.npmjs.com/package/coc-autark)
 
 ## Articles
 
 - [Autark: Rethinking build systems – Integrate, Don’t Outsource](https://blog.annapurna.cc/posts/autark-intro/)
+
+## Editor support
+
+Autark scripts (`Autark`, `*.autark`) are recognized by editors through the
+[tree-sitter-autark](https://github.com/Softmotions/tree-sitter-autark) grammar.
+
+For Vim and Neovim users there is also [coc-autark](https://www.npmjs.com/package/coc-autark),
+a [coc.nvim](https://github.com/neoclide/coc.nvim) extension that adds completion for the
+Autark DSL. It understands the structure of a rule bag and suggests only what is meaningful
+at the cursor position: directives, rule arguments (`consumes`, `produces`, `objects`, ...),
+`meta` and `toolchain` keys, conditions, `${...}` variables, check scripts, project paths
+(for `S{}`, `SS{}`, `C{}`, `CC{}`) and macros declared in the buffer.
+
+Install it with:
+
+```vim
+:CocInstall coc-autark
+```
+
+CoC `0.0.82+` and Node.js 18+ are required, and the buffer filetype has to be `autark`
+(installing the tree-sitter-autark Vim plugin provides it). Path and variable completion
+works for scripts saved inside a project, i.e. under a directory containing the root
+`Autark` script. Extension settings such as the project cache directory or additional
+check-script directories are described in `:CocConfig`.
 
 ## Installation
 
